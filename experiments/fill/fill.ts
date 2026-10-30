@@ -229,12 +229,20 @@ export interface Mark {
 
 const empty = (v: unknown) => v === null || v === undefined || v === "";
 
-/** Marks each field; text that had to be written is judged by Jev (a fitting value, within length). */
+const accepted = (c: Case, f: Field) => [c.gold[f.key]!.value, ...(c.gold[f.key]!.also ?? [])].map(String);
+
+/**
+ * Marks each field. Text that had to be written is judged by Jev: a fitting value, true to the
+ * message, within length. Other text counts when its words match an accepted answer, or, said
+ * differently, when Jev judges it gives the same information.
+ */
 export async function score(c: Case, values: Values): Promise<Mark[]> {
   const fields = fieldsOf(c);
-  const toJudge = fields.filter((f) => c.gold[f.key]!.need === "write" && !empty(values[f.key]));
+  const filled = (f: Field) => !empty(values[f.key]) && c.gold[f.key]!.value !== null;
+  const toJudge = fields.filter((f) => filled(f) && c.gold[f.key]!.need === "write");
+  const toCompare = fields.filter((f) => filled(f) && f.type === "string" && c.gold[f.key]!.need !== "write" && !accepted(c, f).some((x) => f1(x, String(values[f.key])) >= 0.8));
   const judged: Record<string, number> = {};
-  if (toJudge.length) {
+  if (toJudge.length || toCompare.length) {
     const questions: Record<string, Question> = {};
     for (const f of toJudge) {
       questions[f.key] = {
@@ -243,8 +251,20 @@ export async function score(c: Case, values: Values): Promise<Mark[]> {
         criteria: { yes: "It does what the field asks for, and says nothing `source` does not support.", no: "It does not fit the field, misses the point, or adds things `source` does not say." },
       };
     }
-    const call = await systemOne({ source: c.source, values: Object.fromEntries(toJudge.map((f) => [id(f.key), String(values[f.key])])) }, questions);
-    for (const f of toJudge) judged[f.key] = (call.answers[f.key] as NoulAnswer).noul;
+    for (const f of toCompare) {
+      questions[f.key] = {
+        type: "noul",
+        instructions: `For the form field "${f.label}", does \`values.${id(f.key)}\` give the same information as \`answers.${id(f.key)}\`?`,
+        criteria: { yes: "The same information, perhaps in other words.", no: "Different, more or less information." },
+      };
+    }
+    const state = {
+      source: c.source,
+      values: Object.fromEntries([...toJudge, ...toCompare].map((f) => [id(f.key), String(values[f.key])])),
+      answers: Object.fromEntries(toCompare.map((f) => [id(f.key), String(c.gold[f.key]!.value)])),
+    };
+    const call = await systemOne(state, questions);
+    for (const f of [...toJudge, ...toCompare]) judged[f.key] = (call.answers[f.key] as NoulAnswer).noul;
   }
   return fields.map((f) => {
     const g = c.gold[f.key]!;
@@ -254,7 +274,7 @@ export async function score(c: Case, values: Values): Promise<Mark[]> {
     else if (empty(v)) correct = false;
     else if (g.need === "write") correct = (judged[f.key] ?? 0) >= 0.5 && (f.maxLength === undefined || String(v).length <= f.maxLength);
     else if (f.type === "url") correct = [g.value, ...(g.also ?? [])].some((x) => site(String(x)) === site(String(v)));
-    else if (f.type === "string") correct = [g.value, ...(g.also ?? [])].some((x) => f1(String(x), String(v)) >= 0.8);
+    else if (f.type === "string") correct = accepted(c, f).some((x) => f1(x, String(v)) >= 0.8) || (judged[f.key] ?? 0) >= 0.5;
     else if (isNumber(f)) correct = Math.abs(Number(v) - Number(g.value)) < 1e-6;
     else if (f.type === "date") correct = minute(v) === minute(g.value);
     else correct = v === g.value;

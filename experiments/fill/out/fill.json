@@ -58,18 +58,19 @@
           "gold": "'September' by Earth, Wind & Fire",
           "value": "Could the band play 'September' by Earth, Wind & Fire",
           "correct": false,
-          "invented": false
+          "invented": false,
+          "judged": 0.49
         }
       ],
-      "ms": 281,
+      "ms": 279,
       "tokens": 2281,
       "sureness": {
-        "guestName": 0.82,
+        "guestName": 0.9,
         "attending": 1,
-        "guests": 0.99,
-        "meal": 0.69,
-        "dietary": 0.49,
-        "song": 0.48
+        "guests": 0.98,
+        "meal": 0.68,
+        "dietary": 0.45,
+        "song": 0.5
       }
     },
     {
@@ -133,13 +134,13 @@
           "invented": false
         }
       ],
-      "ms": 1096,
+      "ms": 1991,
       "tokens": 1353,
       "sureness": {
         "guestName": 0.9991636276245117,
         "attending": 0.9279881119728088,
         "guests": 0.9725956351054634,
-        "meal": 0.9640488028526306,
+        "meal": 0.9646347761154175,
         "dietary": 0.848534882068634,
         "song": 0.9992517828941345
       }
@@ -193,7 +194,8 @@
           "gold": "Ana's vegetarian",
           "value": "No allergies",
           "correct": false,
-          "invented": false
+          "invented": false,
+          "judged": 0.05
         },
         {
           "key": "song",
@@ -205,13 +207,13 @@
           "invented": false
         }
       ],
-      "ms": 1038,
+      "ms": 810,
       "tokens": 3059,
       "sureness": {
         "guestName": 0.9992287158966064,
-        "attending": 0.99,
+        "attending": 1,
         "guests": 0.9903519279719993,
-        "meal": 0.71,
+        "meal": 0.64,
         "dietary": 0.5877195000648499,
         "song": 0.9996603727340698
       }
@@ -296,7 +298,7 @@
           "invented": false
         }
       ],
-      "ms": 223,
+      "ms": 206,
       "tokens": 3432,
       "sureness": {
         "title": 1,
@@ -306,7 +308,7 @@
         "platform": 1,
         "osVersion": 0.99,
         "appVersion": 0.97,
-        "device": 0.9
+        "device": 0.88
       }
     },
     {
@@ -389,17 +391,17 @@
           "invented": false
         }
       ],
-      "ms": 961,
+      "ms": 820,
       "tokens": 1948,
       "sureness": {
-        "title": 0.6643357276916504,
-        "steps": 0.35793760418891907,
-        "expected": 0.3296748697757721,
-        "severity": 0.3880222737789154,
-        "platform": 0.9844834208488464,
-        "osVersion": 0.9992073178291321,
-        "appVersion": 0.999944806098938,
-        "device": 0.9997712969779968
+        "title": 0.6400773525238037,
+        "steps": 0.3536517918109894,
+        "expected": 0.3338293433189392,
+        "severity": 0.37535372376441956,
+        "platform": 0.9845550656318665,
+        "osVersion": 0.9991391897201538,
+        "appVersion": 0.9999411106109619,
+        "device": 0.9997667670249939
       }
     },
     {
@@ -482,17 +484,17 @@
           "invented": false
         }
       ],
-      "ms": 819,
+      "ms": 770,
       "tokens": 4704,
       "sureness": {
         "title": 0.40854328870773315,
         "steps": 0.29268643260002136,
-        "expected": 0.33082476258277893,
-        "severity": 0.97,
+        "expected": 0.32853302359580994,
+        "severity": 0.96,
         "platform": 1,
-        "osVersion": 0.9993778467178345,
-        "appVersion": 0.9999401569366455,
-        "device": 0.9997398257255554
+        "osVersion": 0.9994300007820129,
+        "appVersion": 0.9999333620071411,
+        "device": 0.9997497200965881
       }
     },
     {
@@ -556,13 +558,13 @@
           "invented": false
         }
       ],
-      "ms": 192,
+      "ms": 200,
       "tokens": 1507,
       "sureness": {
         "bookedBy": 0.99,
         "people": 1,
-        "start": 0.88,
-        "hours": 0.88,
+        "start": 0.85,
+        "hours": 0.89,
         "catering": 1,
         "purpose": 0.98
       }
@@ -628,7 +630,7 @@
           "invented": false
         }
       ],
-      "ms": 751,
+      "ms": 803,
       "tokens": 799,
       "sureness": {
         "bookedBy": 0.99998939037323,
@@ -700,7 +702,7 @@
           "invented": false
         }
       ],
-      "ms": 1472,
+      "ms": 782,
       "tokens": 2065,
       "sureness": {
         "bookedBy": 0.9999858140945435,
@@ -779,10 +781,10 @@
           "value": "Please raise the request timeout to 2 minutes, allow 5 retries, run 16 workers, and give it a 4 GB cache",
           "correct": false,
           "invented": false,
-          "judged": 0.5
+          "judged": 0.52
         }
       ],
-      "ms": 190,
+      "ms": 196,
       "tokens": 1967,
       "sureness": {
         "timeout": 0.8,
@@ -791,7 +793,7 @@
         "cache": 1,
         "retention": 1,
         "logLevel": 1,
-        "change": 0.39
+        "change": 0.38
       }
     },
     {
@@ -865,7 +867,7 @@
           "judged": 0.59
         }
       ],
-      "ms": 747,
+      "ms": 774,
       "tokens": 748,
       "sureness": {
         "timeout": 0.9999836685775678,
@@ -948,7 +950,7 @@
           "judged": 0.61
         }
       ],
-      "ms": 750,
+      "ms": 721,
       "tokens": 2465,
       "sureness": {
         "timeout": 0.9999775891257061,
@@ -971,8 +973,8 @@
           "label": "Full name",
           "need": "copy",
           "gold": "Priya Shah",
-          "value": "Priya",
-          "correct": false,
+          "value": "I'm Priya Shah",
+          "correct": true,
           "invented": false
         },
         {
@@ -1039,12 +1041,12 @@
           "invented": false
         }
       ],
-      "ms": 198,
+      "ms": 195,
       "tokens": 2754,
       "sureness": {
-        "fullName": 0.46,
+        "fullName": 0.45,
         "email": 1,
-        "jobTitle": 0.99,
+        "jobTitle": 0.97,
         "company": 1,
         "website": 1,
         "teamSize": 1,
@@ -1131,7 +1133,7 @@
           "invented": false
         }
       ],
-      "ms": 825,
+      "ms": 903,
       "tokens": 1876,
       "sureness": {
         "fullName": 1,
@@ -1223,17 +1225,17 @@
           "invented": false
         }
       ],
-      "ms": 769,
+      "ms": 741,
       "tokens": 3852,
       "sureness": {
         "fullName": 1,
         "email": 1,
-        "jobTitle": 0.9991891980171204,
-        "company": 0.999987006187439,
-        "website": 0.9985257983207703,
+        "jobTitle": 0.9991564750671387,
+        "company": 0.9999891519546509,
+        "website": 0.9985213875770569,
         "teamSize": 1,
         "newsletter": 1,
-        "password": 0.44563329219818115
+        "password": 0.42811137437820435
       }
     },
     {
@@ -1297,15 +1299,15 @@
           "invented": false
         }
       ],
-      "ms": 203,
+      "ms": 208,
       "tokens": 3753,
       "sureness": {
-        "displayName": 0.39,
-        "location": 1,
-        "headline": 0.87,
-        "bio": 0.43,
+        "displayName": 0.4,
+        "location": 0.99,
+        "headline": 0.84,
+        "bio": 0.48,
         "website": 1,
-        "theme": 0.99
+        "theme": 1
       }
     },
     {
@@ -1370,11 +1372,11 @@
           "invented": false
         }
       ],
-      "ms": 772,
+      "ms": 776,
       "tokens": 1424,
       "sureness": {
         "displayName": 0.9999096393585205,
-        "location": 0.9179036021232605,
+        "location": 0.9175776839256287,
         "headline": 0.9838288426399231,
         "bio": 0.33115893602371216,
         "website": 0.5486937761306763,
@@ -1422,7 +1424,7 @@
           "value": "Sam Ortiz",
           "correct": false,
           "invented": false,
-          "judged": 0.06
+          "judged": 0.05
         },
         {
           "key": "website",
@@ -1443,14 +1445,14 @@
           "invented": false
         }
       ],
-      "ms": 758,
+      "ms": 776,
       "tokens": 4882,
       "sureness": {
         "displayName": 0.9996696710586548,
-        "location": 0.9106507897377014,
-        "headline": 0.9902923703193665,
-        "bio": 0.3445122539997101,
-        "website": 0.3988535404205322,
+        "location": 0.9128974080085754,
+        "headline": 0.9892581105232239,
+        "bio": 0.3386198878288269,
+        "website": 0.4085586965084076,
         "theme": 1
       }
     },
@@ -1533,16 +1535,16 @@
           "invented": false
         }
       ],
-      "ms": 209,
+      "ms": 203,
       "tokens": 2961,
       "sureness": {
-        "method": 0.97,
+        "method": 0.98,
         "street": 1,
         "postalCode": 1,
         "city": 1,
         "country": 1,
         "giftWrap": 1,
-        "courierNote": 0.73,
+        "courierNote": 0.74,
         "giftMessage": 0.89
       }
     },
@@ -1613,7 +1615,8 @@
           "gold": "If nobody's home, leave it with the neighbour at 223",
           "value": "gift wrap would be lovely",
           "correct": false,
-          "invented": false
+          "invented": false,
+          "judged": 0.03
         },
         {
           "key": "giftMessage",
@@ -1625,17 +1628,17 @@
           "invented": false
         }
       ],
-      "ms": 793,
+      "ms": 813,
       "tokens": 1929,
       "sureness": {
         "method": 0.9069291949272156,
-        "street": 0.9967672824859619,
+        "street": 0.9966411590576172,
         "postalCode": 1,
-        "city": 0.9999916553497314,
-        "country": 0.9858842492103577,
-        "giftWrap": 0.9853723645210266,
-        "courierNote": 0.27025869488716125,
-        "giftMessage": 0.7580430507659912
+        "city": 0.9999904632568359,
+        "country": 0.9868296980857849,
+        "giftWrap": 0.9860879778862,
+        "courierNote": 0.2647040784358978,
+        "giftMessage": 0.7609736919403076
       }
     },
     {
@@ -1705,7 +1708,8 @@
           "gold": "If nobody's home, leave it with the neighbour at 223",
           "value": "gift wrap would be lovely",
           "correct": false,
-          "invented": false
+          "invented": false,
+          "judged": 0.03
         },
         {
           "key": "giftMessage",
@@ -1717,28 +1721,28 @@
           "invented": false
         }
       ],
-      "ms": 720,
+      "ms": 743,
       "tokens": 3937,
       "sureness": {
         "method": 0.98,
         "street": 0.9966996312141418,
         "postalCode": 1,
-        "city": 0.9998793601989746,
+        "city": 0.9998661279678345,
         "country": 1,
         "giftWrap": 1,
-        "courierNote": 0.47081485390663147,
-        "giftMessage": 0.8411190509796143
+        "courierNote": 0.4771985411643982,
+        "giftMessage": 0.8388273119926453
       }
     }
   ],
   "summary": {
     "jev": {
-      "right": 42,
+      "right": 43,
       "of": 49,
       "invented": 0,
       "needs": {
         "copy": {
-          "right": 24,
+          "right": 25,
           "of": 26
         },
         "choose": {
@@ -1758,7 +1762,7 @@
           "of": 4
         }
       },
-      "ms": 214,
+      "ms": 212,
       "tokens": 2665
     },
     "clairic": {
@@ -1787,7 +1791,7 @@
           "of": 4
         }
       },
-      "ms": 849,
+      "ms": 983,
       "tokens": 1440
     },
     "both": {
@@ -1816,7 +1820,7 @@
           "of": 4
         }
       },
-      "ms": 904,
+      "ms": 763,
       "tokens": 3566
     }
   }

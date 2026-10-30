@@ -1,0 +1,3354 @@
+{
+  "writer": "@cf/google/gemma-4-26b-a4b-it",
+  "results": [
+    {
+      "id": "rsvp",
+      "title": "Wedding RSVP from a reply",
+      "source": "Hi both! So happy for you. Count us in: it'll be me, Tom Becker, plus my partner Ana, so two of us. I'll have the fish, and Ana's vegetarian. No allergies on our side. Could the band play 'September' by Earth, Wind & Fire?",
+      "needs": {
+        "guestName": "copy",
+        "attending": "choose",
+        "guests": "copy",
+        "meal": "choose",
+        "dietary": "copy",
+        "song": "copy"
+      },
+      "routes": {
+        "guestName": "taken",
+        "attending": "taken",
+        "guests": "taken",
+        "meal": "taken",
+        "dietary": "taken",
+        "song": "taken"
+      },
+      "routeSure": {
+        "guestName": 0.79,
+        "attending": 0.97,
+        "guests": 0.98,
+        "meal": 0.8,
+        "dietary": 0.73,
+        "song": 0.99
+      },
+      "clairicSure": {
+        "guestName": 0.9992287158966064,
+        "attending": 0.99,
+        "guests": 0.9903519279719993,
+        "meal": 0.71,
+        "dietary": 0.5877195000648499,
+        "song": 0.9996603727340698
+      },
+      "checks": {
+        "guestName": 0.82,
+        "attending": 0.93,
+        "guests": 0.86,
+        "meal": 0.91,
+        "dietary": 0.88,
+        "song": 0.96
+      },
+      "runs": [
+        {
+          "way": "both",
+          "values": {
+            "guestName": "Tom Becker",
+            "attending": true,
+            "guests": 2,
+            "meal": "fish",
+            "dietary": "No allergies",
+            "song": "September"
+          },
+          "marks": [
+            {
+              "key": "guestName",
+              "label": "Guest name",
+              "need": "copy",
+              "gold": "Tom Becker",
+              "value": "Tom Becker",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "attending",
+              "label": "Attending",
+              "need": "choose",
+              "gold": true,
+              "value": true,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "guests",
+              "label": "Number of guests",
+              "need": "copy",
+              "gold": 2,
+              "value": 2,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "meal",
+              "label": "Meal choice",
+              "need": "choose",
+              "gold": "fish",
+              "value": "fish",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "dietary",
+              "label": "Dietary restrictions",
+              "need": "copy",
+              "gold": "Ana's vegetarian",
+              "value": "No allergies",
+              "correct": false,
+              "invented": false,
+              "judged": 0.06
+            },
+            {
+              "key": "song",
+              "label": "Song request",
+              "need": "copy",
+              "gold": "'September' by Earth, Wind & Fire",
+              "value": "September",
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [],
+          "rejected": [],
+          "ms": 831
+        },
+        {
+          "way": "jev-routes",
+          "values": {
+            "guestName": "Tom Becker",
+            "attending": true,
+            "guests": 2,
+            "meal": "fish",
+            "dietary": "No allergies",
+            "song": "September"
+          },
+          "marks": [
+            {
+              "key": "guestName",
+              "label": "Guest name",
+              "need": "copy",
+              "gold": "Tom Becker",
+              "value": "Tom Becker",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "attending",
+              "label": "Attending",
+              "need": "choose",
+              "gold": true,
+              "value": true,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "guests",
+              "label": "Number of guests",
+              "need": "copy",
+              "gold": 2,
+              "value": 2,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "meal",
+              "label": "Meal choice",
+              "need": "choose",
+              "gold": "fish",
+              "value": "fish",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "dietary",
+              "label": "Dietary restrictions",
+              "need": "copy",
+              "gold": "Ana's vegetarian",
+              "value": "No allergies",
+              "correct": false,
+              "invented": false,
+              "judged": 0.06
+            },
+            {
+              "key": "song",
+              "label": "Song request",
+              "need": "copy",
+              "gold": "'September' by Earth, Wind & Fire",
+              "value": "September",
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [],
+          "rejected": [],
+          "ms": 831
+        },
+        {
+          "way": "clairic-unsure",
+          "values": {
+            "guestName": "Tom Becker",
+            "attending": true,
+            "guests": 2,
+            "meal": "fish",
+            "dietary": "No allergies",
+            "song": "September"
+          },
+          "marks": [
+            {
+              "key": "guestName",
+              "label": "Guest name",
+              "need": "copy",
+              "gold": "Tom Becker",
+              "value": "Tom Becker",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "attending",
+              "label": "Attending",
+              "need": "choose",
+              "gold": true,
+              "value": true,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "guests",
+              "label": "Number of guests",
+              "need": "copy",
+              "gold": 2,
+              "value": 2,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "meal",
+              "label": "Meal choice",
+              "need": "choose",
+              "gold": "fish",
+              "value": "fish",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "dietary",
+              "label": "Dietary restrictions",
+              "need": "copy",
+              "gold": "Ana's vegetarian",
+              "value": "No allergies",
+              "correct": false,
+              "invented": false,
+              "judged": 0.06
+            },
+            {
+              "key": "song",
+              "label": "Song request",
+              "need": "copy",
+              "gold": "'September' by Earth, Wind & Fire",
+              "value": "September",
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [],
+          "rejected": [],
+          "ms": 831
+        },
+        {
+          "way": "jev-checks",
+          "values": {
+            "guestName": "Tom Becker",
+            "attending": true,
+            "guests": 2,
+            "meal": "fish",
+            "dietary": "No allergies",
+            "song": "September"
+          },
+          "marks": [
+            {
+              "key": "guestName",
+              "label": "Guest name",
+              "need": "copy",
+              "gold": "Tom Becker",
+              "value": "Tom Becker",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "attending",
+              "label": "Attending",
+              "need": "choose",
+              "gold": true,
+              "value": true,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "guests",
+              "label": "Number of guests",
+              "need": "copy",
+              "gold": 2,
+              "value": 2,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "meal",
+              "label": "Meal choice",
+              "need": "choose",
+              "gold": "fish",
+              "value": "fish",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "dietary",
+              "label": "Dietary restrictions",
+              "need": "copy",
+              "gold": "Ana's vegetarian",
+              "value": "No allergies",
+              "correct": false,
+              "invented": false,
+              "judged": 0.06
+            },
+            {
+              "key": "song",
+              "label": "Song request",
+              "need": "copy",
+              "gold": "'September' by Earth, Wind & Fire",
+              "value": "September",
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [],
+          "rejected": [],
+          "ms": 1009
+        },
+        {
+          "way": "writer",
+          "values": {
+            "guestName": "Tom Becker",
+            "attending": true,
+            "guests": 2,
+            "meal": "fish",
+            "dietary": "Ana's vegetarian",
+            "song": "September by Earth, Wind & Fire"
+          },
+          "marks": [
+            {
+              "key": "guestName",
+              "label": "Guest name",
+              "need": "copy",
+              "gold": "Tom Becker",
+              "value": "Tom Becker",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "attending",
+              "label": "Attending",
+              "need": "choose",
+              "gold": true,
+              "value": true,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "guests",
+              "label": "Number of guests",
+              "need": "copy",
+              "gold": 2,
+              "value": 2,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "meal",
+              "label": "Meal choice",
+              "need": "choose",
+              "gold": "fish",
+              "value": "fish",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "dietary",
+              "label": "Dietary restrictions",
+              "need": "copy",
+              "gold": "Ana's vegetarian",
+              "value": "Ana's vegetarian",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "song",
+              "label": "Song request",
+              "need": "copy",
+              "gold": "'September' by Earth, Wind & Fire",
+              "value": "September by Earth, Wind & Fire",
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "guestName",
+            "attending",
+            "guests",
+            "meal",
+            "dietary",
+            "song"
+          ],
+          "rejected": [],
+          "ms": 9908
+        }
+      ]
+    },
+    {
+      "id": "bug",
+      "title": "Bug report from a support message",
+      "source": "The app keeps crashing when I try to upload a photo to my profile. I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately. It happens every time since yesterday's update. I'm on a Pixel 8 running Android 15, app version 4.2.1. I'd expect it to just upload the photo like before.",
+      "needs": {
+        "title": "write",
+        "steps": "copy",
+        "expected": "copy",
+        "severity": "choose",
+        "platform": "choose",
+        "osVersion": "copy",
+        "appVersion": "copy",
+        "device": "copy"
+      },
+      "routes": {
+        "title": "written",
+        "steps": "taken",
+        "expected": "taken",
+        "severity": "written",
+        "platform": "taken",
+        "osVersion": "taken",
+        "appVersion": "taken",
+        "device": "taken"
+      },
+      "routeSure": {
+        "title": 0.95,
+        "steps": 0.9,
+        "expected": 0.96,
+        "severity": 0.85,
+        "platform": 0.97,
+        "osVersion": 1,
+        "appVersion": 1,
+        "device": 0.99
+      },
+      "clairicSure": {
+        "title": 0.43345141410827637,
+        "steps": 0.28874993324279785,
+        "expected": 0.32853302359580994,
+        "severity": 0.97,
+        "platform": 1,
+        "osVersion": 0.9994300007820129,
+        "appVersion": 0.9999333620071411,
+        "device": 0.9997398257255554
+      },
+      "checks": {
+        "steps": 0.96,
+        "expected": 0.9,
+        "severity": 0.86,
+        "platform": 0.9,
+        "osVersion": 0.97,
+        "appVersion": 0.98,
+        "device": 0.97
+      },
+      "runs": [
+        {
+          "way": "both",
+          "values": {
+            "title": "The app keeps crashing when I try to upload a photo to my profile",
+            "steps": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+            "expected": "to just upload the photo like before",
+            "severity": "crash-or-data-loss",
+            "platform": "android",
+            "osVersion": "Android 15",
+            "appVersion": "4.2.1",
+            "device": "Pixel 8"
+          },
+          "marks": [
+            {
+              "key": "title",
+              "label": "Title",
+              "need": "write",
+              "gold": "App crashes when uploading a profile photo",
+              "value": "The app keeps crashing when I try to upload a photo to my profile",
+              "correct": true,
+              "invented": false,
+              "judged": 0.98
+            },
+            {
+              "key": "steps",
+              "label": "Steps to reproduce",
+              "need": "copy",
+              "gold": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+              "value": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "expected",
+              "label": "What did you expect?",
+              "need": "copy",
+              "gold": "it to just upload the photo like before",
+              "value": "to just upload the photo like before",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "severity",
+              "label": "Severity",
+              "need": "choose",
+              "gold": "crash-or-data-loss",
+              "value": "crash-or-data-loss",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "platform",
+              "label": "Platform",
+              "need": "choose",
+              "gold": "android",
+              "value": "android",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "osVersion",
+              "label": "OS version",
+              "need": "copy",
+              "gold": "15",
+              "value": "Android 15",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "appVersion",
+              "label": "App version",
+              "need": "copy",
+              "gold": "4.2.1",
+              "value": "4.2.1",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "device",
+              "label": "Device",
+              "need": "copy",
+              "gold": "Pixel 8",
+              "value": "Pixel 8",
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [],
+          "rejected": [],
+          "ms": 742
+        },
+        {
+          "way": "jev-routes",
+          "values": {
+            "title": "App crashes when uploading profile photo",
+            "steps": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+            "expected": "to just upload the photo like before",
+            "severity": "crash-or-data-loss",
+            "platform": "android",
+            "osVersion": "Android 15",
+            "appVersion": "4.2.1",
+            "device": "Pixel 8"
+          },
+          "marks": [
+            {
+              "key": "title",
+              "label": "Title",
+              "need": "write",
+              "gold": "App crashes when uploading a profile photo",
+              "value": "App crashes when uploading profile photo",
+              "correct": true,
+              "invented": false,
+              "judged": 0.97
+            },
+            {
+              "key": "steps",
+              "label": "Steps to reproduce",
+              "need": "copy",
+              "gold": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+              "value": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "expected",
+              "label": "What did you expect?",
+              "need": "copy",
+              "gold": "it to just upload the photo like before",
+              "value": "to just upload the photo like before",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "severity",
+              "label": "Severity",
+              "need": "choose",
+              "gold": "crash-or-data-loss",
+              "value": "crash-or-data-loss",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "platform",
+              "label": "Platform",
+              "need": "choose",
+              "gold": "android",
+              "value": "android",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "osVersion",
+              "label": "OS version",
+              "need": "copy",
+              "gold": "15",
+              "value": "Android 15",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "appVersion",
+              "label": "App version",
+              "need": "copy",
+              "gold": "4.2.1",
+              "value": "4.2.1",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "device",
+              "label": "Device",
+              "need": "copy",
+              "gold": "Pixel 8",
+              "value": "Pixel 8",
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "title",
+            "severity"
+          ],
+          "rejected": [],
+          "ms": 21077
+        },
+        {
+          "way": "clairic-unsure",
+          "values": {
+            "title": "App crashes when uploading profile photo",
+            "steps": "1. Open Settings. 2. Tap Profile picture. 3. Choose a photo from the gallery.",
+            "expected": "The app should upload the photo like before.",
+            "severity": "crash-or-data-loss",
+            "platform": "android",
+            "osVersion": "Android 15",
+            "appVersion": "4.2.1",
+            "device": "Pixel 8"
+          },
+          "marks": [
+            {
+              "key": "title",
+              "label": "Title",
+              "need": "write",
+              "gold": "App crashes when uploading a profile photo",
+              "value": "App crashes when uploading profile photo",
+              "correct": true,
+              "invented": false,
+              "judged": 0.97
+            },
+            {
+              "key": "steps",
+              "label": "Steps to reproduce",
+              "need": "copy",
+              "gold": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+              "value": "1. Open Settings. 2. Tap Profile picture. 3. Choose a photo from the gallery.",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "expected",
+              "label": "What did you expect?",
+              "need": "copy",
+              "gold": "it to just upload the photo like before",
+              "value": "The app should upload the photo like before.",
+              "correct": false,
+              "invented": false,
+              "judged": 0.47
+            },
+            {
+              "key": "severity",
+              "label": "Severity",
+              "need": "choose",
+              "gold": "crash-or-data-loss",
+              "value": "crash-or-data-loss",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "platform",
+              "label": "Platform",
+              "need": "choose",
+              "gold": "android",
+              "value": "android",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "osVersion",
+              "label": "OS version",
+              "need": "copy",
+              "gold": "15",
+              "value": "Android 15",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "appVersion",
+              "label": "App version",
+              "need": "copy",
+              "gold": "4.2.1",
+              "value": "4.2.1",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "device",
+              "label": "Device",
+              "need": "copy",
+              "gold": "Pixel 8",
+              "value": "Pixel 8",
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "title",
+            "steps",
+            "expected"
+          ],
+          "rejected": [],
+          "ms": 10101
+        },
+        {
+          "way": "jev-checks",
+          "values": {
+            "title": "App crashes when uploading a profile photo",
+            "steps": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+            "expected": "to just upload the photo like before",
+            "severity": "crash-or-data-loss",
+            "platform": "android",
+            "osVersion": "Android 15",
+            "appVersion": "4.2.1",
+            "device": "Pixel 8"
+          },
+          "marks": [
+            {
+              "key": "title",
+              "label": "Title",
+              "need": "write",
+              "gold": "App crashes when uploading a profile photo",
+              "value": "App crashes when uploading a profile photo",
+              "correct": true,
+              "invented": false,
+              "judged": 0.97
+            },
+            {
+              "key": "steps",
+              "label": "Steps to reproduce",
+              "need": "copy",
+              "gold": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+              "value": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "expected",
+              "label": "What did you expect?",
+              "need": "copy",
+              "gold": "it to just upload the photo like before",
+              "value": "to just upload the photo like before",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "severity",
+              "label": "Severity",
+              "need": "choose",
+              "gold": "crash-or-data-loss",
+              "value": "crash-or-data-loss",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "platform",
+              "label": "Platform",
+              "need": "choose",
+              "gold": "android",
+              "value": "android",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "osVersion",
+              "label": "OS version",
+              "need": "copy",
+              "gold": "15",
+              "value": "Android 15",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "appVersion",
+              "label": "App version",
+              "need": "copy",
+              "gold": "4.2.1",
+              "value": "4.2.1",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "device",
+              "label": "Device",
+              "need": "copy",
+              "gold": "Pixel 8",
+              "value": "Pixel 8",
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "title",
+            "severity"
+          ],
+          "rejected": [],
+          "ms": 6977
+        },
+        {
+          "way": "writer",
+          "values": {
+            "title": "App crashes when uploading a profile photo",
+            "steps": "1. Open Settings. 2. Tap Profile picture. 3. Choose a photo from the gallery.",
+            "expected": "The app should upload the photo as it did before the update.",
+            "severity": "crash-or-data-loss",
+            "platform": "android",
+            "osVersion": "Android 15",
+            "appVersion": "4.2.1",
+            "device": "Pixel 8"
+          },
+          "marks": [
+            {
+              "key": "title",
+              "label": "Title",
+              "need": "write",
+              "gold": "App crashes when uploading a profile photo",
+              "value": "App crashes when uploading a profile photo",
+              "correct": true,
+              "invented": false,
+              "judged": 0.97
+            },
+            {
+              "key": "steps",
+              "label": "Steps to reproduce",
+              "need": "copy",
+              "gold": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+              "value": "1. Open Settings. 2. Tap Profile picture. 3. Choose a photo from the gallery.",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "expected",
+              "label": "What did you expect?",
+              "need": "copy",
+              "gold": "it to just upload the photo like before",
+              "value": "The app should upload the photo as it did before the update.",
+              "correct": true,
+              "invented": false,
+              "judged": 0.54
+            },
+            {
+              "key": "severity",
+              "label": "Severity",
+              "need": "choose",
+              "gold": "crash-or-data-loss",
+              "value": "crash-or-data-loss",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "platform",
+              "label": "Platform",
+              "need": "choose",
+              "gold": "android",
+              "value": "android",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "osVersion",
+              "label": "OS version",
+              "need": "copy",
+              "gold": "15",
+              "value": "Android 15",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "appVersion",
+              "label": "App version",
+              "need": "copy",
+              "gold": "4.2.1",
+              "value": "4.2.1",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "device",
+              "label": "Device",
+              "need": "copy",
+              "gold": "Pixel 8",
+              "value": "Pixel 8",
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "title",
+            "steps",
+            "expected",
+            "severity",
+            "platform",
+            "osVersion",
+            "appVersion",
+            "device"
+          ],
+          "rejected": [],
+          "ms": 3838
+        }
+      ]
+    },
+    {
+      "id": "booking",
+      "title": "Meeting room booking from a chat message",
+      "source": "Hi! Could I book a room for next Thursday at 2pm? We'll be 6 people and need about 90 minutes. Coffee would be great, thanks! Marta",
+      "needs": {
+        "bookedBy": "copy",
+        "people": "copy",
+        "start": "compute",
+        "hours": "compute",
+        "catering": "choose",
+        "purpose": "absent"
+      },
+      "routes": {
+        "bookedBy": "taken",
+        "people": "taken",
+        "start": "taken",
+        "hours": "taken",
+        "catering": "taken",
+        "purpose": "missing"
+      },
+      "routeSure": {
+        "bookedBy": 0.9,
+        "people": 1,
+        "start": 0.94,
+        "hours": 0.98,
+        "catering": 0.85,
+        "purpose": 0.78
+      },
+      "clairicSure": {
+        "bookedBy": 0.9999858140945435,
+        "people": 0.9999880791809225,
+        "start": 0.9867978089051992,
+        "hours": 0.9996258847206743,
+        "catering": 1,
+        "purpose": 0.9811907410621643
+      },
+      "checks": {
+        "bookedBy": 0.89,
+        "people": 0.98,
+        "start": 0.19,
+        "hours": 0.94,
+        "catering": 0.97
+      },
+      "runs": [
+        {
+          "way": "both",
+          "values": {
+            "bookedBy": "Marta",
+            "people": 6,
+            "start": "2026-11-02T14:00:00",
+            "hours": 1.5,
+            "catering": "coffee",
+            "purpose": null
+          },
+          "marks": [
+            {
+              "key": "bookedBy",
+              "label": "Booked by",
+              "need": "copy",
+              "gold": "Marta",
+              "value": "Marta",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "people",
+              "label": "Number of people",
+              "need": "copy",
+              "gold": 6,
+              "value": 6,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "start",
+              "label": "Start",
+              "need": "compute",
+              "gold": "2026-11-05T14:00",
+              "value": "2026-11-02T14:00:00",
+              "correct": false,
+              "invented": false
+            },
+            {
+              "key": "hours",
+              "label": "Duration",
+              "need": "compute",
+              "gold": 1.5,
+              "value": 1.5,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "catering",
+              "label": "Catering",
+              "need": "choose",
+              "gold": "coffee",
+              "value": "coffee",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "purpose",
+              "label": "Purpose of the meeting",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [],
+          "rejected": [],
+          "ms": 887
+        },
+        {
+          "way": "jev-routes",
+          "values": {
+            "bookedBy": "Marta",
+            "people": 6,
+            "start": "2026-11-02T14:00:00",
+            "hours": 1.5,
+            "catering": "coffee",
+            "purpose": null
+          },
+          "marks": [
+            {
+              "key": "bookedBy",
+              "label": "Booked by",
+              "need": "copy",
+              "gold": "Marta",
+              "value": "Marta",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "people",
+              "label": "Number of people",
+              "need": "copy",
+              "gold": 6,
+              "value": 6,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "start",
+              "label": "Start",
+              "need": "compute",
+              "gold": "2026-11-05T14:00",
+              "value": "2026-11-02T14:00:00",
+              "correct": false,
+              "invented": false
+            },
+            {
+              "key": "hours",
+              "label": "Duration",
+              "need": "compute",
+              "gold": 1.5,
+              "value": 1.5,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "catering",
+              "label": "Catering",
+              "need": "choose",
+              "gold": "coffee",
+              "value": "coffee",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "purpose",
+              "label": "Purpose of the meeting",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [],
+          "rejected": [],
+          "ms": 887
+        },
+        {
+          "way": "clairic-unsure",
+          "values": {
+            "bookedBy": "Marta",
+            "people": 6,
+            "start": "2026-11-02T14:00:00",
+            "hours": 1.5,
+            "catering": "coffee",
+            "purpose": "Coffee"
+          },
+          "marks": [
+            {
+              "key": "bookedBy",
+              "label": "Booked by",
+              "need": "copy",
+              "gold": "Marta",
+              "value": "Marta",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "people",
+              "label": "Number of people",
+              "need": "copy",
+              "gold": 6,
+              "value": 6,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "start",
+              "label": "Start",
+              "need": "compute",
+              "gold": "2026-11-05T14:00",
+              "value": "2026-11-02T14:00:00",
+              "correct": false,
+              "invented": false
+            },
+            {
+              "key": "hours",
+              "label": "Duration",
+              "need": "compute",
+              "gold": 1.5,
+              "value": 1.5,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "catering",
+              "label": "Catering",
+              "need": "choose",
+              "gold": "coffee",
+              "value": "coffee",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "purpose",
+              "label": "Purpose of the meeting",
+              "need": "absent",
+              "gold": null,
+              "value": "Coffee",
+              "correct": false,
+              "invented": true
+            }
+          ],
+          "delegated": [
+            "purpose"
+          ],
+          "rejected": [],
+          "ms": 1854
+        },
+        {
+          "way": "jev-checks",
+          "values": {
+            "bookedBy": "Marta",
+            "people": 6,
+            "start": "2026-11-05T14:00",
+            "hours": 1.5,
+            "catering": "coffee",
+            "purpose": null
+          },
+          "marks": [
+            {
+              "key": "bookedBy",
+              "label": "Booked by",
+              "need": "copy",
+              "gold": "Marta",
+              "value": "Marta",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "people",
+              "label": "Number of people",
+              "need": "copy",
+              "gold": 6,
+              "value": 6,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "start",
+              "label": "Start",
+              "need": "compute",
+              "gold": "2026-11-05T14:00",
+              "value": "2026-11-05T14:00",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "hours",
+              "label": "Duration",
+              "need": "compute",
+              "gold": 1.5,
+              "value": 1.5,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "catering",
+              "label": "Catering",
+              "need": "choose",
+              "gold": "coffee",
+              "value": "coffee",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "purpose",
+              "label": "Purpose of the meeting",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "start"
+          ],
+          "rejected": [],
+          "ms": 2576
+        },
+        {
+          "way": "writer",
+          "values": {
+            "bookedBy": "Marta",
+            "people": 6,
+            "start": "2026-11-05T14:00",
+            "hours": 1.5,
+            "catering": "coffee",
+            "purpose": null
+          },
+          "marks": [
+            {
+              "key": "bookedBy",
+              "label": "Booked by",
+              "need": "copy",
+              "gold": "Marta",
+              "value": "Marta",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "people",
+              "label": "Number of people",
+              "need": "copy",
+              "gold": 6,
+              "value": 6,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "start",
+              "label": "Start",
+              "need": "compute",
+              "gold": "2026-11-05T14:00",
+              "value": "2026-11-05T14:00",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "hours",
+              "label": "Duration",
+              "need": "compute",
+              "gold": 1.5,
+              "value": 1.5,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "catering",
+              "label": "Catering",
+              "need": "choose",
+              "gold": "coffee",
+              "value": "coffee",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "purpose",
+              "label": "Purpose of the meeting",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "bookedBy",
+            "people",
+            "start",
+            "hours",
+            "catering",
+            "purpose"
+          ],
+          "rejected": [],
+          "ms": 2511
+        }
+      ]
+    },
+    {
+      "id": "worker",
+      "title": "Worker settings from an ops ticket",
+      "source": "Prod workers are timing out under load. Please raise the request timeout to 2 minutes, allow 5 retries, run 16 workers, and give it a 4 GB cache. Keep logs for 30 days and switch logging to debug until we've found the cause.",
+      "needs": {
+        "timeout": "compute",
+        "retries": "copy",
+        "workers": "copy",
+        "cache": "copy",
+        "retention": "copy",
+        "logLevel": "choose",
+        "change": "write"
+      },
+      "routes": {
+        "timeout": "taken",
+        "retries": "taken",
+        "workers": "taken",
+        "cache": "taken",
+        "retention": "taken",
+        "logLevel": "taken",
+        "change": "written"
+      },
+      "routeSure": {
+        "timeout": 0.99,
+        "retries": 1,
+        "workers": 1,
+        "cache": 1,
+        "retention": 1,
+        "logLevel": 1,
+        "change": 0.88
+      },
+      "clairicSure": {
+        "timeout": 0.9999775891257061,
+        "retries": 0.9999579204017899,
+        "workers": 0.9999792579176545,
+        "cache": 0.9999996423722308,
+        "retention": 0.9997597317541113,
+        "logLevel": 1,
+        "change": 0.7846332788467407
+      },
+      "checks": {
+        "timeout": 0.96,
+        "retries": 0.98,
+        "workers": 0.97,
+        "cache": 0.97,
+        "retention": 0.99,
+        "logLevel": 0.94
+      },
+      "runs": [
+        {
+          "way": "both",
+          "values": {
+            "timeout": 120,
+            "retries": 5,
+            "workers": 16,
+            "cache": 4,
+            "retention": 30,
+            "logLevel": "debug",
+            "change": "Prod workers are timing out under load"
+          },
+          "marks": [
+            {
+              "key": "timeout",
+              "label": "Request timeout",
+              "need": "compute",
+              "gold": 120,
+              "value": 120,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "retries",
+              "label": "Retries",
+              "need": "copy",
+              "gold": 5,
+              "value": 5,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "workers",
+              "label": "Workers",
+              "need": "copy",
+              "gold": 16,
+              "value": 16,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "cache",
+              "label": "Cache size",
+              "need": "copy",
+              "gold": 4,
+              "value": 4,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "retention",
+              "label": "Keep logs for",
+              "need": "copy",
+              "gold": 30,
+              "value": 30,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "logLevel",
+              "label": "Log level",
+              "need": "choose",
+              "gold": "debug",
+              "value": "debug",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "change",
+              "label": "Change summary",
+              "need": "write",
+              "gold": "Raise timeout to 120 s, 5 retries, 16 workers, 4 GB cache, debug logging",
+              "value": "Prod workers are timing out under load",
+              "correct": true,
+              "invented": false,
+              "judged": 0.64
+            }
+          ],
+          "delegated": [],
+          "rejected": [],
+          "ms": 732
+        },
+        {
+          "way": "jev-routes",
+          "values": {
+            "timeout": 120,
+            "retries": 5,
+            "workers": 16,
+            "cache": 4,
+            "retention": 30,
+            "logLevel": "debug",
+            "change": "Prod workers are timing out under load"
+          },
+          "marks": [
+            {
+              "key": "timeout",
+              "label": "Request timeout",
+              "need": "compute",
+              "gold": 120,
+              "value": 120,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "retries",
+              "label": "Retries",
+              "need": "copy",
+              "gold": 5,
+              "value": 5,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "workers",
+              "label": "Workers",
+              "need": "copy",
+              "gold": 16,
+              "value": 16,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "cache",
+              "label": "Cache size",
+              "need": "copy",
+              "gold": 4,
+              "value": 4,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "retention",
+              "label": "Keep logs for",
+              "need": "copy",
+              "gold": 30,
+              "value": 30,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "logLevel",
+              "label": "Log level",
+              "need": "choose",
+              "gold": "debug",
+              "value": "debug",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "change",
+              "label": "Change summary",
+              "need": "write",
+              "gold": "Raise timeout to 120 s, 5 retries, 16 workers, 4 GB cache, debug logging",
+              "value": "Prod workers are timing out under load",
+              "correct": true,
+              "invented": false,
+              "judged": 0.62
+            }
+          ],
+          "delegated": [
+            "change"
+          ],
+          "rejected": [
+            "change"
+          ],
+          "ms": 16069
+        },
+        {
+          "way": "clairic-unsure",
+          "values": {
+            "timeout": 120,
+            "retries": 5,
+            "workers": 16,
+            "cache": 4,
+            "retention": 30,
+            "logLevel": "debug",
+            "change": "Prod workers are timing out under load"
+          },
+          "marks": [
+            {
+              "key": "timeout",
+              "label": "Request timeout",
+              "need": "compute",
+              "gold": 120,
+              "value": 120,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "retries",
+              "label": "Retries",
+              "need": "copy",
+              "gold": 5,
+              "value": 5,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "workers",
+              "label": "Workers",
+              "need": "copy",
+              "gold": 16,
+              "value": 16,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "cache",
+              "label": "Cache size",
+              "need": "copy",
+              "gold": 4,
+              "value": 4,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "retention",
+              "label": "Keep logs for",
+              "need": "copy",
+              "gold": 30,
+              "value": 30,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "logLevel",
+              "label": "Log level",
+              "need": "choose",
+              "gold": "debug",
+              "value": "debug",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "change",
+              "label": "Change summary",
+              "need": "write",
+              "gold": "Raise timeout to 120 s, 5 retries, 16 workers, 4 GB cache, debug logging",
+              "value": "Prod workers are timing out under load",
+              "correct": true,
+              "invented": false,
+              "judged": 0.64
+            }
+          ],
+          "delegated": [],
+          "rejected": [],
+          "ms": 732
+        },
+        {
+          "way": "jev-checks",
+          "values": {
+            "timeout": 120,
+            "retries": 5,
+            "workers": 16,
+            "cache": 4,
+            "retention": 30,
+            "logLevel": "debug",
+            "change": "Prod workers are timing out under load"
+          },
+          "marks": [
+            {
+              "key": "timeout",
+              "label": "Request timeout",
+              "need": "compute",
+              "gold": 120,
+              "value": 120,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "retries",
+              "label": "Retries",
+              "need": "copy",
+              "gold": 5,
+              "value": 5,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "workers",
+              "label": "Workers",
+              "need": "copy",
+              "gold": 16,
+              "value": 16,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "cache",
+              "label": "Cache size",
+              "need": "copy",
+              "gold": 4,
+              "value": 4,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "retention",
+              "label": "Keep logs for",
+              "need": "copy",
+              "gold": 30,
+              "value": 30,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "logLevel",
+              "label": "Log level",
+              "need": "choose",
+              "gold": "debug",
+              "value": "debug",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "change",
+              "label": "Change summary",
+              "need": "write",
+              "gold": "Raise timeout to 120 s, 5 retries, 16 workers, 4 GB cache, debug logging",
+              "value": "Prod workers are timing out under load",
+              "correct": true,
+              "invented": false,
+              "judged": 0.6
+            }
+          ],
+          "delegated": [
+            "change"
+          ],
+          "rejected": [
+            "change"
+          ],
+          "ms": 3529
+        },
+        {
+          "way": "writer",
+          "values": {
+            "timeout": 120,
+            "retries": 5,
+            "workers": 16,
+            "cache": 4,
+            "retention": 30,
+            "logLevel": "debug",
+            "change": "Increase request timeout to 2m, allow 5 retries, 16 workers, 4 GB cache, and set log level to debug."
+          },
+          "marks": [
+            {
+              "key": "timeout",
+              "label": "Request timeout",
+              "need": "compute",
+              "gold": 120,
+              "value": 120,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "retries",
+              "label": "Retries",
+              "need": "copy",
+              "gold": 5,
+              "value": 5,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "workers",
+              "label": "Workers",
+              "need": "copy",
+              "gold": 16,
+              "value": 16,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "cache",
+              "label": "Cache size",
+              "need": "copy",
+              "gold": 4,
+              "value": 4,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "retention",
+              "label": "Keep logs for",
+              "need": "copy",
+              "gold": 30,
+              "value": 30,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "logLevel",
+              "label": "Log level",
+              "need": "choose",
+              "gold": "debug",
+              "value": "debug",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "change",
+              "label": "Change summary",
+              "need": "write",
+              "gold": "Raise timeout to 120 s, 5 retries, 16 workers, 4 GB cache, debug logging",
+              "value": "Increase request timeout to 2m, allow 5 retries, 16 workers, 4 GB cache, and set log level to debug.",
+              "correct": true,
+              "invented": false,
+              "judged": 0.6
+            }
+          ],
+          "delegated": [
+            "timeout",
+            "retries",
+            "workers",
+            "cache",
+            "retention",
+            "logLevel",
+            "change"
+          ],
+          "rejected": [],
+          "ms": 2799
+        }
+      ]
+    },
+    {
+      "id": "signup",
+      "title": "Sign-up from an introduction email",
+      "source": "Hi, I'm Priya Shah, CTO at Lumen Labs (lumenlabs.io). We're a team of about 40. You can reach me at priya@lumenlabs.io. Please don't sign me up for any newsletters.",
+      "needs": {
+        "fullName": "copy",
+        "email": "copy",
+        "jobTitle": "copy",
+        "company": "copy",
+        "website": "compute",
+        "teamSize": "choose",
+        "newsletter": "choose",
+        "password": "absent"
+      },
+      "routes": {
+        "fullName": "taken",
+        "email": "taken",
+        "jobTitle": "taken",
+        "company": "taken",
+        "website": "taken",
+        "teamSize": "taken",
+        "newsletter": "taken",
+        "password": "missing"
+      },
+      "routeSure": {
+        "fullName": 0.99,
+        "email": 1,
+        "jobTitle": 1,
+        "company": 1,
+        "website": 0.99,
+        "teamSize": 0.98,
+        "newsletter": 0.95,
+        "password": 1
+      },
+      "clairicSure": {
+        "fullName": 1,
+        "email": 1,
+        "jobTitle": 0.9991564750671387,
+        "company": 0.9999891519546509,
+        "website": 0.9985213875770569,
+        "teamSize": 1,
+        "newsletter": 1,
+        "password": 0.42811137437820435
+      },
+      "checks": {
+        "fullName": 0.98,
+        "email": 0.98,
+        "jobTitle": 0.98,
+        "company": 0.98,
+        "website": 0.96,
+        "teamSize": 0.76,
+        "newsletter": 0.88
+      },
+      "runs": [
+        {
+          "way": "both",
+          "values": {
+            "fullName": "Priya Shah",
+            "email": "priya@lumenlabs.io",
+            "jobTitle": "CTO",
+            "company": "Lumen Labs",
+            "website": "lumenlabs.io",
+            "teamSize": "11-50",
+            "newsletter": false,
+            "password": null
+          },
+          "marks": [
+            {
+              "key": "fullName",
+              "label": "Full name",
+              "need": "copy",
+              "gold": "Priya Shah",
+              "value": "Priya Shah",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "email",
+              "label": "Email",
+              "need": "copy",
+              "gold": "priya@lumenlabs.io",
+              "value": "priya@lumenlabs.io",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "jobTitle",
+              "label": "Job title",
+              "need": "copy",
+              "gold": "CTO",
+              "value": "CTO",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "company",
+              "label": "Company",
+              "need": "copy",
+              "gold": "Lumen Labs",
+              "value": "Lumen Labs",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "website",
+              "label": "Website",
+              "need": "compute",
+              "gold": "https://lumenlabs.io",
+              "value": "lumenlabs.io",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "teamSize",
+              "label": "Team size",
+              "need": "choose",
+              "gold": "11-50",
+              "value": "11-50",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "newsletter",
+              "label": "Send me the newsletter",
+              "need": "choose",
+              "gold": false,
+              "value": false,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "password",
+              "label": "Password",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [],
+          "rejected": [],
+          "ms": 786
+        },
+        {
+          "way": "jev-routes",
+          "values": {
+            "fullName": "Priya Shah",
+            "email": "priya@lumenlabs.io",
+            "jobTitle": "CTO",
+            "company": "Lumen Labs",
+            "website": "lumenlabs.io",
+            "teamSize": "11-50",
+            "newsletter": false,
+            "password": null
+          },
+          "marks": [
+            {
+              "key": "fullName",
+              "label": "Full name",
+              "need": "copy",
+              "gold": "Priya Shah",
+              "value": "Priya Shah",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "email",
+              "label": "Email",
+              "need": "copy",
+              "gold": "priya@lumenlabs.io",
+              "value": "priya@lumenlabs.io",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "jobTitle",
+              "label": "Job title",
+              "need": "copy",
+              "gold": "CTO",
+              "value": "CTO",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "company",
+              "label": "Company",
+              "need": "copy",
+              "gold": "Lumen Labs",
+              "value": "Lumen Labs",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "website",
+              "label": "Website",
+              "need": "compute",
+              "gold": "https://lumenlabs.io",
+              "value": "lumenlabs.io",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "teamSize",
+              "label": "Team size",
+              "need": "choose",
+              "gold": "11-50",
+              "value": "11-50",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "newsletter",
+              "label": "Send me the newsletter",
+              "need": "choose",
+              "gold": false,
+              "value": false,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "password",
+              "label": "Password",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [],
+          "rejected": [],
+          "ms": 786
+        },
+        {
+          "way": "clairic-unsure",
+          "values": {
+            "fullName": "Priya Shah",
+            "email": "priya@lumenlabs.io",
+            "jobTitle": "CTO",
+            "company": "Lumen Labs",
+            "website": "lumenlabs.io",
+            "teamSize": "11-50",
+            "newsletter": false,
+            "password": null
+          },
+          "marks": [
+            {
+              "key": "fullName",
+              "label": "Full name",
+              "need": "copy",
+              "gold": "Priya Shah",
+              "value": "Priya Shah",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "email",
+              "label": "Email",
+              "need": "copy",
+              "gold": "priya@lumenlabs.io",
+              "value": "priya@lumenlabs.io",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "jobTitle",
+              "label": "Job title",
+              "need": "copy",
+              "gold": "CTO",
+              "value": "CTO",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "company",
+              "label": "Company",
+              "need": "copy",
+              "gold": "Lumen Labs",
+              "value": "Lumen Labs",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "website",
+              "label": "Website",
+              "need": "compute",
+              "gold": "https://lumenlabs.io",
+              "value": "lumenlabs.io",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "teamSize",
+              "label": "Team size",
+              "need": "choose",
+              "gold": "11-50",
+              "value": "11-50",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "newsletter",
+              "label": "Send me the newsletter",
+              "need": "choose",
+              "gold": false,
+              "value": false,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "password",
+              "label": "Password",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "password"
+          ],
+          "rejected": [
+            "password"
+          ],
+          "ms": 1615
+        },
+        {
+          "way": "jev-checks",
+          "values": {
+            "fullName": "Priya Shah",
+            "email": "priya@lumenlabs.io",
+            "jobTitle": "CTO",
+            "company": "Lumen Labs",
+            "website": "lumenlabs.io",
+            "teamSize": "11-50",
+            "newsletter": false,
+            "password": null
+          },
+          "marks": [
+            {
+              "key": "fullName",
+              "label": "Full name",
+              "need": "copy",
+              "gold": "Priya Shah",
+              "value": "Priya Shah",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "email",
+              "label": "Email",
+              "need": "copy",
+              "gold": "priya@lumenlabs.io",
+              "value": "priya@lumenlabs.io",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "jobTitle",
+              "label": "Job title",
+              "need": "copy",
+              "gold": "CTO",
+              "value": "CTO",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "company",
+              "label": "Company",
+              "need": "copy",
+              "gold": "Lumen Labs",
+              "value": "Lumen Labs",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "website",
+              "label": "Website",
+              "need": "compute",
+              "gold": "https://lumenlabs.io",
+              "value": "lumenlabs.io",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "teamSize",
+              "label": "Team size",
+              "need": "choose",
+              "gold": "11-50",
+              "value": "11-50",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "newsletter",
+              "label": "Send me the newsletter",
+              "need": "choose",
+              "gold": false,
+              "value": false,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "password",
+              "label": "Password",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [],
+          "rejected": [],
+          "ms": 971
+        },
+        {
+          "way": "writer",
+          "values": {
+            "fullName": "Priya Shah",
+            "email": "priya@lumenlabs.io",
+            "jobTitle": "CTO",
+            "company": "Lumen Labs",
+            "website": "lumenlabs.io",
+            "teamSize": "11-50",
+            "newsletter": false,
+            "password": null
+          },
+          "marks": [
+            {
+              "key": "fullName",
+              "label": "Full name",
+              "need": "copy",
+              "gold": "Priya Shah",
+              "value": "Priya Shah",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "email",
+              "label": "Email",
+              "need": "copy",
+              "gold": "priya@lumenlabs.io",
+              "value": "priya@lumenlabs.io",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "jobTitle",
+              "label": "Job title",
+              "need": "copy",
+              "gold": "CTO",
+              "value": "CTO",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "company",
+              "label": "Company",
+              "need": "copy",
+              "gold": "Lumen Labs",
+              "value": "Lumen Labs",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "website",
+              "label": "Website",
+              "need": "compute",
+              "gold": "https://lumenlabs.io",
+              "value": "lumenlabs.io",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "teamSize",
+              "label": "Team size",
+              "need": "choose",
+              "gold": "11-50",
+              "value": "11-50",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "newsletter",
+              "label": "Send me the newsletter",
+              "need": "choose",
+              "gold": false,
+              "value": false,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "password",
+              "label": "Password",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "fullName",
+            "email",
+            "jobTitle",
+            "company",
+            "website",
+            "teamSize",
+            "newsletter",
+            "password"
+          ],
+          "rejected": [],
+          "ms": 1340
+        }
+      ]
+    },
+    {
+      "id": "profile",
+      "title": "Profile page from a self-introduction",
+      "source": "I'm Sam Ortiz, a landscape photographer based in Lisbon. For the last ten years I've photographed coastlines across Portugal and Spain, mostly at dawn, and my work has appeared in National Geographic Traveller and Monocle. Besides shooting, I run weekend workshops for beginners and the occasional week-long trip along the Alentejo coast. I've also published two photo books with a small press in Porto. I prefer the dark theme.",
+      "needs": {
+        "displayName": "copy",
+        "location": "copy",
+        "headline": "copy",
+        "bio": "write",
+        "website": "absent",
+        "theme": "choose"
+      },
+      "routes": {
+        "displayName": "taken",
+        "location": "taken",
+        "headline": "written",
+        "bio": "written",
+        "website": "missing",
+        "theme": "taken"
+      },
+      "routeSure": {
+        "displayName": 0.94,
+        "location": 0.97,
+        "headline": 0.84,
+        "bio": 0.98,
+        "website": 0.97,
+        "theme": 0.99
+      },
+      "clairicSure": {
+        "displayName": 0.9996696710586548,
+        "location": 0.9128974080085754,
+        "headline": 0.9892581105232239,
+        "bio": 0.3386198878288269,
+        "website": 0.4085586965084076,
+        "theme": 1
+      },
+      "checks": {
+        "displayName": 0.95,
+        "location": 0.97,
+        "headline": 0.91,
+        "theme": 0.91
+      },
+      "runs": [
+        {
+          "way": "both",
+          "values": {
+            "displayName": "Sam Ortiz",
+            "location": "Lisbon",
+            "headline": "landscape photographer",
+            "bio": "Sam Ortiz",
+            "website": null,
+            "theme": "dark"
+          },
+          "marks": [
+            {
+              "key": "displayName",
+              "label": "Display name",
+              "need": "copy",
+              "gold": "Sam Ortiz",
+              "value": "Sam Ortiz",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "location",
+              "label": "Location",
+              "need": "copy",
+              "gold": "Lisbon",
+              "value": "Lisbon",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "headline",
+              "label": "Headline",
+              "need": "copy",
+              "gold": "Landscape photographer based in Lisbon",
+              "value": "landscape photographer",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "bio",
+              "label": "Bio",
+              "need": "write",
+              "gold": "Sam Ortiz is a Lisbon-based landscape photographer who has spent ten years shooting the coasts of Portugal and Spain. Sam runs beginner workshops and has published two photo books.",
+              "value": "Sam Ortiz",
+              "correct": false,
+              "invented": false,
+              "judged": 0.04
+            },
+            {
+              "key": "website",
+              "label": "Website",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "theme",
+              "label": "Theme",
+              "need": "choose",
+              "gold": "dark",
+              "value": "dark",
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [],
+          "rejected": [],
+          "ms": 777
+        },
+        {
+          "way": "jev-routes",
+          "values": {
+            "displayName": "Sam Ortiz",
+            "location": "Lisbon",
+            "headline": "Landscape photographer based in Lisbon",
+            "bio": "Sam Ortiz is a landscape photographer who has spent ten years documenting coastlines across Portugal and Spain. He also runs photography workshops and has published two photo books.",
+            "website": null,
+            "theme": "dark"
+          },
+          "marks": [
+            {
+              "key": "displayName",
+              "label": "Display name",
+              "need": "copy",
+              "gold": "Sam Ortiz",
+              "value": "Sam Ortiz",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "location",
+              "label": "Location",
+              "need": "copy",
+              "gold": "Lisbon",
+              "value": "Lisbon",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "headline",
+              "label": "Headline",
+              "need": "copy",
+              "gold": "Landscape photographer based in Lisbon",
+              "value": "Landscape photographer based in Lisbon",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "bio",
+              "label": "Bio",
+              "need": "write",
+              "gold": "Sam Ortiz is a Lisbon-based landscape photographer who has spent ten years shooting the coasts of Portugal and Spain. Sam runs beginner workshops and has published two photo books.",
+              "value": "Sam Ortiz is a landscape photographer who has spent ten years documenting coastlines across Portugal and Spain. He also runs photography workshops and has published two photo books.",
+              "correct": true,
+              "invented": false,
+              "judged": 0.83
+            },
+            {
+              "key": "website",
+              "label": "Website",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "theme",
+              "label": "Theme",
+              "need": "choose",
+              "gold": "dark",
+              "value": "dark",
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "headline",
+            "bio"
+          ],
+          "rejected": [],
+          "ms": 3156
+        },
+        {
+          "way": "clairic-unsure",
+          "values": {
+            "displayName": "Sam Ortiz",
+            "location": "Lisbon",
+            "headline": "landscape photographer",
+            "bio": "Sam Ortiz is a landscape photographer based in Lisbon who has spent ten years photographing coastlines across Portugal and Spain. He also runs photography workshops and has published two photo books.",
+            "website": null,
+            "theme": "dark"
+          },
+          "marks": [
+            {
+              "key": "displayName",
+              "label": "Display name",
+              "need": "copy",
+              "gold": "Sam Ortiz",
+              "value": "Sam Ortiz",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "location",
+              "label": "Location",
+              "need": "copy",
+              "gold": "Lisbon",
+              "value": "Lisbon",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "headline",
+              "label": "Headline",
+              "need": "copy",
+              "gold": "Landscape photographer based in Lisbon",
+              "value": "landscape photographer",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "bio",
+              "label": "Bio",
+              "need": "write",
+              "gold": "Sam Ortiz is a Lisbon-based landscape photographer who has spent ten years shooting the coasts of Portugal and Spain. Sam runs beginner workshops and has published two photo books.",
+              "value": "Sam Ortiz is a landscape photographer based in Lisbon who has spent ten years photographing coastlines across Portugal and Spain. He also runs photography workshops and has published two photo books.",
+              "correct": true,
+              "invented": false,
+              "judged": 0.83
+            },
+            {
+              "key": "website",
+              "label": "Website",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "theme",
+              "label": "Theme",
+              "need": "choose",
+              "gold": "dark",
+              "value": "dark",
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "bio",
+            "website"
+          ],
+          "rejected": [
+            "website"
+          ],
+          "ms": 3585
+        },
+        {
+          "way": "jev-checks",
+          "values": {
+            "displayName": "Sam Ortiz",
+            "location": "Lisbon",
+            "headline": "Landscape photographer based in Lisbon",
+            "bio": "Sam Ortiz is a Lisbon-based landscape photographer specializing in coastlines across Portugal and Spain. They run photography workshops and have published two photo books.",
+            "website": null,
+            "theme": "dark"
+          },
+          "marks": [
+            {
+              "key": "displayName",
+              "label": "Display name",
+              "need": "copy",
+              "gold": "Sam Ortiz",
+              "value": "Sam Ortiz",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "location",
+              "label": "Location",
+              "need": "copy",
+              "gold": "Lisbon",
+              "value": "Lisbon",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "headline",
+              "label": "Headline",
+              "need": "copy",
+              "gold": "Landscape photographer based in Lisbon",
+              "value": "Landscape photographer based in Lisbon",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "bio",
+              "label": "Bio",
+              "need": "write",
+              "gold": "Sam Ortiz is a Lisbon-based landscape photographer who has spent ten years shooting the coasts of Portugal and Spain. Sam runs beginner workshops and has published two photo books.",
+              "value": "Sam Ortiz is a Lisbon-based landscape photographer specializing in coastlines across Portugal and Spain. They run photography workshops and have published two photo books.",
+              "correct": true,
+              "invented": false,
+              "judged": 0.86
+            },
+            {
+              "key": "website",
+              "label": "Website",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "theme",
+              "label": "Theme",
+              "need": "choose",
+              "gold": "dark",
+              "value": "dark",
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "headline",
+            "bio"
+          ],
+          "rejected": [],
+          "ms": 3291
+        },
+        {
+          "way": "writer",
+          "values": {
+            "displayName": "Sam Ortiz",
+            "location": "Lisbon",
+            "headline": "Landscape photographer",
+            "bio": "Sam Ortiz is a landscape photographer based in Lisbon who specializes in photographing coastlines across Portugal and Spain. He also runs weekend workshops for beginners and publishes photo books.",
+            "website": null,
+            "theme": "dark"
+          },
+          "marks": [
+            {
+              "key": "displayName",
+              "label": "Display name",
+              "need": "copy",
+              "gold": "Sam Ortiz",
+              "value": "Sam Ortiz",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "location",
+              "label": "Location",
+              "need": "copy",
+              "gold": "Lisbon",
+              "value": "Lisbon",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "headline",
+              "label": "Headline",
+              "need": "copy",
+              "gold": "Landscape photographer based in Lisbon",
+              "value": "Landscape photographer",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "bio",
+              "label": "Bio",
+              "need": "write",
+              "gold": "Sam Ortiz is a Lisbon-based landscape photographer who has spent ten years shooting the coasts of Portugal and Spain. Sam runs beginner workshops and has published two photo books.",
+              "value": "Sam Ortiz is a landscape photographer based in Lisbon who specializes in photographing coastlines across Portugal and Spain. He also runs weekend workshops for beginners and publishes photo books.",
+              "correct": true,
+              "invented": false,
+              "judged": 0.78
+            },
+            {
+              "key": "website",
+              "label": "Website",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "theme",
+              "label": "Theme",
+              "need": "choose",
+              "gold": "dark",
+              "value": "dark",
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "displayName",
+            "location",
+            "headline",
+            "bio",
+            "website",
+            "theme"
+          ],
+          "rejected": [],
+          "ms": 8317
+        }
+      ]
+    },
+    {
+      "id": "checkout",
+      "title": "Delivery details from an order note",
+      "source": "Please ship it to 221B Baker Street, London NW1 6XE, United Kingdom. It's a birthday present, so gift wrap would be lovely. If nobody's home, leave it with the neighbour at 223. Any day next week is fine.",
+      "needs": {
+        "method": "choose",
+        "street": "copy",
+        "postalCode": "copy",
+        "city": "copy",
+        "country": "choose",
+        "giftWrap": "choose",
+        "courierNote": "copy",
+        "giftMessage": "absent"
+      },
+      "routes": {
+        "method": "taken",
+        "street": "taken",
+        "postalCode": "taken",
+        "city": "taken",
+        "country": "taken",
+        "giftWrap": "taken",
+        "courierNote": "taken",
+        "giftMessage": "written"
+      },
+      "routeSure": {
+        "method": 0.63,
+        "street": 0.98,
+        "postalCode": 1,
+        "city": 1,
+        "country": 1,
+        "giftWrap": 0.98,
+        "courierNote": 0.73,
+        "giftMessage": 0.48
+      },
+      "clairicSure": {
+        "method": 0.98,
+        "street": 0.9966996312141418,
+        "postalCode": 1,
+        "city": 0.9998661279678345,
+        "country": 1,
+        "giftWrap": 1,
+        "courierNote": 0.4771985411643982,
+        "giftMessage": 0.8388273119926453
+      },
+      "checks": {
+        "method": 0.51,
+        "street": 0.92,
+        "postalCode": 0.98,
+        "city": 0.97,
+        "country": 0.98,
+        "giftWrap": 0.95,
+        "courierNote": 0.59
+      },
+      "runs": [
+        {
+          "way": "both",
+          "values": {
+            "method": "ship",
+            "street": "221B Baker Street",
+            "postalCode": "NW1 6XE",
+            "city": "London",
+            "country": "united-kingdom",
+            "giftWrap": true,
+            "courierNote": "gift wrap would be lovely",
+            "giftMessage": null
+          },
+          "marks": [
+            {
+              "key": "method",
+              "label": "Delivery",
+              "need": "choose",
+              "gold": "ship",
+              "value": "ship",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "street",
+              "label": "Street and number",
+              "need": "copy",
+              "gold": "221B Baker Street",
+              "value": "221B Baker Street",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "postalCode",
+              "label": "Postal code",
+              "need": "copy",
+              "gold": "NW1 6XE",
+              "value": "NW1 6XE",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "city",
+              "label": "City",
+              "need": "copy",
+              "gold": "London",
+              "value": "London",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "country",
+              "label": "Country",
+              "need": "choose",
+              "gold": "united-kingdom",
+              "value": "united-kingdom",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "giftWrap",
+              "label": "Gift wrap",
+              "need": "choose",
+              "gold": true,
+              "value": true,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "courierNote",
+              "label": "Note for the courier",
+              "need": "copy",
+              "gold": "If nobody's home, leave it with the neighbour at 223",
+              "value": "gift wrap would be lovely",
+              "correct": false,
+              "invented": false,
+              "judged": 0.03
+            },
+            {
+              "key": "giftMessage",
+              "label": "Gift message",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [],
+          "rejected": [],
+          "ms": 748
+        },
+        {
+          "way": "jev-routes",
+          "values": {
+            "method": "ship",
+            "street": "221B Baker Street",
+            "postalCode": "NW1 6XE",
+            "city": "London",
+            "country": "united-kingdom",
+            "giftWrap": true,
+            "courierNote": "gift wrap would be lovely",
+            "giftMessage": null
+          },
+          "marks": [
+            {
+              "key": "method",
+              "label": "Delivery",
+              "need": "choose",
+              "gold": "ship",
+              "value": "ship",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "street",
+              "label": "Street and number",
+              "need": "copy",
+              "gold": "221B Baker Street",
+              "value": "221B Baker Street",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "postalCode",
+              "label": "Postal code",
+              "need": "copy",
+              "gold": "NW1 6XE",
+              "value": "NW1 6XE",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "city",
+              "label": "City",
+              "need": "copy",
+              "gold": "London",
+              "value": "London",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "country",
+              "label": "Country",
+              "need": "choose",
+              "gold": "united-kingdom",
+              "value": "united-kingdom",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "giftWrap",
+              "label": "Gift wrap",
+              "need": "choose",
+              "gold": true,
+              "value": true,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "courierNote",
+              "label": "Note for the courier",
+              "need": "copy",
+              "gold": "If nobody's home, leave it with the neighbour at 223",
+              "value": "gift wrap would be lovely",
+              "correct": false,
+              "invented": false,
+              "judged": 0.03
+            },
+            {
+              "key": "giftMessage",
+              "label": "Gift message",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "giftMessage"
+          ],
+          "rejected": [
+            "giftMessage"
+          ],
+          "ms": 3192
+        },
+        {
+          "way": "clairic-unsure",
+          "values": {
+            "method": "ship",
+            "street": "221B Baker Street",
+            "postalCode": "NW1 6XE",
+            "city": "London",
+            "country": "united-kingdom",
+            "giftWrap": true,
+            "courierNote": "If nobody's home, leave it with the neighbour at 223.",
+            "giftMessage": null
+          },
+          "marks": [
+            {
+              "key": "method",
+              "label": "Delivery",
+              "need": "choose",
+              "gold": "ship",
+              "value": "ship",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "street",
+              "label": "Street and number",
+              "need": "copy",
+              "gold": "221B Baker Street",
+              "value": "221B Baker Street",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "postalCode",
+              "label": "Postal code",
+              "need": "copy",
+              "gold": "NW1 6XE",
+              "value": "NW1 6XE",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "city",
+              "label": "City",
+              "need": "copy",
+              "gold": "London",
+              "value": "London",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "country",
+              "label": "Country",
+              "need": "choose",
+              "gold": "united-kingdom",
+              "value": "united-kingdom",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "giftWrap",
+              "label": "Gift wrap",
+              "need": "choose",
+              "gold": true,
+              "value": true,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "courierNote",
+              "label": "Note for the courier",
+              "need": "copy",
+              "gold": "If nobody's home, leave it with the neighbour at 223",
+              "value": "If nobody's home, leave it with the neighbour at 223.",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "giftMessage",
+              "label": "Gift message",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "courierNote",
+            "giftMessage"
+          ],
+          "rejected": [
+            "giftMessage"
+          ],
+          "ms": 2515
+        },
+        {
+          "way": "jev-checks",
+          "values": {
+            "method": "ship",
+            "street": "221B Baker Street",
+            "postalCode": "NW1 6XE",
+            "city": "London",
+            "country": "united-kingdom",
+            "giftWrap": true,
+            "courierNote": "gift wrap would be lovely",
+            "giftMessage": null
+          },
+          "marks": [
+            {
+              "key": "method",
+              "label": "Delivery",
+              "need": "choose",
+              "gold": "ship",
+              "value": "ship",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "street",
+              "label": "Street and number",
+              "need": "copy",
+              "gold": "221B Baker Street",
+              "value": "221B Baker Street",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "postalCode",
+              "label": "Postal code",
+              "need": "copy",
+              "gold": "NW1 6XE",
+              "value": "NW1 6XE",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "city",
+              "label": "City",
+              "need": "copy",
+              "gold": "London",
+              "value": "London",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "country",
+              "label": "Country",
+              "need": "choose",
+              "gold": "united-kingdom",
+              "value": "united-kingdom",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "giftWrap",
+              "label": "Gift wrap",
+              "need": "choose",
+              "gold": true,
+              "value": true,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "courierNote",
+              "label": "Note for the courier",
+              "need": "copy",
+              "gold": "If nobody's home, leave it with the neighbour at 223",
+              "value": "gift wrap would be lovely",
+              "correct": false,
+              "invented": false,
+              "judged": 0.03
+            },
+            {
+              "key": "giftMessage",
+              "label": "Gift message",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "giftMessage"
+          ],
+          "rejected": [
+            "giftMessage"
+          ],
+          "ms": 11414
+        },
+        {
+          "way": "writer",
+          "values": {
+            "method": "ship",
+            "street": "221B Baker Street",
+            "postalCode": "NW1 6XE",
+            "city": "London",
+            "country": "united-kingdom",
+            "giftWrap": true,
+            "courierNote": "If nobody's home, leave it with the neighbour at 223.",
+            "giftMessage": null
+          },
+          "marks": [
+            {
+              "key": "method",
+              "label": "Delivery",
+              "need": "choose",
+              "gold": "ship",
+              "value": "ship",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "street",
+              "label": "Street and number",
+              "need": "copy",
+              "gold": "221B Baker Street",
+              "value": "221B Baker Street",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "postalCode",
+              "label": "Postal code",
+              "need": "copy",
+              "gold": "NW1 6XE",
+              "value": "NW1 6XE",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "city",
+              "label": "City",
+              "need": "copy",
+              "gold": "London",
+              "value": "London",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "country",
+              "label": "Country",
+              "need": "choose",
+              "gold": "united-kingdom",
+              "value": "united-kingdom",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "giftWrap",
+              "label": "Gift wrap",
+              "need": "choose",
+              "gold": true,
+              "value": true,
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "courierNote",
+              "label": "Note for the courier",
+              "need": "copy",
+              "gold": "If nobody's home, leave it with the neighbour at 223",
+              "value": "If nobody's home, leave it with the neighbour at 223.",
+              "correct": true,
+              "invented": false
+            },
+            {
+              "key": "giftMessage",
+              "label": "Gift message",
+              "need": "absent",
+              "gold": null,
+              "value": null,
+              "correct": true,
+              "invented": false
+            }
+          ],
+          "delegated": [
+            "method",
+            "street",
+            "postalCode",
+            "city",
+            "country",
+            "giftWrap",
+            "courierNote",
+            "giftMessage"
+          ],
+          "rejected": [],
+          "ms": 2682
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "both": {
+      "right": 45,
+      "of": 49,
+      "invented": 0,
+      "delegated": 0,
+      "rejected": 0,
+      "ms": 786
+    },
+    "jev-routes": {
+      "right": 46,
+      "of": 49,
+      "invented": 0,
+      "delegated": 6,
+      "rejected": 2,
+      "ms": 6571
+    },
+    "clairic-unsure": {
+      "right": 45,
+      "of": 49,
+      "invented": 1,
+      "delegated": 9,
+      "rejected": 3,
+      "ms": 3033
+    },
+    "jev-checks": {
+      "right": 47,
+      "of": 49,
+      "invented": 0,
+      "delegated": 7,
+      "rejected": 2,
+      "ms": 4252
+    },
+    "writer": {
+      "right": 49,
+      "of": 49,
+      "invented": 0,
+      "delegated": 49,
+      "rejected": 0,
+      "ms": 4485
+    }
+  },
+  "signals": {
+    "jev": {
+      "caught": 3,
+      "of": 3,
+      "falseAlarms": 3
+    },
+    "clairic": {
+      "caught": 2,
+      "of": 3,
+      "falseAlarms": 7
+    },
+    "checks": {
+      "caught": 1,
+      "wrong": 3,
+      "falseAlarms": 0,
+      "checked": 42
+    },
+    "routeRight": 46,
+    "fields": 49
+  }
+}
