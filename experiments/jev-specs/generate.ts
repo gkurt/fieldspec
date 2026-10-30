@@ -24,13 +24,13 @@ const PICK = 0.7;
 /** How likely a condition must be before a field is hidden by it. */
 const SHOWN_WHEN = 0.5;
 
-type Question = { type: "noul" | "choice"; instructions: unknown; criteria?: unknown };
-interface NoulAnswer { type: "noul"; noul: number }
-interface ChoiceAnswer { type: "choice"; choice: string; confidence: number; probabilities: Record<string, number> }
-type Answer = NoulAnswer | ChoiceAnswer;
-interface Call { answers: Record<string, Answer>; model: string; tokens: number; ms: number; questions: number }
+export type Question = { type: "noul" | "choice"; instructions: unknown; criteria?: unknown };
+export interface NoulAnswer { type: "noul"; noul: number }
+export interface ChoiceAnswer { type: "choice"; choice: string; confidence: number; probabilities: Record<string, number> }
+export type Answer = NoulAnswer | ChoiceAnswer;
+export interface Call { answers: Record<string, Answer>; model: string; tokens: number; ms: number; questions: number }
 
-async function systemOne(state: unknown, questions: Record<string, Question>): Promise<Call> {
+export async function systemOne(state: unknown, questions: Record<string, Question>): Promise<Call> {
   const key = process.env.TYPESAFE_API_KEY;
   if (!key) throw new Error("TYPESAFE_API_KEY is not set (put it in .env.local)");
   const start = performance.now();

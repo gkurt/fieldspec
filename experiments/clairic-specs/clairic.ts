@@ -44,10 +44,11 @@ export interface ClairicCall {
   fields: number;
 }
 
-export async function clairic(state: string, fields: Record<string, ClairicField>): Promise<ClairicCall> {
+/** `referenceDate` anchors dates written without a year, and relative ones ("next Thursday"). */
+export async function clairic(state: string, fields: Record<string, ClairicField>, referenceDate?: string): Promise<ClairicCall> {
   const dir = mkdtempSync(join(tmpdir(), "clairic-"));
   const body = join(dir, "body.json");
-  writeFileSync(body, JSON.stringify({ model: "clairic", state, fields }));
+  writeFileSync(body, JSON.stringify({ model: "clairic", state, fields, ...(referenceDate && { reference_date: referenceDate }) }));
   const start = performance.now();
   try {
     // `cf` is a Node program; on Windows it is a .cmd shim.

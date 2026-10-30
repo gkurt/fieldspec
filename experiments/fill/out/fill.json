@@ -1,0 +1,1823 @@
+{
+  "runs": [
+    {
+      "id": "rsvp",
+      "title": "Wedding RSVP from a reply",
+      "source": "Hi both! So happy for you. Count us in: it'll be me, Tom Becker, plus my partner Ana, so two of us. I'll have the fish, and Ana's vegetarian. No allergies on our side. Could the band play 'September' by Earth, Wind & Fire?",
+      "filler": "jev",
+      "marks": [
+        {
+          "key": "guestName",
+          "label": "Guest name",
+          "need": "copy",
+          "gold": "Tom Becker",
+          "value": "Tom Becker",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "attending",
+          "label": "Attending",
+          "need": "choose",
+          "gold": true,
+          "value": true,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "guests",
+          "label": "Number of guests",
+          "need": "copy",
+          "gold": 2,
+          "value": 2,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "meal",
+          "label": "Meal choice",
+          "need": "choose",
+          "gold": "fish",
+          "value": "fish",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "dietary",
+          "label": "Dietary restrictions",
+          "need": "copy",
+          "gold": "Ana's vegetarian",
+          "value": "Ana's vegetarian",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "song",
+          "label": "Song request",
+          "need": "copy",
+          "gold": "'September' by Earth, Wind & Fire",
+          "value": "Could the band play 'September' by Earth, Wind & Fire",
+          "correct": false,
+          "invented": false
+        }
+      ],
+      "ms": 281,
+      "tokens": 2281,
+      "sureness": {
+        "guestName": 0.82,
+        "attending": 1,
+        "guests": 0.99,
+        "meal": 0.69,
+        "dietary": 0.49,
+        "song": 0.48
+      }
+    },
+    {
+      "id": "rsvp",
+      "title": "Wedding RSVP from a reply",
+      "source": "Hi both! So happy for you. Count us in: it'll be me, Tom Becker, plus my partner Ana, so two of us. I'll have the fish, and Ana's vegetarian. No allergies on our side. Could the band play 'September' by Earth, Wind & Fire?",
+      "filler": "clairic",
+      "marks": [
+        {
+          "key": "guestName",
+          "label": "Guest name",
+          "need": "copy",
+          "gold": "Tom Becker",
+          "value": "Tom Becker",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "attending",
+          "label": "Attending",
+          "need": "choose",
+          "gold": true,
+          "value": true,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "guests",
+          "label": "Number of guests",
+          "need": "copy",
+          "gold": 2,
+          "value": 2,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "meal",
+          "label": "Meal choice",
+          "need": "choose",
+          "gold": "fish",
+          "value": "fish",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "dietary",
+          "label": "Dietary restrictions",
+          "need": "copy",
+          "gold": "Ana's vegetarian",
+          "value": null,
+          "correct": false,
+          "invented": false
+        },
+        {
+          "key": "song",
+          "label": "Song request",
+          "need": "copy",
+          "gold": "'September' by Earth, Wind & Fire",
+          "value": "September",
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 1096,
+      "tokens": 1353,
+      "sureness": {
+        "guestName": 0.9991636276245117,
+        "attending": 0.9279881119728088,
+        "guests": 0.9725956351054634,
+        "meal": 0.9640488028526306,
+        "dietary": 0.848534882068634,
+        "song": 0.9992517828941345
+      }
+    },
+    {
+      "id": "rsvp",
+      "title": "Wedding RSVP from a reply",
+      "source": "Hi both! So happy for you. Count us in: it'll be me, Tom Becker, plus my partner Ana, so two of us. I'll have the fish, and Ana's vegetarian. No allergies on our side. Could the band play 'September' by Earth, Wind & Fire?",
+      "filler": "both",
+      "marks": [
+        {
+          "key": "guestName",
+          "label": "Guest name",
+          "need": "copy",
+          "gold": "Tom Becker",
+          "value": "Tom Becker",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "attending",
+          "label": "Attending",
+          "need": "choose",
+          "gold": true,
+          "value": true,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "guests",
+          "label": "Number of guests",
+          "need": "copy",
+          "gold": 2,
+          "value": 2,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "meal",
+          "label": "Meal choice",
+          "need": "choose",
+          "gold": "fish",
+          "value": "fish",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "dietary",
+          "label": "Dietary restrictions",
+          "need": "copy",
+          "gold": "Ana's vegetarian",
+          "value": "No allergies",
+          "correct": false,
+          "invented": false
+        },
+        {
+          "key": "song",
+          "label": "Song request",
+          "need": "copy",
+          "gold": "'September' by Earth, Wind & Fire",
+          "value": "September",
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 1038,
+      "tokens": 3059,
+      "sureness": {
+        "guestName": 0.9992287158966064,
+        "attending": 0.99,
+        "guests": 0.9903519279719993,
+        "meal": 0.71,
+        "dietary": 0.5877195000648499,
+        "song": 0.9996603727340698
+      }
+    },
+    {
+      "id": "bug",
+      "title": "Bug report from a support message",
+      "source": "The app keeps crashing when I try to upload a photo to my profile. I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately. It happens every time since yesterday's update. I'm on a Pixel 8 running Android 15, app version 4.2.1. I'd expect it to just upload the photo like before.",
+      "filler": "jev",
+      "marks": [
+        {
+          "key": "title",
+          "label": "Title",
+          "need": "write",
+          "gold": "App crashes when uploading a profile photo",
+          "value": "The app keeps crashing when I try to upload a photo to my profile",
+          "correct": true,
+          "invented": false,
+          "judged": 0.98
+        },
+        {
+          "key": "steps",
+          "label": "Steps to reproduce",
+          "need": "copy",
+          "gold": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+          "value": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "expected",
+          "label": "What did you expect?",
+          "need": "copy",
+          "gold": "it to just upload the photo like before",
+          "value": "I'd expect it to just upload the photo like before",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "severity",
+          "label": "Severity",
+          "need": "choose",
+          "gold": "crash-or-data-loss",
+          "value": "crash-or-data-loss",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "platform",
+          "label": "Platform",
+          "need": "choose",
+          "gold": "android",
+          "value": "android",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "osVersion",
+          "label": "OS version",
+          "need": "copy",
+          "gold": "15",
+          "value": "Android 15",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "appVersion",
+          "label": "App version",
+          "need": "copy",
+          "gold": "4.2.1",
+          "value": "4.2.1",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "device",
+          "label": "Device",
+          "need": "copy",
+          "gold": "Pixel 8",
+          "value": "Pixel 8",
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 223,
+      "tokens": 3432,
+      "sureness": {
+        "title": 1,
+        "steps": 0.98,
+        "expected": 1,
+        "severity": 0.97,
+        "platform": 1,
+        "osVersion": 0.99,
+        "appVersion": 0.97,
+        "device": 0.9
+      }
+    },
+    {
+      "id": "bug",
+      "title": "Bug report from a support message",
+      "source": "The app keeps crashing when I try to upload a photo to my profile. I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately. It happens every time since yesterday's update. I'm on a Pixel 8 running Android 15, app version 4.2.1. I'd expect it to just upload the photo like before.",
+      "filler": "clairic",
+      "marks": [
+        {
+          "key": "title",
+          "label": "Title",
+          "need": "write",
+          "gold": "App crashes when uploading a profile photo",
+          "value": "The app keeps crashing when I try to upload a photo to my profile",
+          "correct": true,
+          "invented": false,
+          "judged": 0.98
+        },
+        {
+          "key": "steps",
+          "label": "Steps to reproduce",
+          "need": "copy",
+          "gold": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+          "value": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "expected",
+          "label": "What did you expect?",
+          "need": "copy",
+          "gold": "it to just upload the photo like before",
+          "value": "to just upload the photo like before",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "severity",
+          "label": "Severity",
+          "need": "choose",
+          "gold": "crash-or-data-loss",
+          "value": "cosmetic",
+          "correct": false,
+          "invented": false
+        },
+        {
+          "key": "platform",
+          "label": "Platform",
+          "need": "choose",
+          "gold": "android",
+          "value": "android",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "osVersion",
+          "label": "OS version",
+          "need": "copy",
+          "gold": "15",
+          "value": "Android 15",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "appVersion",
+          "label": "App version",
+          "need": "copy",
+          "gold": "4.2.1",
+          "value": "4.2.1",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "device",
+          "label": "Device",
+          "need": "copy",
+          "gold": "Pixel 8",
+          "value": "Pixel 8",
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 961,
+      "tokens": 1948,
+      "sureness": {
+        "title": 0.6643357276916504,
+        "steps": 0.35793760418891907,
+        "expected": 0.3296748697757721,
+        "severity": 0.3880222737789154,
+        "platform": 0.9844834208488464,
+        "osVersion": 0.9992073178291321,
+        "appVersion": 0.999944806098938,
+        "device": 0.9997712969779968
+      }
+    },
+    {
+      "id": "bug",
+      "title": "Bug report from a support message",
+      "source": "The app keeps crashing when I try to upload a photo to my profile. I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately. It happens every time since yesterday's update. I'm on a Pixel 8 running Android 15, app version 4.2.1. I'd expect it to just upload the photo like before.",
+      "filler": "both",
+      "marks": [
+        {
+          "key": "title",
+          "label": "Title",
+          "need": "write",
+          "gold": "App crashes when uploading a profile photo",
+          "value": "The app keeps crashing when I try to upload a photo to my profile",
+          "correct": true,
+          "invented": false,
+          "judged": 0.98
+        },
+        {
+          "key": "steps",
+          "label": "Steps to reproduce",
+          "need": "copy",
+          "gold": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+          "value": "I open Settings, tap Profile picture, choose a photo from the gallery and it closes immediately",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "expected",
+          "label": "What did you expect?",
+          "need": "copy",
+          "gold": "it to just upload the photo like before",
+          "value": "to just upload the photo like before",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "severity",
+          "label": "Severity",
+          "need": "choose",
+          "gold": "crash-or-data-loss",
+          "value": "crash-or-data-loss",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "platform",
+          "label": "Platform",
+          "need": "choose",
+          "gold": "android",
+          "value": "android",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "osVersion",
+          "label": "OS version",
+          "need": "copy",
+          "gold": "15",
+          "value": "Android 15",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "appVersion",
+          "label": "App version",
+          "need": "copy",
+          "gold": "4.2.1",
+          "value": "4.2.1",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "device",
+          "label": "Device",
+          "need": "copy",
+          "gold": "Pixel 8",
+          "value": "Pixel 8",
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 819,
+      "tokens": 4704,
+      "sureness": {
+        "title": 0.40854328870773315,
+        "steps": 0.29268643260002136,
+        "expected": 0.33082476258277893,
+        "severity": 0.97,
+        "platform": 1,
+        "osVersion": 0.9993778467178345,
+        "appVersion": 0.9999401569366455,
+        "device": 0.9997398257255554
+      }
+    },
+    {
+      "id": "booking",
+      "title": "Meeting room booking from a chat message",
+      "source": "Hi! Could I book a room for next Thursday at 2pm? We'll be 6 people and need about 90 minutes. Coffee would be great, thanks! Marta",
+      "filler": "jev",
+      "marks": [
+        {
+          "key": "bookedBy",
+          "label": "Booked by",
+          "need": "copy",
+          "gold": "Marta",
+          "value": "Marta",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "people",
+          "label": "Number of people",
+          "need": "copy",
+          "gold": 6,
+          "value": 6,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "start",
+          "label": "Start",
+          "need": "compute",
+          "gold": "2026-11-05T14:00",
+          "value": "Could I book a room for next Thursday at 2pm",
+          "correct": false,
+          "invented": false
+        },
+        {
+          "key": "hours",
+          "label": "Duration",
+          "need": "compute",
+          "gold": 1.5,
+          "value": 90,
+          "correct": false,
+          "invented": false
+        },
+        {
+          "key": "catering",
+          "label": "Catering",
+          "need": "choose",
+          "gold": "coffee",
+          "value": "coffee",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "purpose",
+          "label": "Purpose of the meeting",
+          "need": "absent",
+          "gold": null,
+          "value": null,
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 192,
+      "tokens": 1507,
+      "sureness": {
+        "bookedBy": 0.99,
+        "people": 1,
+        "start": 0.88,
+        "hours": 0.88,
+        "catering": 1,
+        "purpose": 0.98
+      }
+    },
+    {
+      "id": "booking",
+      "title": "Meeting room booking from a chat message",
+      "source": "Hi! Could I book a room for next Thursday at 2pm? We'll be 6 people and need about 90 minutes. Coffee would be great, thanks! Marta",
+      "filler": "clairic",
+      "marks": [
+        {
+          "key": "bookedBy",
+          "label": "Booked by",
+          "need": "copy",
+          "gold": "Marta",
+          "value": null,
+          "correct": false,
+          "invented": false
+        },
+        {
+          "key": "people",
+          "label": "Number of people",
+          "need": "copy",
+          "gold": 6,
+          "value": 6,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "start",
+          "label": "Start",
+          "need": "compute",
+          "gold": "2026-11-05T14:00",
+          "value": "2026-11-02T14:00:00",
+          "correct": false,
+          "invented": false
+        },
+        {
+          "key": "hours",
+          "label": "Duration",
+          "need": "compute",
+          "gold": 1.5,
+          "value": 1.5,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "catering",
+          "label": "Catering",
+          "need": "choose",
+          "gold": "coffee",
+          "value": "coffee",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "purpose",
+          "label": "Purpose of the meeting",
+          "need": "absent",
+          "gold": null,
+          "value": null,
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 751,
+      "tokens": 799,
+      "sureness": {
+        "bookedBy": 0.99998939037323,
+        "people": 0.9999922514442188,
+        "start": 0.9962032432446905,
+        "hours": 0.9997000031570491,
+        "catering": 0.9933645725250244,
+        "purpose": 0.24155232310295105
+      }
+    },
+    {
+      "id": "booking",
+      "title": "Meeting room booking from a chat message",
+      "source": "Hi! Could I book a room for next Thursday at 2pm? We'll be 6 people and need about 90 minutes. Coffee would be great, thanks! Marta",
+      "filler": "both",
+      "marks": [
+        {
+          "key": "bookedBy",
+          "label": "Booked by",
+          "need": "copy",
+          "gold": "Marta",
+          "value": "Marta",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "people",
+          "label": "Number of people",
+          "need": "copy",
+          "gold": 6,
+          "value": 6,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "start",
+          "label": "Start",
+          "need": "compute",
+          "gold": "2026-11-05T14:00",
+          "value": "2026-11-02T14:00:00",
+          "correct": false,
+          "invented": false
+        },
+        {
+          "key": "hours",
+          "label": "Duration",
+          "need": "compute",
+          "gold": 1.5,
+          "value": 1.5,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "catering",
+          "label": "Catering",
+          "need": "choose",
+          "gold": "coffee",
+          "value": "coffee",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "purpose",
+          "label": "Purpose of the meeting",
+          "need": "absent",
+          "gold": null,
+          "value": null,
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 1472,
+      "tokens": 2065,
+      "sureness": {
+        "bookedBy": 0.9999858140945435,
+        "people": 0.9999880791809225,
+        "start": 0.9867978089051992,
+        "hours": 0.9996258847206743,
+        "catering": 1,
+        "purpose": 0.9811907410621643
+      }
+    },
+    {
+      "id": "worker",
+      "title": "Worker settings from an ops ticket",
+      "source": "Prod workers are timing out under load. Please raise the request timeout to 2 minutes, allow 5 retries, run 16 workers, and give it a 4 GB cache. Keep logs for 30 days and switch logging to debug until we've found the cause.",
+      "filler": "jev",
+      "marks": [
+        {
+          "key": "timeout",
+          "label": "Request timeout",
+          "need": "compute",
+          "gold": 120,
+          "value": 2,
+          "correct": false,
+          "invented": false
+        },
+        {
+          "key": "retries",
+          "label": "Retries",
+          "need": "copy",
+          "gold": 5,
+          "value": 5,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "workers",
+          "label": "Workers",
+          "need": "copy",
+          "gold": 16,
+          "value": 16,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "cache",
+          "label": "Cache size",
+          "need": "copy",
+          "gold": 4,
+          "value": 4,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "retention",
+          "label": "Keep logs for",
+          "need": "copy",
+          "gold": 30,
+          "value": 30,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "logLevel",
+          "label": "Log level",
+          "need": "choose",
+          "gold": "debug",
+          "value": "debug",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "change",
+          "label": "Change summary",
+          "need": "write",
+          "gold": "Raise timeout to 120 s, 5 retries, 16 workers, 4 GB cache, debug logging",
+          "value": "Please raise the request timeout to 2 minutes, allow 5 retries, run 16 workers, and give it a 4 GB cache",
+          "correct": false,
+          "invented": false,
+          "judged": 0.5
+        }
+      ],
+      "ms": 190,
+      "tokens": 1967,
+      "sureness": {
+        "timeout": 0.8,
+        "retries": 1,
+        "workers": 1,
+        "cache": 1,
+        "retention": 1,
+        "logLevel": 1,
+        "change": 0.39
+      }
+    },
+    {
+      "id": "worker",
+      "title": "Worker settings from an ops ticket",
+      "source": "Prod workers are timing out under load. Please raise the request timeout to 2 minutes, allow 5 retries, run 16 workers, and give it a 4 GB cache. Keep logs for 30 days and switch logging to debug until we've found the cause.",
+      "filler": "clairic",
+      "marks": [
+        {
+          "key": "timeout",
+          "label": "Request timeout",
+          "need": "compute",
+          "gold": 120,
+          "value": 120,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "retries",
+          "label": "Retries",
+          "need": "copy",
+          "gold": 5,
+          "value": 5,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "workers",
+          "label": "Workers",
+          "need": "copy",
+          "gold": 16,
+          "value": 16,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "cache",
+          "label": "Cache size",
+          "need": "copy",
+          "gold": 4,
+          "value": 4,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "retention",
+          "label": "Keep logs for",
+          "need": "copy",
+          "gold": 30,
+          "value": 30,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "logLevel",
+          "label": "Log level",
+          "need": "choose",
+          "gold": "debug",
+          "value": "debug",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "change",
+          "label": "Change summary",
+          "need": "write",
+          "gold": "Raise timeout to 120 s, 5 retries, 16 workers, 4 GB cache, debug logging",
+          "value": "Prod workers are timing out under load",
+          "correct": true,
+          "invented": false,
+          "judged": 0.59
+        }
+      ],
+      "ms": 747,
+      "tokens": 748,
+      "sureness": {
+        "timeout": 0.9999836685775678,
+        "retries": 0.9999440931300058,
+        "workers": 0.9999858142477992,
+        "cache": 1,
+        "retention": 0.9998425493233942,
+        "logLevel": 0.5072388648986816,
+        "change": 0.791255533695221
+      }
+    },
+    {
+      "id": "worker",
+      "title": "Worker settings from an ops ticket",
+      "source": "Prod workers are timing out under load. Please raise the request timeout to 2 minutes, allow 5 retries, run 16 workers, and give it a 4 GB cache. Keep logs for 30 days and switch logging to debug until we've found the cause.",
+      "filler": "both",
+      "marks": [
+        {
+          "key": "timeout",
+          "label": "Request timeout",
+          "need": "compute",
+          "gold": 120,
+          "value": 120,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "retries",
+          "label": "Retries",
+          "need": "copy",
+          "gold": 5,
+          "value": 5,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "workers",
+          "label": "Workers",
+          "need": "copy",
+          "gold": 16,
+          "value": 16,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "cache",
+          "label": "Cache size",
+          "need": "copy",
+          "gold": 4,
+          "value": 4,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "retention",
+          "label": "Keep logs for",
+          "need": "copy",
+          "gold": 30,
+          "value": 30,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "logLevel",
+          "label": "Log level",
+          "need": "choose",
+          "gold": "debug",
+          "value": "debug",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "change",
+          "label": "Change summary",
+          "need": "write",
+          "gold": "Raise timeout to 120 s, 5 retries, 16 workers, 4 GB cache, debug logging",
+          "value": "Prod workers are timing out under load",
+          "correct": true,
+          "invented": false,
+          "judged": 0.61
+        }
+      ],
+      "ms": 750,
+      "tokens": 2465,
+      "sureness": {
+        "timeout": 0.9999775891257061,
+        "retries": 0.9999579204017899,
+        "workers": 0.9999792579176545,
+        "cache": 0.9999996423722308,
+        "retention": 0.9997597317541113,
+        "logLevel": 1,
+        "change": 0.7846332788467407
+      }
+    },
+    {
+      "id": "signup",
+      "title": "Sign-up from an introduction email",
+      "source": "Hi, I'm Priya Shah, CTO at Lumen Labs (lumenlabs.io). We're a team of about 40. You can reach me at priya@lumenlabs.io. Please don't sign me up for any newsletters.",
+      "filler": "jev",
+      "marks": [
+        {
+          "key": "fullName",
+          "label": "Full name",
+          "need": "copy",
+          "gold": "Priya Shah",
+          "value": "Priya",
+          "correct": false,
+          "invented": false
+        },
+        {
+          "key": "email",
+          "label": "Email",
+          "need": "copy",
+          "gold": "priya@lumenlabs.io",
+          "value": "priya@lumenlabs.io",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "jobTitle",
+          "label": "Job title",
+          "need": "copy",
+          "gold": "CTO",
+          "value": "CTO",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "company",
+          "label": "Company",
+          "need": "copy",
+          "gold": "Lumen Labs",
+          "value": "Lumen Labs",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "website",
+          "label": "Website",
+          "need": "compute",
+          "gold": "https://lumenlabs.io",
+          "value": "lumenlabs.io",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "teamSize",
+          "label": "Team size",
+          "need": "choose",
+          "gold": "11-50",
+          "value": "11-50",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "newsletter",
+          "label": "Send me the newsletter",
+          "need": "choose",
+          "gold": false,
+          "value": false,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "password",
+          "label": "Password",
+          "need": "absent",
+          "gold": null,
+          "value": null,
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 198,
+      "tokens": 2754,
+      "sureness": {
+        "fullName": 0.46,
+        "email": 1,
+        "jobTitle": 0.99,
+        "company": 1,
+        "website": 1,
+        "teamSize": 1,
+        "newsletter": 1,
+        "password": 1
+      }
+    },
+    {
+      "id": "signup",
+      "title": "Sign-up from an introduction email",
+      "source": "Hi, I'm Priya Shah, CTO at Lumen Labs (lumenlabs.io). We're a team of about 40. You can reach me at priya@lumenlabs.io. Please don't sign me up for any newsletters.",
+      "filler": "clairic",
+      "marks": [
+        {
+          "key": "fullName",
+          "label": "Full name",
+          "need": "copy",
+          "gold": "Priya Shah",
+          "value": "Priya Shah",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "email",
+          "label": "Email",
+          "need": "copy",
+          "gold": "priya@lumenlabs.io",
+          "value": "priya@lumenlabs.io",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "jobTitle",
+          "label": "Job title",
+          "need": "copy",
+          "gold": "CTO",
+          "value": "CTO",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "company",
+          "label": "Company",
+          "need": "copy",
+          "gold": "Lumen Labs",
+          "value": "Lumen Labs",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "website",
+          "label": "Website",
+          "need": "compute",
+          "gold": "https://lumenlabs.io",
+          "value": "lumenlabs.io",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "teamSize",
+          "label": "Team size",
+          "need": "choose",
+          "gold": "11-50",
+          "value": "11-50",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "newsletter",
+          "label": "Send me the newsletter",
+          "need": "choose",
+          "gold": false,
+          "value": false,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "password",
+          "label": "Password",
+          "need": "absent",
+          "gold": null,
+          "value": null,
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 825,
+      "tokens": 1876,
+      "sureness": {
+        "fullName": 1,
+        "email": 1,
+        "jobTitle": 0.9977303147315979,
+        "company": 0.9999790191650391,
+        "website": 0.9963811039924622,
+        "teamSize": 0.9405413269996643,
+        "newsletter": 0.9993810653686523,
+        "password": 0.5798787474632263
+      }
+    },
+    {
+      "id": "signup",
+      "title": "Sign-up from an introduction email",
+      "source": "Hi, I'm Priya Shah, CTO at Lumen Labs (lumenlabs.io). We're a team of about 40. You can reach me at priya@lumenlabs.io. Please don't sign me up for any newsletters.",
+      "filler": "both",
+      "marks": [
+        {
+          "key": "fullName",
+          "label": "Full name",
+          "need": "copy",
+          "gold": "Priya Shah",
+          "value": "Priya Shah",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "email",
+          "label": "Email",
+          "need": "copy",
+          "gold": "priya@lumenlabs.io",
+          "value": "priya@lumenlabs.io",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "jobTitle",
+          "label": "Job title",
+          "need": "copy",
+          "gold": "CTO",
+          "value": "CTO",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "company",
+          "label": "Company",
+          "need": "copy",
+          "gold": "Lumen Labs",
+          "value": "Lumen Labs",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "website",
+          "label": "Website",
+          "need": "compute",
+          "gold": "https://lumenlabs.io",
+          "value": "lumenlabs.io",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "teamSize",
+          "label": "Team size",
+          "need": "choose",
+          "gold": "11-50",
+          "value": "11-50",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "newsletter",
+          "label": "Send me the newsletter",
+          "need": "choose",
+          "gold": false,
+          "value": false,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "password",
+          "label": "Password",
+          "need": "absent",
+          "gold": null,
+          "value": null,
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 769,
+      "tokens": 3852,
+      "sureness": {
+        "fullName": 1,
+        "email": 1,
+        "jobTitle": 0.9991891980171204,
+        "company": 0.999987006187439,
+        "website": 0.9985257983207703,
+        "teamSize": 1,
+        "newsletter": 1,
+        "password": 0.44563329219818115
+      }
+    },
+    {
+      "id": "profile",
+      "title": "Profile page from a self-introduction",
+      "source": "I'm Sam Ortiz, a landscape photographer based in Lisbon. For the last ten years I've photographed coastlines across Portugal and Spain, mostly at dawn, and my work has appeared in National Geographic Traveller and Monocle. Besides shooting, I run weekend workshops for beginners and the occasional week-long trip along the Alentejo coast. I've also published two photo books with a small press in Porto. I prefer the dark theme.",
+      "filler": "jev",
+      "marks": [
+        {
+          "key": "displayName",
+          "label": "Display name",
+          "need": "copy",
+          "gold": "Sam Ortiz",
+          "value": "I'm Sam Ortiz",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "location",
+          "label": "Location",
+          "need": "copy",
+          "gold": "Lisbon",
+          "value": "Lisbon",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "headline",
+          "label": "Headline",
+          "need": "copy",
+          "gold": "Landscape photographer based in Lisbon",
+          "value": "a landscape photographer based in Lisbon",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "bio",
+          "label": "Bio",
+          "need": "write",
+          "gold": "Sam Ortiz is a Lisbon-based landscape photographer who has spent ten years shooting the coasts of Portugal and Spain. Sam runs beginner workshops and has published two photo books.",
+          "value": null,
+          "correct": false,
+          "invented": false
+        },
+        {
+          "key": "website",
+          "label": "Website",
+          "need": "absent",
+          "gold": null,
+          "value": null,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "theme",
+          "label": "Theme",
+          "need": "choose",
+          "gold": "dark",
+          "value": "dark",
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 203,
+      "tokens": 3753,
+      "sureness": {
+        "displayName": 0.39,
+        "location": 1,
+        "headline": 0.87,
+        "bio": 0.43,
+        "website": 1,
+        "theme": 0.99
+      }
+    },
+    {
+      "id": "profile",
+      "title": "Profile page from a self-introduction",
+      "source": "I'm Sam Ortiz, a landscape photographer based in Lisbon. For the last ten years I've photographed coastlines across Portugal and Spain, mostly at dawn, and my work has appeared in National Geographic Traveller and Monocle. Besides shooting, I run weekend workshops for beginners and the occasional week-long trip along the Alentejo coast. I've also published two photo books with a small press in Porto. I prefer the dark theme.",
+      "filler": "clairic",
+      "marks": [
+        {
+          "key": "displayName",
+          "label": "Display name",
+          "need": "copy",
+          "gold": "Sam Ortiz",
+          "value": "Sam Ortiz",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "location",
+          "label": "Location",
+          "need": "copy",
+          "gold": "Lisbon",
+          "value": "Lisbon",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "headline",
+          "label": "Headline",
+          "need": "copy",
+          "gold": "Landscape photographer based in Lisbon",
+          "value": "landscape photographer",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "bio",
+          "label": "Bio",
+          "need": "write",
+          "gold": "Sam Ortiz is a Lisbon-based landscape photographer who has spent ten years shooting the coasts of Portugal and Spain. Sam runs beginner workshops and has published two photo books.",
+          "value": "Sam Ortiz",
+          "correct": false,
+          "invented": false,
+          "judged": 0.05
+        },
+        {
+          "key": "website",
+          "label": "Website",
+          "need": "absent",
+          "gold": null,
+          "value": null,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "theme",
+          "label": "Theme",
+          "need": "choose",
+          "gold": "dark",
+          "value": "dark",
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 772,
+      "tokens": 1424,
+      "sureness": {
+        "displayName": 0.9999096393585205,
+        "location": 0.9179036021232605,
+        "headline": 0.9838288426399231,
+        "bio": 0.33115893602371216,
+        "website": 0.5486937761306763,
+        "theme": 0.9996174573898315
+      }
+    },
+    {
+      "id": "profile",
+      "title": "Profile page from a self-introduction",
+      "source": "I'm Sam Ortiz, a landscape photographer based in Lisbon. For the last ten years I've photographed coastlines across Portugal and Spain, mostly at dawn, and my work has appeared in National Geographic Traveller and Monocle. Besides shooting, I run weekend workshops for beginners and the occasional week-long trip along the Alentejo coast. I've also published two photo books with a small press in Porto. I prefer the dark theme.",
+      "filler": "both",
+      "marks": [
+        {
+          "key": "displayName",
+          "label": "Display name",
+          "need": "copy",
+          "gold": "Sam Ortiz",
+          "value": "Sam Ortiz",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "location",
+          "label": "Location",
+          "need": "copy",
+          "gold": "Lisbon",
+          "value": "Lisbon",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "headline",
+          "label": "Headline",
+          "need": "copy",
+          "gold": "Landscape photographer based in Lisbon",
+          "value": "landscape photographer",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "bio",
+          "label": "Bio",
+          "need": "write",
+          "gold": "Sam Ortiz is a Lisbon-based landscape photographer who has spent ten years shooting the coasts of Portugal and Spain. Sam runs beginner workshops and has published two photo books.",
+          "value": "Sam Ortiz",
+          "correct": false,
+          "invented": false,
+          "judged": 0.06
+        },
+        {
+          "key": "website",
+          "label": "Website",
+          "need": "absent",
+          "gold": null,
+          "value": null,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "theme",
+          "label": "Theme",
+          "need": "choose",
+          "gold": "dark",
+          "value": "dark",
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 758,
+      "tokens": 4882,
+      "sureness": {
+        "displayName": 0.9996696710586548,
+        "location": 0.9106507897377014,
+        "headline": 0.9902923703193665,
+        "bio": 0.3445122539997101,
+        "website": 0.3988535404205322,
+        "theme": 1
+      }
+    },
+    {
+      "id": "checkout",
+      "title": "Delivery details from an order note",
+      "source": "Please ship it to 221B Baker Street, London NW1 6XE, United Kingdom. It's a birthday present, so gift wrap would be lovely. If nobody's home, leave it with the neighbour at 223. Any day next week is fine.",
+      "filler": "jev",
+      "marks": [
+        {
+          "key": "method",
+          "label": "Delivery",
+          "need": "choose",
+          "gold": "ship",
+          "value": "ship",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "street",
+          "label": "Street and number",
+          "need": "copy",
+          "gold": "221B Baker Street",
+          "value": "221B Baker Street",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "postalCode",
+          "label": "Postal code",
+          "need": "copy",
+          "gold": "NW1 6XE",
+          "value": "NW1 6XE",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "city",
+          "label": "City",
+          "need": "copy",
+          "gold": "London",
+          "value": "London",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "country",
+          "label": "Country",
+          "need": "choose",
+          "gold": "united-kingdom",
+          "value": "united-kingdom",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "giftWrap",
+          "label": "Gift wrap",
+          "need": "choose",
+          "gold": true,
+          "value": true,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "courierNote",
+          "label": "Note for the courier",
+          "need": "copy",
+          "gold": "If nobody's home, leave it with the neighbour at 223",
+          "value": "If nobody's home, leave it with the neighbour at 223",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "giftMessage",
+          "label": "Gift message",
+          "need": "absent",
+          "gold": null,
+          "value": null,
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 209,
+      "tokens": 2961,
+      "sureness": {
+        "method": 0.97,
+        "street": 1,
+        "postalCode": 1,
+        "city": 1,
+        "country": 1,
+        "giftWrap": 1,
+        "courierNote": 0.73,
+        "giftMessage": 0.89
+      }
+    },
+    {
+      "id": "checkout",
+      "title": "Delivery details from an order note",
+      "source": "Please ship it to 221B Baker Street, London NW1 6XE, United Kingdom. It's a birthday present, so gift wrap would be lovely. If nobody's home, leave it with the neighbour at 223. Any day next week is fine.",
+      "filler": "clairic",
+      "marks": [
+        {
+          "key": "method",
+          "label": "Delivery",
+          "need": "choose",
+          "gold": "ship",
+          "value": "ship",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "street",
+          "label": "Street and number",
+          "need": "copy",
+          "gold": "221B Baker Street",
+          "value": "221B Baker Street",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "postalCode",
+          "label": "Postal code",
+          "need": "copy",
+          "gold": "NW1 6XE",
+          "value": "NW1 6XE",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "city",
+          "label": "City",
+          "need": "copy",
+          "gold": "London",
+          "value": "London",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "country",
+          "label": "Country",
+          "need": "choose",
+          "gold": "united-kingdom",
+          "value": "united-kingdom",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "giftWrap",
+          "label": "Gift wrap",
+          "need": "choose",
+          "gold": true,
+          "value": true,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "courierNote",
+          "label": "Note for the courier",
+          "need": "copy",
+          "gold": "If nobody's home, leave it with the neighbour at 223",
+          "value": "gift wrap would be lovely",
+          "correct": false,
+          "invented": false
+        },
+        {
+          "key": "giftMessage",
+          "label": "Gift message",
+          "need": "absent",
+          "gold": null,
+          "value": null,
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 793,
+      "tokens": 1929,
+      "sureness": {
+        "method": 0.9069291949272156,
+        "street": 0.9967672824859619,
+        "postalCode": 1,
+        "city": 0.9999916553497314,
+        "country": 0.9858842492103577,
+        "giftWrap": 0.9853723645210266,
+        "courierNote": 0.27025869488716125,
+        "giftMessage": 0.7580430507659912
+      }
+    },
+    {
+      "id": "checkout",
+      "title": "Delivery details from an order note",
+      "source": "Please ship it to 221B Baker Street, London NW1 6XE, United Kingdom. It's a birthday present, so gift wrap would be lovely. If nobody's home, leave it with the neighbour at 223. Any day next week is fine.",
+      "filler": "both",
+      "marks": [
+        {
+          "key": "method",
+          "label": "Delivery",
+          "need": "choose",
+          "gold": "ship",
+          "value": "ship",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "street",
+          "label": "Street and number",
+          "need": "copy",
+          "gold": "221B Baker Street",
+          "value": "221B Baker Street",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "postalCode",
+          "label": "Postal code",
+          "need": "copy",
+          "gold": "NW1 6XE",
+          "value": "NW1 6XE",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "city",
+          "label": "City",
+          "need": "copy",
+          "gold": "London",
+          "value": "London",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "country",
+          "label": "Country",
+          "need": "choose",
+          "gold": "united-kingdom",
+          "value": "united-kingdom",
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "giftWrap",
+          "label": "Gift wrap",
+          "need": "choose",
+          "gold": true,
+          "value": true,
+          "correct": true,
+          "invented": false
+        },
+        {
+          "key": "courierNote",
+          "label": "Note for the courier",
+          "need": "copy",
+          "gold": "If nobody's home, leave it with the neighbour at 223",
+          "value": "gift wrap would be lovely",
+          "correct": false,
+          "invented": false
+        },
+        {
+          "key": "giftMessage",
+          "label": "Gift message",
+          "need": "absent",
+          "gold": null,
+          "value": null,
+          "correct": true,
+          "invented": false
+        }
+      ],
+      "ms": 720,
+      "tokens": 3937,
+      "sureness": {
+        "method": 0.98,
+        "street": 0.9966996312141418,
+        "postalCode": 1,
+        "city": 0.9998793601989746,
+        "country": 1,
+        "giftWrap": 1,
+        "courierNote": 0.47081485390663147,
+        "giftMessage": 0.8411190509796143
+      }
+    }
+  ],
+  "summary": {
+    "jev": {
+      "right": 42,
+      "of": 49,
+      "invented": 0,
+      "needs": {
+        "copy": {
+          "right": 24,
+          "of": 26
+        },
+        "choose": {
+          "right": 12,
+          "of": 12
+        },
+        "compute": {
+          "right": 1,
+          "of": 4
+        },
+        "write": {
+          "right": 1,
+          "of": 3
+        },
+        "absent": {
+          "right": 4,
+          "of": 4
+        }
+      },
+      "ms": 214,
+      "tokens": 2665
+    },
+    "clairic": {
+      "right": 43,
+      "of": 49,
+      "invented": 0,
+      "needs": {
+        "copy": {
+          "right": 23,
+          "of": 26
+        },
+        "choose": {
+          "right": 11,
+          "of": 12
+        },
+        "compute": {
+          "right": 3,
+          "of": 4
+        },
+        "write": {
+          "right": 2,
+          "of": 3
+        },
+        "absent": {
+          "right": 4,
+          "of": 4
+        }
+      },
+      "ms": 849,
+      "tokens": 1440
+    },
+    "both": {
+      "right": 45,
+      "of": 49,
+      "invented": 0,
+      "needs": {
+        "copy": {
+          "right": 24,
+          "of": 26
+        },
+        "choose": {
+          "right": 12,
+          "of": 12
+        },
+        "compute": {
+          "right": 3,
+          "of": 4
+        },
+        "write": {
+          "right": 2,
+          "of": 3
+        },
+        "absent": {
+          "right": 4,
+          "of": 4
+        }
+      },
+      "ms": 904,
+      "tokens": 3566
+    }
+  }
+}
