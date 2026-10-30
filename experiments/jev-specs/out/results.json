@@ -54,26 +54,26 @@
     "phrases": [
       {
         "text": "A sign-up form for a B2B SaaS",
-        "field": 0.04,
+        "field": 0.02,
         "kind": "text",
-        "kindConfidence": 0.55,
-        "blank": 0.27,
-        "match": "none (0.87)"
+        "kindConfidence": 0.62,
+        "blank": 0.24,
+        "match": "none (0.84)"
       },
       {
         "text": "work email",
         "field": 0.98,
         "kind": "email",
         "kindConfidence": 0.99,
-        "blank": 0.07,
-        "match": "email (0.98)"
+        "blank": 0.08,
+        "match": "email (0.99)"
       },
       {
         "text": "password",
         "field": 0.98,
         "kind": "password",
         "kindConfidence": 1,
-        "blank": 0.09,
+        "blank": 0.08,
         "match": "password (1.00)"
       },
       {
@@ -81,20 +81,20 @@
         "field": 0.98,
         "kind": "text",
         "kindConfidence": 1,
-        "blank": 0.12,
+        "blank": 0.14,
         "match": "companyName (1.00)"
       },
       {
         "text": "team size",
-        "field": 0.97,
+        "field": 0.98,
         "kind": "whole_number",
-        "kindConfidence": 0.91,
-        "blank": 0.41,
+        "kindConfidence": 0.94,
+        "blank": 0.37,
         "match": "teamSize (1.00)"
       },
       {
         "text": "an optional newsletter opt-in",
-        "field": 0.92,
+        "field": 0.96,
         "kind": "yes_no",
         "kindConfidence": 1,
         "blank": 0.97,
@@ -124,30 +124,30 @@
       },
       {
         "key": "expected",
-        "p": 0.64
+        "p": 0.67
       },
       {
         "key": "enabled",
-        "p": 0.53
+        "p": 0.55
       },
       {
         "key": "notifyEmail",
-        "p": 0.51
+        "p": 0.5
       },
       {
         "key": "acceptTerms",
-        "p": 0.33
+        "p": 0.35
       },
       {
         "key": "guests",
-        "p": 0.15
+        "p": 0.16
       },
       {
         "key": "fullName",
         "p": 0.09
       },
       {
-        "key": "frequency",
+        "key": "country",
         "p": 0.08
       }
     ],
@@ -165,17 +165,19 @@
     "calls": [
       {
         "questions": 145,
-        "tokens": 15198,
-        "ms": 329,
+        "tokens": 15222,
+        "ms": 350,
         "model": "jev-1.14.0"
       },
       {
         "questions": 5,
         "tokens": 1250,
-        "ms": 180,
+        "ms": 200,
         "model": "jev-1.14.0"
       }
-    ]
+    ],
+    "applied": [],
+    "wallMs": 553
   },
   {
     "criteria": "Checkout delivery step for an online shop: delivery method (ship or pick up in store), shipping address, preferred delivery date, gift wrapping, and a note for the courier.",
@@ -271,11 +273,19 @@
         "giftWrap": {
           "type": "boolean",
           "label": "Gift wrapping",
-          "render": "switch"
+          "render": "switch",
+          "visible": {
+            "$state": "deliveryMethod",
+            "eq": "ship"
+          }
         },
         "message": {
           "use": "multiline",
-          "label": "Note for the courier"
+          "label": "Note for the courier",
+          "visible": {
+            "$state": "deliveryMethod",
+            "eq": "ship"
+          }
         }
       }
     },
@@ -283,51 +293,51 @@
     "phrases": [
       {
         "text": "Checkout delivery step for an online shop",
-        "field": 0.07,
+        "field": 0.1,
         "kind": "text",
         "kindConfidence": 0.36,
         "blank": 0.39,
-        "match": "none (0.71)"
+        "match": "none (0.73)"
       },
       {
         "text": "delivery method (ship or pick up in store)",
-        "field": 0.96,
+        "field": 0.97,
         "kind": "one_choice",
-        "kindConfidence": 0.98,
-        "blank": 0.17,
+        "kindConfidence": 0.99,
+        "blank": 0.16,
         "match": "deliveryMethod (1.00)"
       },
       {
         "text": "shipping address",
-        "field": 0.97,
+        "field": 0.96,
         "kind": "long_text",
         "kindConfidence": 0.84,
-        "blank": 0.32,
+        "blank": 0.29,
         "match": "address (1.00)"
       },
       {
         "text": "preferred delivery date",
-        "field": 0.97,
+        "field": 0.96,
         "kind": "date",
-        "kindConfidence": 0.97,
-        "blank": 0.76,
-        "match": "deliveryDate (1.00)"
+        "kindConfidence": 0.96,
+        "blank": 0.75,
+        "match": "deliveryDate (0.99)"
       },
       {
         "text": "gift wrapping",
-        "field": 0.95,
+        "field": 0.96,
         "kind": "yes_no",
         "kindConfidence": 0.95,
-        "blank": 0.87,
+        "blank": 0.86,
         "match": "giftWrap (1.00)"
       },
       {
         "text": "a note for the courier",
         "field": 0.96,
         "kind": "long_text",
-        "kindConfidence": 0.9,
-        "blank": 0.88,
-        "match": "message (0.96)"
+        "kindConfidence": 0.91,
+        "blank": 0.87,
+        "match": "message (0.97)"
       }
     ],
     "picks": [
@@ -345,7 +355,7 @@
       },
       {
         "key": "address",
-        "p": 0.96
+        "p": 0.95
       },
       {
         "key": "message",
@@ -356,27 +366,27 @@
         "p": 0.92
       },
       {
-        "key": "city",
-        "p": 0.83
+        "key": "postalCode",
+        "p": 0.86
       },
       {
-        "key": "postalCode",
-        "p": 0.83
+        "key": "city",
+        "p": 0.85
       },
       {
         "key": "country",
-        "p": 0.75
+        "p": 0.77
       },
       {
         "key": "enabled",
-        "p": 0.74
+        "p": 0.76
       },
       {
         "key": "expected",
-        "p": 0.42
+        "p": 0.39
       },
       {
-        "key": "description",
+        "key": "fullName",
         "p": 0.23
       }
     ],
@@ -389,7 +399,9 @@
     ],
     "shownWhen": {
       "address": "deliveryMethod=ship (0.98)",
-      "deliveryDate": "deliveryMethod=ship (0.85)"
+      "deliveryDate": "deliveryMethod=ship (0.91)",
+      "giftWrap": "deliveryMethod=ship (0.59)",
+      "message": "deliveryMethod=ship (0.59)"
     },
     "notes": [],
     "faults": [],
@@ -397,17 +409,19 @@
     "calls": [
       {
         "questions": 145,
-        "tokens": 15209,
-        "ms": 286,
+        "tokens": 15233,
+        "ms": 288,
         "model": "jev-1.14.0"
       },
       {
         "questions": 5,
         "tokens": 954,
-        "ms": 193,
+        "ms": 189,
         "model": "jev-1.14.0"
       }
-    ]
+    ],
+    "applied": [],
+    "wallMs": 478
   },
   {
     "criteria": "Settings for a scheduled backup job: how often it runs (hourly, daily or weekly), retention in days, compress archives, encrypt backups, and an email to notify when a backup fails.",
@@ -462,50 +476,50 @@
     "phrases": [
       {
         "text": "Settings for a scheduled backup job",
-        "field": 0.1,
-        "kind": "text",
-        "kindConfidence": 0.41,
+        "field": 0.17,
+        "kind": "long_text",
+        "kindConfidence": 0.34,
         "blank": 0.41,
-        "match": "none (0.66)"
+        "match": "none (0.65)"
       },
       {
         "text": "how often it runs (hourly, daily or weekly)",
-        "field": 0.93,
+        "field": 0.96,
         "kind": "one_choice",
         "kindConfidence": 0.97,
-        "blank": 0.53,
-        "match": "schedule (1.00)"
+        "blank": 0.56,
+        "match": "schedule (0.99)"
       },
       {
         "text": "retention in days",
-        "field": 0.94,
+        "field": 0.97,
         "kind": "whole_number",
         "kindConfidence": 1,
-        "blank": 0.56,
+        "blank": 0.54,
         "match": "retentionDays (1.00)"
       },
       {
         "text": "compress archives",
-        "field": 0.91,
+        "field": 0.95,
         "kind": "yes_no",
-        "kindConfidence": 0.99,
-        "blank": 0.71,
-        "match": "none (0.85)"
+        "kindConfidence": 1,
+        "blank": 0.7,
+        "match": "none (0.88)"
       },
       {
         "text": "encrypt backups",
-        "field": 0.89,
+        "field": 0.95,
         "kind": "yes_no",
         "kindConfidence": 0.99,
         "blank": 0.77,
-        "match": "none (0.56)"
+        "match": "none (0.63)"
       },
       {
         "text": "an email to notify when a backup fails",
-        "field": 0.89,
+        "field": 0.91,
         "kind": "email",
-        "kindConfidence": 0.67,
-        "blank": 0.77,
+        "kindConfidence": 0.69,
+        "blank": 0.75,
         "match": "notifyEmail (0.95)"
       }
     ],
@@ -516,7 +530,7 @@
       },
       {
         "key": "retentionDays",
-        "p": 0.97
+        "p": 0.98
       },
       {
         "key": "notifyEmail",
@@ -528,31 +542,31 @@
       },
       {
         "key": "email",
-        "p": 0.76
+        "p": 0.75
       },
       {
         "key": "expected",
-        "p": 0.25
+        "p": 0.27
       },
       {
         "key": "subject",
         "p": 0.18
       },
       {
-        "key": "timezone",
-        "p": 0.18
+        "key": "contactMethod",
+        "p": 0.17
       },
       {
-        "key": "contactMethod",
-        "p": 0.16
+        "key": "timezone",
+        "p": 0.17
       },
       {
         "key": "message",
-        "p": 0.13
+        "p": 0.12
       },
       {
         "key": "description",
-        "p": 0.12
+        "p": 0.11
       },
       {
         "key": "retries",
@@ -573,17 +587,19 @@
     "calls": [
       {
         "questions": 145,
-        "tokens": 15219,
-        "ms": 280,
+        "tokens": 15243,
+        "ms": 288,
         "model": "jev-1.14.0"
       },
       {
         "questions": 5,
         "tokens": 1188,
-        "ms": 229,
+        "ms": 205,
         "model": "jev-1.14.0"
       }
-    ]
+    ],
+    "applied": [],
+    "wallMs": 494
   },
   {
     "criteria": "Wedding RSVP: guest name, attending or not, number of guests, meal choice (beef, fish or vegetarian), dietary restrictions, and a song request.",
@@ -649,15 +665,15 @@
     "phrases": [
       {
         "text": "Wedding RSVP",
-        "field": 0.07,
+        "field": 0.05,
         "kind": "text",
-        "kindConfidence": 0.49,
-        "blank": 0.44,
+        "kindConfidence": 0.5,
+        "blank": 0.43,
         "match": "none (0.89)"
       },
       {
         "text": "guest name",
-        "field": 0.97,
+        "field": 0.98,
         "kind": "text",
         "kindConfidence": 1,
         "blank": 0.14,
@@ -665,15 +681,15 @@
       },
       {
         "text": "attending or not",
-        "field": 0.96,
+        "field": 0.97,
         "kind": "yes_no",
-        "kindConfidence": 0.84,
-        "blank": 0.31,
-        "match": "none (0.74)"
+        "kindConfidence": 0.75,
+        "blank": 0.33,
+        "match": "none (0.72)"
       },
       {
         "text": "number of guests",
-        "field": 0.96,
+        "field": 0.98,
         "kind": "whole_number",
         "kindConfidence": 1,
         "blank": 0.57,
@@ -683,25 +699,25 @@
         "text": "meal choice (beef, fish or vegetarian)",
         "field": 0.97,
         "kind": "one_choice",
-        "kindConfidence": 0.99,
-        "blank": 0.63,
+        "kindConfidence": 0.98,
+        "blank": 0.62,
         "match": "none (0.95)"
       },
       {
         "text": "dietary restrictions",
-        "field": 0.96,
+        "field": 0.97,
         "kind": "text",
-        "kindConfidence": 0.63,
+        "kindConfidence": 0.64,
         "blank": 0.82,
-        "match": "none (0.95)"
+        "match": "none (0.93)"
       },
       {
         "text": "a song request",
-        "field": 0.95,
+        "field": 0.97,
         "kind": "text",
-        "kindConfidence": 0.82,
-        "blank": 0.8,
-        "match": "none (0.65)"
+        "kindConfidence": 0.83,
+        "blank": 0.81,
+        "match": "none (0.67)"
       }
     ],
     "picks": [
@@ -711,11 +727,11 @@
       },
       {
         "key": "fullName",
-        "p": 0.82
+        "p": 0.79
       },
       {
         "key": "message",
-        "p": 0.24
+        "p": 0.25
       },
       {
         "key": "quantity",
@@ -723,19 +739,19 @@
       },
       {
         "key": "enabled",
-        "p": 0.15
+        "p": 0.17
       },
       {
         "key": "subject",
-        "p": 0.13
+        "p": 0.15
       },
       {
         "key": "expected",
-        "p": 0.12
+        "p": 0.13
       },
       {
         "key": "description",
-        "p": 0.1
+        "p": 0.11
       },
       {
         "key": "notifyEmail",
@@ -746,11 +762,11 @@
         "p": 0.08
       },
       {
-        "key": "topics",
-        "p": 0.08
+        "key": "email",
+        "p": 0.07
       },
       {
-        "key": "email",
+        "key": "contactMethod",
         "p": 0.07
       }
     ],
@@ -763,7 +779,7 @@
       "songRequest: \"a song request\" → text"
     ],
     "shownWhen": {
-      "guests": "attendingOrNot=yes (0.65)",
+      "guests": "attendingOrNot=yes (0.64)",
       "mealChoice": "attendingOrNot=yes (0.89)"
     },
     "notes": [],
@@ -772,17 +788,19 @@
     "calls": [
       {
         "questions": 150,
-        "tokens": 17198,
-        "ms": 304,
+        "tokens": 17226,
+        "ms": 299,
         "model": "jev-1.14.0"
       },
       {
         "questions": 6,
         "tokens": 1280,
-        "ms": 193,
+        "ms": 224,
         "model": "jev-1.14.0"
       }
-    ]
+    ],
+    "applied": [],
+    "wallMs": 524
   },
   {
     "criteria": "3D printer profile: nozzle temperature, bed temperature, layer height, infill percentage, print speed, filament color.",
@@ -820,69 +838,69 @@
     "phrases": [
       {
         "text": "3D printer profile",
-        "field": 0.25,
+        "field": 0.14,
         "kind": "text",
-        "kindConfidence": 0.61,
+        "kindConfidence": 0.63,
         "blank": 0.51,
-        "match": "none (0.90)"
-      },
-      {
-        "text": "nozzle temperature",
-        "field": 0.93,
-        "kind": "measurement",
-        "kindConfidence": 1,
-        "blank": 0.58,
-        "match": "none (0.96)"
-      },
-      {
-        "text": "bed temperature",
-        "field": 0.94,
-        "kind": "measurement",
-        "kindConfidence": 0.99,
-        "blank": 0.66,
-        "match": "none (0.99)"
-      },
-      {
-        "text": "layer height",
-        "field": 0.94,
-        "kind": "measurement",
-        "kindConfidence": 0.99,
-        "blank": 0.58,
-        "match": "none (0.92)"
-      },
-      {
-        "text": "infill percentage",
-        "field": 0.94,
-        "kind": "percentage",
-        "kindConfidence": 0.99,
-        "blank": 0.63,
-        "match": "none (0.85)"
-      },
-      {
-        "text": "print speed",
-        "field": 0.93,
-        "kind": "measurement",
-        "kindConfidence": 0.95,
-        "blank": 0.65,
         "match": "none (0.88)"
       },
       {
-        "text": "filament color",
-        "field": 0.95,
-        "kind": "color",
+        "text": "nozzle temperature",
+        "field": 0.97,
+        "kind": "measurement",
+        "kindConfidence": 0.98,
+        "blank": 0.59,
+        "match": "none (0.95)"
+      },
+      {
+        "text": "bed temperature",
+        "field": 0.97,
+        "kind": "measurement",
         "kindConfidence": 0.99,
+        "blank": 0.64,
+        "match": "none (0.97)"
+      },
+      {
+        "text": "layer height",
+        "field": 0.96,
+        "kind": "measurement",
+        "kindConfidence": 0.99,
+        "blank": 0.56,
+        "match": "none (0.95)"
+      },
+      {
+        "text": "infill percentage",
+        "field": 0.96,
+        "kind": "percentage",
+        "kindConfidence": 0.98,
+        "blank": 0.64,
+        "match": "none (0.84)"
+      },
+      {
+        "text": "print speed",
+        "field": 0.96,
+        "kind": "measurement",
+        "kindConfidence": 0.94,
+        "blank": 0.65,
+        "match": "none (0.85)"
+      },
+      {
+        "text": "filament color",
+        "field": 0.96,
+        "kind": "color",
+        "kindConfidence": 0.98,
         "blank": 0.73,
-        "match": "none (0.81)"
+        "match": "none (0.85)"
       }
     ],
     "picks": [
       {
         "key": "theme",
-        "p": 0.58
+        "p": 0.59
       },
       {
         "key": "subject",
-        "p": 0.2
+        "p": 0.22
       },
       {
         "key": "description",
@@ -893,27 +911,27 @@
         "p": 0.11
       },
       {
+        "key": "message",
+        "p": 0.1
+      },
+      {
         "key": "title",
         "p": 0.1
       },
       {
-        "key": "message",
-        "p": 0.09
-      },
-      {
         "key": "rating",
-        "p": 0.09
+        "p": 0.1
       },
       {
         "key": "enabled",
+        "p": 0.09
+      },
+      {
+        "key": "deviceModel",
         "p": 0.08
       },
       {
         "key": "expected",
-        "p": 0.07
-      },
-      {
-        "key": "deviceModel",
         "p": 0.07
       },
       {
@@ -940,11 +958,13 @@
     "calls": [
       {
         "questions": 150,
-        "tokens": 17178,
-        "ms": 300,
+        "tokens": 17206,
+        "ms": 276,
         "model": "jev-1.14.0"
       }
-    ]
+    ],
+    "applied": [],
+    "wallMs": 277
   },
   {
     "criteria": "A bug report form for a mobile app.",
@@ -1054,25 +1074,25 @@
     "phrases": [
       {
         "text": "A bug report form for a mobile app",
-        "field": 0.11,
+        "field": 0.03,
         "kind": "text",
-        "kindConfidence": 0.52,
-        "blank": 0.44,
-        "match": "none (0.49)"
+        "kindConfidence": 0.46,
+        "blank": 0.45,
+        "match": "none (0.60)"
       }
     ],
     "picks": [
       {
         "key": "stepsToReproduce",
-        "p": 0.89
+        "p": 0.88
       },
       {
         "key": "title",
-        "p": 0.86
+        "p": 0.85
       },
       {
         "key": "description",
-        "p": 0.86
+        "p": 0.85
       },
       {
         "key": "message",
@@ -1080,22 +1100,22 @@
       },
       {
         "key": "appVersion",
-        "p": 0.82
+        "p": 0.83
+      },
+      {
+        "key": "expected",
+        "p": 0.81
       },
       {
         "key": "platform",
         "p": 0.81
       },
       {
-        "key": "expected",
-        "p": 0.8
+        "key": "severity",
+        "p": 0.77
       },
       {
         "key": "deviceModel",
-        "p": 0.78
-      },
-      {
-        "key": "severity",
         "p": 0.77
       },
       {
@@ -1108,20 +1128,20 @@
       },
       {
         "key": "email",
-        "p": 0.59
+        "p": 0.6
       }
     ],
     "sources": [
-      "title: catalog title (0.86)",
-      "description: catalog description (0.86)",
-      "stepsToReproduce: catalog stepsToReproduce (0.89)",
-      "expected: catalog expected (0.80)",
+      "title: catalog title (0.85)",
+      "description: catalog description (0.85)",
+      "stepsToReproduce: catalog stepsToReproduce (0.88)",
+      "expected: catalog expected (0.81)",
       "severity: catalog severity (0.77)",
       "screenshot: catalog screenshot (0.71)",
       "platform: catalog platform (0.81)",
       "osVersion: catalog osVersion (0.76)",
-      "appVersion: catalog appVersion (0.82)",
-      "deviceModel: catalog deviceModel (0.78)"
+      "appVersion: catalog appVersion (0.83)",
+      "deviceModel: catalog deviceModel (0.77)"
     ],
     "shownWhen": {},
     "notes": [],
@@ -1130,17 +1150,19 @@
     "calls": [
       {
         "questions": 120,
-        "tokens": 5217,
-        "ms": 231,
+        "tokens": 5221,
+        "ms": 244,
         "model": "jev-1.14.0"
       },
       {
         "questions": 10,
         "tokens": 2350,
-        "ms": 198,
+        "ms": 235,
         "model": "jev-1.14.0"
       }
-    ]
+    ],
+    "applied": [],
+    "wallMs": 480
   },
   {
     "criteria": "Contact form for a dentist's website.",
@@ -1173,68 +1195,68 @@
     "phrases": [
       {
         "text": "Contact form for a dentist's website",
-        "field": 0.06,
+        "field": 0.03,
         "kind": "long_text",
-        "kindConfidence": 0.52,
-        "blank": 0.53,
-        "match": "none (0.59)"
+        "kindConfidence": 0.43,
+        "blank": 0.51,
+        "match": "none (0.62)"
       }
     ],
     "picks": [
-      {
-        "key": "email",
-        "p": 0.86
-      },
       {
         "key": "fullName",
         "p": 0.86
       },
       {
+        "key": "email",
+        "p": 0.85
+      },
+      {
         "key": "message",
-        "p": 0.86
+        "p": 0.84
       },
       {
         "key": "phone",
-        "p": 0.81
-      },
-      {
-        "key": "reason",
-        "p": 0.66
-      },
-      {
-        "key": "newPatient",
-        "p": 0.65
+        "p": 0.83
       },
       {
         "key": "appointmentDate",
-        "p": 0.63
+        "p": 0.65
+      },
+      {
+        "key": "reason",
+        "p": 0.64
       },
       {
         "key": "city",
-        "p": 0.61
+        "p": 0.63
       },
       {
-        "key": "contactMethod",
+        "key": "newPatient",
+        "p": 0.62
+      },
+      {
+        "key": "postalCode",
         "p": 0.58
       },
       {
         "key": "notifyEmail",
-        "p": 0.58
-      },
-      {
-        "key": "postalCode",
-        "p": 0.57
-      },
-      {
-        "key": "expected",
         "p": 0.54
+      },
+      {
+        "key": "contactMethod",
+        "p": 0.53
+      },
+      {
+        "key": "subject",
+        "p": 0.53
       }
     ],
     "sources": [
-      "email: catalog email (0.86)",
+      "email: catalog email (0.85)",
       "fullName: catalog fullName (0.86)",
-      "phone: catalog phone (0.81)",
-      "message: catalog message (0.86)"
+      "phone: catalog phone (0.83)",
+      "message: catalog message (0.84)"
     ],
     "shownWhen": {},
     "notes": [],
@@ -1243,11 +1265,13 @@
     "calls": [
       {
         "questions": 120,
-        "tokens": 5215,
-        "ms": 237,
+        "tokens": 5219,
+        "ms": 230,
         "model": "jev-1.14.0"
       }
-    ]
+    ],
+    "applied": [],
+    "wallMs": 230
   },
   {
     "criteria": "Newsletter preferences page.",
@@ -1296,11 +1320,11 @@
     "phrases": [
       {
         "text": "Newsletter preferences page",
-        "field": 0.14,
+        "field": 0.1,
         "kind": "text",
-        "kindConfidence": 0.38,
-        "blank": 0.45,
-        "match": "newsletter (0.65)"
+        "kindConfidence": 0.3,
+        "blank": 0.46,
+        "match": "newsletter (0.69)"
       }
     ],
     "picks": [
@@ -1310,7 +1334,7 @@
       },
       {
         "key": "enabled",
-        "p": 0.78
+        "p": 0.77
       },
       {
         "key": "topics",
@@ -1318,11 +1342,11 @@
       },
       {
         "key": "frequency",
-        "p": 0.62
+        "p": 0.63
       },
       {
         "key": "notifyEmail",
-        "p": 0.59
+        "p": 0.63
       },
       {
         "key": "email",
@@ -1330,26 +1354,26 @@
       },
       {
         "key": "unsubscribeAll",
-        "p": 0.55
+        "p": 0.57
       },
       {
         "key": "language",
-        "p": 0.4
+        "p": 0.39
       },
       {
         "key": "contactMethod",
-        "p": 0.35
+        "p": 0.37
       },
       {
         "key": "country",
-        "p": 0.25
+        "p": 0.24
       },
       {
         "key": "acceptTerms",
-        "p": 0.21
+        "p": 0.22
       },
       {
-        "key": "fullName",
+        "key": "deliveryDate",
         "p": 0.21
       }
     ],
@@ -1358,7 +1382,7 @@
       "newsletter: catalog newsletter (0.88)"
     ],
     "shownWhen": {
-      "topics": "newsletter=yes (0.53)"
+      "topics": "newsletter=yes (0.52)"
     },
     "notes": [],
     "faults": [],
@@ -1366,8 +1390,8 @@
     "calls": [
       {
         "questions": 120,
-        "tokens": 5207,
-        "ms": 231,
+        "tokens": 5211,
+        "ms": 236,
         "model": "jev-1.14.0"
       },
       {
@@ -1376,6 +1400,8 @@
         "ms": 187,
         "model": "jev-1.14.0"
       }
-    ]
+    ],
+    "applied": [],
+    "wallMs": 423
   }
 ]

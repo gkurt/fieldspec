@@ -112,7 +112,8 @@ function phrasesOf(criteria: string): Phrase[] {
     const c = criteria[i]!;
     if (c === "(") depth++;
     if (c === ")") depth = Math.max(0, depth - 1);
-    const and = depth === 0 && /^\sand\s/i.test(criteria.slice(i, i + 5));
+    // " and " between two numbers ("between 5 and 300") joins a range, not two phrases.
+    const and = depth === 0 && /^\sand\s/i.test(criteria.slice(i, i + 5)) && !(/\d\s*$/.test(current) && /^\s*\d/.test(criteria.slice(i + 5)));
     if (depth === 0 && (/[,;:\n•]/.test(c) || and)) {
       parts.push(current);
       current = "";
@@ -126,7 +127,8 @@ function phrasesOf(criteria: string): Phrase[] {
     .map((p) => p.trim().replace(/\.$/, ""))
     .filter((p) => p.length > 0)
     .map((text) => {
-      const listed = /\(([^)]*)\)/.exec(text)?.[1];
+      // "(debug, info or warn, default info)": the default is not an option.
+      const listed = /\(([^)]*)\)/.exec(text)?.[1]?.replace(/[;,]?\s*(?:\w+\s+)?(?:by\s+)?default\b.*$/i, "");
       let name = text.replace(/\([^)]*\)/g, "").trim();
       for (let prev = ""; prev !== name; ) [prev, name] = [name, name.replace(FILLER, "")];
       const options = listed?.split(/,|\bor\b|\band\b/).map((o) => o.trim()).filter(Boolean);
@@ -160,8 +162,12 @@ function firstQuestions(phrases: readonly Phrase[]): Record<string, Question> {
     const at = `\`phrases[${i}]\``;
     q[`field_${i}`] = {
       type: "noul",
-      instructions: `In the form described by \`criteria\`, is ${at} a piece of information the person filling in the form enters or picks?`,
-      criteria: { yes: "It names something the person answers, types or chooses.", no: "It names the form itself, its purpose or its audience." },
+      // Not "what the person fills in": read literally, a setting does not feel filled in.
+      instructions: `Does ${at} name something that gets a value in the form or settings described by \`criteria\`, rather than naming the form itself or its purpose?`,
+      criteria: {
+        yes: "It names something the person answers, types, chooses or sets, even when it also states limits, options or a default.",
+        no: "It names the form itself, its purpose or its audience.",
+      },
     };
     q[`kind_${i}`] = {
       type: "choice",
@@ -198,11 +204,28 @@ function firstQuestions(phrases: readonly Phrase[]): Record<string, Question> {
   return q;
 }
 
-interface Built {
+export interface Built {
   readonly key: string;
   readonly decl: Record<string, unknown>;
   readonly source: string;
   readonly section?: string;
+  /** The kind Jev chose, for a field built from a phrase rather than taken from the catalog. */
+  readonly kind?: string;
+  /** Whether its options were read from parentheses in the description. */
+  readonly listed?: boolean;
+  /** The phrase it came from. */
+  readonly phrase?: string;
+}
+
+/** A request to another model, as the results record it. */
+export interface CallInfo { readonly questions: number; readonly tokens: number; readonly ms: number; readonly model: string }
+
+/** What another model adds, asked alongside Jev's requests so it costs no extra round trip. */
+export interface Helpers {
+  /** Short names for the phrases ("Request timeout" for "request timeout between 5 and 300 seconds"). */
+  names?(criteria: string, phrases: readonly string[]): Promise<{ names: readonly (string | undefined)[]; call: CallInfo }>;
+  /** Fills in the fields' declarations (ranges, defaults, units, options) once they are known. */
+  enrich?(criteria: string, fields: readonly Built[]): Promise<{ applied: readonly string[]; call: CallInfo }>;
 }
 
 /** Leaves the required flag to kinds where "empty" means something. */
@@ -229,7 +252,7 @@ function assemble(phrases: readonly Phrase[], call: Call): { fields: Built[]; ex
       // The catalog's declaration, under the description's own words.
       const decl: Record<string, unknown> = { ...(entry.decl as Record<string, unknown>), label: p.name };
       if (!blank && fillable(decl)) decl.required = true;
-      add({ key: entry.key, decl, source: `"${p.text}" → catalog ${entry.key}`, section: entry.section });
+      add({ key: entry.key, decl, source: `"${p.text}" → catalog ${entry.key}`, section: entry.section, phrase: p.text });
       return;
     }
     const kind = choice(call, `kind_${i}`).choice;
@@ -250,7 +273,7 @@ function assemble(phrases: readonly Phrase[], call: Call): { fields: Built[]; ex
       }
     }
     if (!blank && fillable(decl)) decl.required = true;
-    add({ key: keyOf(p.name), decl, source });
+    add({ key: keyOf(p.name), decl, source, kind, listed: !!p.options, phrase: p.text });
   });
 
   // A vague description names no fields: take what a form of that kind would ask for, and of
@@ -292,8 +315,10 @@ function triggersFor(fields: readonly Built[], self: string): Trigger[] {
 async function conditions(criteria: string, fields: Built[]): Promise<{ call?: Call; chosen: Record<string, string> }> {
   const state = { criteria, fields: fields.map((f) => ({ name: String(f.decl.label ?? f.key) })) };
   const questions: Record<string, Question> = {};
+  // Worked out once: a helper may change options while the request is out.
+  const asked = fields.map((f) => triggersFor(fields, f.key));
   fields.forEach((f, j) => {
-    const triggers = triggersFor(fields, f.key);
+    const triggers = asked[j]!;
     if (triggers.length === 0) return;
     questions[`when_${j}`] = {
       type: "choice",
@@ -307,7 +332,7 @@ async function conditions(criteria: string, fields: Built[]): Promise<{ call?: C
   fields.forEach((f, j) => {
     const a = call.answers[`when_${j}`] as ChoiceAnswer | undefined;
     if (!a || a.choice === "always" || a.probabilities[a.choice]! < SHOWN_WHEN) return;
-    const trigger = triggersFor(fields, f.key).find((t) => t.id === a.choice)!;
+    const trigger = asked[j]!.find((t) => t.id === a.choice)!;
     f.decl.visible = trigger.visible;
     chosen[f.key] = `${a.choice} (${a.probabilities[a.choice]!.toFixed(2)})`;
   });
@@ -327,14 +352,35 @@ export interface Result {
   readonly notes: readonly string[];
   readonly faults: readonly string[];
   readonly valid: boolean;
-  readonly calls: readonly { questions: number; tokens: number; ms: number; model: string }[];
+  readonly calls: readonly CallInfo[];
+  /** What the helpers changed. */
+  readonly applied: readonly string[];
+  /** Start to finish, with parallel requests overlapping. */
+  readonly wallMs: number;
 }
 
-export async function generate(criteria: string): Promise<Result> {
-  const phrases = phrasesOf(criteria);
-  const first = await systemOne({ criteria, phrases: phrases.map((p) => p.text) }, firstQuestions(phrases));
+export async function generate(criteria: string, helpers: Helpers = {}): Promise<Result> {
+  const started = performance.now();
+  const raw = phrasesOf(criteria);
+  const [first, named] = await Promise.all([
+    systemOne({ criteria, phrases: raw.map((p) => p.text) }, firstQuestions(raw)),
+    helpers.names?.(criteria, raw.map((p) => p.text)),
+  ]);
+  const phrases = raw.map((p, i) => {
+    const name = named?.names[i];
+    return name ? { ...p, name: name.charAt(0).toUpperCase() + name.slice(1) } : p;
+  });
   const { fields, explicit, notes } = assemble(phrases, first);
-  const { call: second, chosen } = await conditions(criteria, fields);
+  const [{ call: second, chosen }, enriched] = await Promise.all([conditions(criteria, fields), helpers.enrich?.(criteria, fields)]);
+  // A helper may have replaced the options a condition names; such a condition is dropped.
+  for (const f of fields) {
+    const when = f.decl.visible as { $state?: string; eq?: unknown } | undefined;
+    const on = when?.$state === undefined ? undefined : fields.find((t) => t.key === when.$state);
+    if (on?.decl.type === "enum" && !(on.decl.options as { value: unknown }[]).some((o) => o.value === when!.eq)) {
+      delete f.decl.visible;
+      delete chosen[f.key];
+    }
+  }
 
   // A vague form drawn from several catalog sections is grouped by them.
   const sections = new Set(fields.map((f) => f.section).filter(Boolean));
@@ -373,7 +419,9 @@ export async function generate(criteria: string): Promise<Result> {
     notes,
     faults,
     valid,
-    calls: [first, ...(second ? [second] : [])].map(({ questions, tokens, ms, model }) => ({ questions, tokens, ms: Math.round(ms), model })),
+    calls: [first, ...(second ? [second] : []), ...(named ? [named.call] : []), ...(enriched ? [enriched.call] : [])].map(({ questions, tokens, ms, model }) => ({ questions, tokens, ms: Math.round(ms), model })),
+    applied: enriched?.applied ?? [],
+    wallMs: Math.round(performance.now() - started),
   };
 }
 
