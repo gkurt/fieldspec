@@ -28,6 +28,15 @@ const result = parse(account, json);  // { ok, value, issues: [{ path: "/email",
 New to the format? [The tutorial](https://gkurt.com/fieldspec/tutorial.html) grows one spec a
 feature at a time, with a live form at every step.
 
+## Install
+
+```bash
+npm install fieldspec
+```
+
+ES modules, with types. `fieldspec/react` needs `react` 18 or later and `fieldspec/zod` needs
+`zod` 4; both are optional peer dependencies, so the core needs neither.
+
 ## Names
 
 Everything a spec refers to by name (kinds, elements, presets, definitions) follows one rule:
@@ -253,6 +262,7 @@ bun install
 bun test
 bun run stress      # the stress cases and 1000 random specs, each run with a time limit
 bun run typecheck
+bun run build       # dist/: what the package ships (npm pack runs it too)
 bun run schema
 bun run demo
 bun run site        # the homepage: every example on it is live

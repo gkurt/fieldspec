@@ -4,16 +4,59 @@
   "description": "A typed, serializable, headless format for configs and the forms that edit them.",
   "license": "MIT",
   "type": "module",
+  "keywords": [
+    "forms",
+    "config",
+    "schema",
+    "json-schema",
+    "zod",
+    "react",
+    "validation",
+    "typescript",
+    "json-render"
+  ],
+  "homepage": "https://gkurt.com/fieldspec/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gkurt/fieldspec.git"
+  },
+  "bugs": "https://github.com/gkurt/fieldspec/issues",
+  "author": "Gokhan Kurt",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./react": "./src/react/index.tsx",
-    "./zod": "./src/zod.ts",
-    "./schema.json": "./schema/spec.json"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "default": "./dist/react/index.js"
+    },
+    "./zod": {
+      "types": "./dist/zod.d.ts",
+      "default": "./dist/zod.js"
+    },
+    "./schema.json": "./schema/spec.json",
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "react": [
+        "./dist/react/index.d.ts"
+      ],
+      "zod": [
+        "./dist/zod.d.ts"
+      ]
+    }
   },
   "scripts": {
     "test": "bun test",
     "stress": "bun test/stress/explore.ts && bun test/stress/fuzz.ts 0 1000",
     "typecheck": "tsc",
+    "build": "bun scripts/build.ts",
+    "prepack": "bun scripts/build.ts",
     "schema": "bun scripts/schema.ts",
     "demo": "vite demo --port 4192",
     "site": "vite site",
@@ -49,8 +92,10 @@
     "zod": "^4.6.7"
   },
   "files": [
+    "dist",
     "src",
     "schema",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ]
 }
