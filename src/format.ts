@@ -59,6 +59,7 @@ export const BASE_PROPS: { readonly [prop: string]: PropInfo } = {
   enabled: { schema: { $ref: "#/$defs/condition" }, description: "Editable only while this holds." },
   required: { schema: { $ref: "#/$defs/condition" }, description: "Must be non-empty while this holds." },
   group: { schema: { type: "string" }, description: "The id of a group in the same scope." },
+  order: { schema: { type: "number" }, description: "Where the field draws among its siblings, lower first; 0 when absent, ties in declaration order." },
   render: { schema: { $ref: "#/$defs/render" }, description: "A control element (`slider`), or a layout of the field's parts; see Rendering." },
   meta: { schema: { type: "object" }, description: "Free-form data for the application." },
 };

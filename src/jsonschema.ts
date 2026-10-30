@@ -38,7 +38,7 @@ const SELF_EVIDENT = new Set(["string", "number", "int", "boolean", "enum", "obj
 /** Declaration properties every kind handles here, not passed through as `x-props`. */
 const BASE_KEYS = new Set([
   "type", "label", "description", "hint", "placeholder", "examples", "aliases", "deprecated", "default",
-  "optional", "readOnly", "visible", "enabled", "required", "group", "render", "meta", "use",
+  "optional", "readOnly", "visible", "enabled", "required", "group", "order", "render", "meta", "use",
 ]);
 
 function kindChain(format: Format, type: string): AnyKind[] {
@@ -143,7 +143,7 @@ function annotate(s: JsonSchema, decl: Resolved) {
     if (typeof decl.deprecated === "string") s["x-deprecated"] = decl.deprecated;
   }
   if (decl.readOnly) s.readOnly = true;
-  for (const prop of ["hint", "placeholder", "aliases", "visible", "enabled", "required", "group", "render", "meta"] as const) {
+  for (const prop of ["hint", "placeholder", "aliases", "visible", "enabled", "required", "group", "order", "render", "meta"] as const) {
     if (decl[prop] !== undefined) s[`x-${prop}`] = decl[prop];
   }
 }
@@ -323,7 +323,7 @@ function fieldFrom(ctx: FromCtx, raw: Schema): FieldDecl {
     if (s.default !== undefined) decl.default = s.default;
     if (s.deprecated === true) decl.deprecated = s["x-deprecated"] ?? true;
     if (s.readOnly === true) decl.readOnly = true;
-    for (const prop of ["label", "description", "default", "hint", "placeholder", "aliases", "visible", "enabled", "required", "group", "render", "meta"]) {
+    for (const prop of ["label", "description", "default", "hint", "placeholder", "aliases", "visible", "enabled", "required", "group", "order", "render", "meta"]) {
       if (s[`x-${prop}`] !== undefined) decl[prop] = s[`x-${prop}`];
     }
     Object.assign(decl, s["x-props"] ?? {});

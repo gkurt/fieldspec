@@ -126,6 +126,30 @@ describe("render", () => {
     expect(shape(find(tree, "size").inner!)).toEqual({ columns: ["field:w", "field:h"] });
   });
 
+  test("order moves a field among its siblings; equal ones keep declaration order", () => {
+    const spec = define({
+      fields: {
+        "2": { type: "string" },
+        notes: { type: "string", order: 1 },
+        name: { type: "string", order: -1 },
+        city: { type: "string", group: "where" },
+        zip: { type: "string", group: "where", order: -2 },
+        tags: { type: "object", fields: { b: { type: "string" }, a: { type: "string", order: -1 } } },
+      },
+      groups: { where: { label: "Where" } },
+    });
+    // The group draws where its first field (zip, now first) does, holding its fields in order.
+    const tree = layout(spec);
+    expect(tree.children.map((n) => n.field ?? `group:${n.group}`)).toEqual(["group:where", "name", "2", "tags", "notes"]);
+    expect([...walk(tree.children[0]!)].filter((n) => n.type === "field").map((n) => n.field)).toEqual(["zip", "city"]);
+    expect(shape(find(tree, "tags").inner!)).toEqual({ stack: ["field:a", "field:b"] });
+    // A fragment's rest follows the order too; the values keep their own.
+    const view = layout(define({ ...spec, layouts: { v: { type: "stack", children: [{ field: "notes" }] } } }), "v");
+    expect([...walk(view)].filter((n) => n.type === "field" && n.field! in spec.fields).map((n) => n.field)).toEqual(["notes", "zip", "city", "name", "2", "tags"]);
+    expect(Object.keys(createForm(spec).values)).toEqual(["2", "notes", "name", "city", "zip", "tags"]);
+    expect(checkSpec({ fields: { a: { type: "string", order: "first" } } } as never).map((f) => `${f.path}: ${f.message}`)).toEqual(["/fields/a/order: must be a number; lower draws first"]);
+  });
+
   test("the checker knows each element's props and which kinds a control edits", () => {
     const messages = checkSpec({
       fields: {

@@ -109,4 +109,55 @@ describe("React controls", () => {
     expect(rows().some((r) => r.dataset.drop !== undefined)).toBe(false);
     await act(() => root.unmount());
   });
+
+  test("a list item moves with the arrow keys on its handle, which keeps the focus", async () => {
+    const { form, act, host, root } = await mount({ steps: ["one", "two", "three"] });
+    const handles = () => [...host.querySelectorAll<HTMLElement>(".fs-handle")];
+    expect(host.querySelector('[aria-label="Move up"], [aria-label="Move down"]')).toBeNull();
+    const press = (el: HTMLElement, key: string) => act(() => el.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true })));
+    handles()[0]!.focus();
+    await press(handles()[0]!, "ArrowDown");
+    expect(form.values.steps).toEqual(["two", "one", "three"]);
+    expect(document.activeElement).toBe(handles()[1]!);
+    await press(handles()[1]!, "ArrowDown");
+    await press(handles()[2]!, "ArrowDown"); // already last
+    expect(form.values.steps).toEqual(["two", "three", "one"]);
+    expect(document.activeElement).toBe(handles()[2]!);
+    expect(handles()[2]!.getAttribute("aria-label")).toBe("Move item 3 of 3");
+    await act(() => root.unmount());
+  });
+
+  test("items are named by their key or position, not a label of their own", async () => {
+    const { act, host, root } = await mount({ headers: { Accept: "json" }, steps: ["one"] });
+    const labels = [...host.querySelectorAll<HTMLLabelElement>("label.fs-label")];
+    const of = (text: string) => labels.find((l) => l.textContent === text)!;
+    expect(of("Accept").classList.contains("fs-sr-only")).toBe(true);
+    expect(of("Headers")).toBeUndefined(); // a container's label is its legend
+    expect(host.querySelector("legend")!.textContent).toBe("Headers");
+    expect(labels.filter((l) => !l.classList.contains("fs-sr-only")).map((l) => l.textContent)).toEqual([]);
+    await act(() => root.unmount());
+  });
+
+  test("a group's title sits on its frame, and a collapsible one opens from it", async () => {
+    const grouped = define({
+      fields: { a: { type: "string", group: "g" }, b: { type: "string", group: "h" } },
+      groups: { g: { label: "General" }, h: { label: "More", render: { type: "collapsible", props: { collapsed: true } } } },
+    });
+    const form = createForm(grouped);
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = client.createRoot(host);
+    const act = (fn: () => void) => React.act(async () => fn());
+    await act(() => root.render(React.createElement(ui.FormView, { form })));
+    expect([...host.querySelectorAll("fieldset > legend")].map((l) => l.textContent)).toEqual(["General", "More"]);
+    const toggle = host.querySelector<HTMLButtonElement>(".fs-toggle")!;
+    const body = () => host.querySelector<HTMLElement>(`#${CSS.escape(toggle.getAttribute("aria-controls")!)}`)!;
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(body().hidden).toBe(true);
+    expect(body().style.display).toBe("");
+    await act(() => toggle.click());
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(body().hidden).toBe(false);
+    await act(() => root.unmount());
+  });
 });

@@ -61,7 +61,7 @@ interface Cx {
 
 const SHOWN_FROM_FIRST = new Set(["label", "description", "hint", "placeholder"]);
 /** Kept when every spec says the same, left out otherwise: none of them limits the value. */
-const KEPT_IF_EQUAL = new Set(["examples", "aliases", "deprecated", "meta", "render", "group", "default", "visible", "enabled", "required", "step", "unknown"]);
+const KEPT_IF_EQUAL = new Set(["examples", "aliases", "deprecated", "meta", "render", "group", "order", "default", "visible", "enabled", "required", "step", "unknown"]);
 const LOWER = new Set(["min", "minLength", "minItems"]);
 const UPPER = new Set(["max", "maxLength", "maxItems", "maxBytes"]);
 const BOUNDS = [

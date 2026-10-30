@@ -11,6 +11,7 @@ import {
   useContext,
   useEffect,
   useId,
+  useRef,
   useState,
   useSyncExternalStore,
   type CSSProperties,
@@ -207,7 +208,10 @@ const column: CSSProperties = { display: "flex", flexDirection: "column", gap: 1
 /** Set by `tabs` for its panes, whose titles are already on their tabs. */
 const InTab = createContext(false);
 
-/** A container's body, framed and headed when it has a title. */
+/**
+ * A container's body, framed when it has a title. The title sits on the frame's border, as a
+ * container field's label does.
+ */
 function Frame({ props, className, children }: { props: Readonly<Record<string, unknown>>; className: string; children: ReactNode }) {
   const inTab = useContext(InTab);
   if (props.title === undefined || inTab) {
@@ -218,11 +222,31 @@ function Frame({ props, className, children }: { props: Readonly<Record<string, 
     );
   }
   return (
-    <section className={cx("fs-section", className)}>
-      <h3 className="fs-title">{text(props.title)}</h3>
+    <fieldset className={cx("fs-section", className)}>
+      <legend className="fs-title">{text(props.title)}</legend>
       {props.description !== undefined && <p className="fs-help">{text(props.description)}</p>}
       {children}
-    </section>
+    </fieldset>
+  );
+}
+
+/** A frame whose title opens and closes it. */
+function Collapsible({ children, props }: ElementProps) {
+  const [open, setOpen] = useState(!props.collapsed);
+  const id = useId();
+  return (
+    <fieldset className="fs-collapsible" data-open={open ? "" : undefined}>
+      <legend className="fs-title">
+        <button type="button" className="fs-toggle" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
+          {text(props.title) ?? "Details"}
+        </button>
+      </legend>
+      {/* An inline display would show it through `hidden`. */}
+      <div id={id} hidden={!open} style={open ? column : undefined}>
+        {props.description !== undefined && <p className="fs-help">{text(props.description)}</p>}
+        {children}
+      </div>
+    </fieldset>
   );
 }
 
@@ -231,6 +255,9 @@ const CONTAINER_KINDS = new Set(["object", "variant", "array", "set", "record", 
 function FieldFrame({ field, control, id, node }: ElementProps) {
   const f = field!;
   const inline = node.control?.type === "checkbox" || node.control?.type === "switch";
+  // An item of a list or record is named by its key or position beside it; its own label is
+  // kept for screen readers only, so its control lines up with the key's.
+  const item = node.field === "";
   if (CONTAINER_KINDS.has(f.decl.type)) {
     return (
       <fieldset className="fs-field fs-group" data-kind={f.decl.type} data-mixed={f.mixed ? "" : undefined}>
@@ -250,11 +277,11 @@ function FieldFrame({ field, control, id, node }: ElementProps) {
     >
       {inline ? (
         <label className="fs-label" htmlFor={id}>
-          {control!()} {f.label}
+          {control!()} <span className={cx(item && "fs-sr-only")}>{f.label}</span>
         </label>
       ) : (
         <>
-          <label className="fs-label" htmlFor={id}>
+          <label className={cx("fs-label", item && "fs-sr-only")} htmlFor={id}>
             {f.label}
             {f.required && <span aria-hidden="true"> *</span>}
           </label>
@@ -325,13 +352,7 @@ const layoutRenderers: Renderers = {
       <div style={{ display: "grid", gap: 12, gridTemplateColumns: `repeat(${Number(props.count ?? 2)}, minmax(0, 1fr))` }}>{children}</div>
     </Frame>
   ),
-  collapsible: ({ children, props }) => (
-    <details className="fs-collapsible" open={!props.collapsed}>
-      <summary className="fs-title">{text(props.title)}</summary>
-      {props.description !== undefined && <p className="fs-help">{text(props.description)}</p>}
-      <div style={column}>{children}</div>
-    </details>
-  ),
+  collapsible: Collapsible,
   scroll: ({ children, props }) => (
     <Frame props={props} className="fs-scroll">
       {/* Focusable, so the keyboard can scroll it too. */}
@@ -519,16 +540,6 @@ function dateText(value: unknown, time: boolean): string {
   return local.toISOString().slice(0, 16);
 }
 
-function ItemButtons({ onUp, onDown, onRemove, disabled }: { onUp?: () => void; onDown?: () => void; onRemove: () => void; disabled: boolean }) {
-  return (
-    <div style={{ display: "flex", gap: 4, alignItems: "start" }} className="fs-item-buttons">
-      <button type="button" aria-label="Move up" disabled={disabled || !onUp} onClick={onUp}>↑</button>
-      <button type="button" aria-label="Move down" disabled={disabled || !onDown} onClick={onDown}>↓</button>
-      <button type="button" aria-label="Remove" disabled={disabled} onClick={onRemove}>✕</button>
-    </div>
-  );
-}
-
 function List(p: ElementProps) {
   const field = p.field!;
   const isSet = field.decl.type === "set";
@@ -536,6 +547,14 @@ function List(p: ElementProps) {
   const d = field.decl as { maxItems?: number };
   const item = p.fieldNode?.item;
   const [drag, setDrag] = useState<{ from: number; over: number } | undefined>();
+  // Rows are keyed by position, so after a move from the keyboard the focus is sent after the item.
+  const box = useRef<HTMLDivElement>(null);
+  const refocus = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (refocus.current === undefined) return;
+    box.current?.querySelectorAll<HTMLElement>(":scope > .fs-item > .fs-handle")[refocus.current]?.focus();
+    refocus.current = undefined;
+  });
   if (isSet) {
     // A set's items have no stable position to point at, so they are edited as lines.
     const items = deref({ defs: p.form.spec.defs, presets: p.form.format.presets }, (field.decl as { items: FieldDecl }).items);
@@ -555,10 +574,10 @@ function List(p: ElementProps) {
       />
     );
   }
-  // Items reorder by dragging their handle (the arrows do the same from the keyboard).
+  // Items reorder by dragging their handle, or with the arrow keys while it has the focus.
   const move = (from: number, to: number) => from !== to && p.form.moveItem(field.path, from, to);
   return (
-    <div className="fs-list" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <div ref={box} className="fs-list" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       {list.map((_, i) => {
         const at = joinPointer(field.path, i);
         const dropping = drag !== undefined && drag.over === i && drag.from !== i ? (drag.from < i ? "after" : "before") : undefined;
@@ -581,11 +600,23 @@ function List(p: ElementProps) {
               setDrag(undefined);
             }}
           >
+            {/* A span, not a button: Firefox does not drag buttons. */}
             <span
               className="fs-handle"
+              role="button"
+              tabIndex={p.disabled ? -1 : 0}
+              aria-disabled={p.disabled || undefined}
+              aria-label={`Move item ${i + 1} of ${list.length}`}
+              aria-keyshortcuts="ArrowUp ArrowDown"
               draggable={!p.disabled}
-              aria-hidden="true"
-              title="Drag to reorder"
+              title="Drag, or use the arrow keys, to reorder"
+              onKeyDown={(e) => {
+                const to = e.key === "ArrowUp" ? i - 1 : e.key === "ArrowDown" ? i + 1 : -1;
+                if (p.disabled || to < 0 || to >= list.length) return;
+                e.preventDefault();
+                refocus.current = to;
+                move(i, to);
+              }}
               onDragStart={(e) => {
                 e.dataTransfer.effectAllowed = "move";
                 e.dataTransfer.setData("text/plain", String(i));
@@ -598,12 +629,9 @@ function List(p: ElementProps) {
               ⠿
             </span>
             <div style={{ flex: 1, minWidth: 0 }}>{item && p.render!(item, at, { item: at, index: i })}</div>
-            <ItemButtons
-              disabled={!!p.disabled}
-              onUp={i > 0 ? () => move(i, i - 1) : undefined}
-              onDown={i < list.length - 1 ? () => move(i, i + 1) : undefined}
-              onRemove={() => p.form.removeItem(at)}
-            />
+            <button type="button" aria-label="Remove" disabled={p.disabled} onClick={() => p.form.removeItem(at)}>
+              ✕
+            </button>
           </div>
         );
       })}
@@ -895,13 +923,19 @@ export const defaultStyles = `
 [data-fieldspec] [aria-invalid="true"] { border-color: #d14343; }
 [data-fieldspec] .fs-help { font-size: 0.8125rem; opacity: 0.7; margin: 0; }
 [data-fieldspec] .fs-errors { color: #d14343; font-size: 0.8125rem; margin: 0; padding: 0; list-style: none; }
-[data-fieldspec] .fs-title { font-size: 1rem; margin: 0 0 8px; }
+[data-fieldspec] .fs-title { font-weight: 600; font-size: 0.875rem; }
 [data-fieldspec] .fs-section, [data-fieldspec] .fs-collapsible, [data-fieldspec] .fs-group {
   border: 1px solid color-mix(in srgb, currentColor 15%, transparent); border-radius: 10px; padding: 12px 14px; margin: 0;
+  display: flex; flex-direction: column; gap: 12px;
 }
-[data-fieldspec] .fs-group > legend { padding: 0 4px; }
+[data-fieldspec] .fs-group { gap: 4px; }
+[data-fieldspec] .fs-section > legend, [data-fieldspec] .fs-collapsible > legend, [data-fieldspec] .fs-group > legend { padding: 0 4px; }
 [data-fieldspec] fieldset { min-width: 0; } /* browsers keep fieldsets as wide as their content; let nested ones shrink */
-[data-fieldspec] .fs-collapsible > summary { cursor: pointer; }
+[data-fieldspec] .fs-collapsible:not([data-open]) { padding-bottom: 0; }
+[data-fieldspec] .fs-toggle { border: 0; padding: 0; background: none; font-weight: 600; display: inline-flex; gap: 6px; align-items: center; }
+[data-fieldspec] .fs-toggle::before { content: "▸"; font-size: 0.75em; transition: transform 0.15s; }
+[data-fieldspec] .fs-toggle[aria-expanded="true"]::before { transform: rotate(90deg); }
+[data-fieldspec] .fs-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 [data-fieldspec] .fs-segmented { border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: 6px; overflow: hidden; width: fit-content; }
 [data-fieldspec] .fs-segmented label { padding: 4px 12px; cursor: pointer; }
 [data-fieldspec] .fs-segmented label + label { border-left: 1px solid color-mix(in srgb, currentColor 25%, transparent); }
@@ -914,7 +948,7 @@ export const defaultStyles = `
 [data-fieldspec] .fs-switch:indeterminate::after { transform: translateX(0.45em); }
 [data-fieldspec] .fs-mixed { opacity: 0.6; font-style: italic; }
 [data-fieldspec] .fs-handle { cursor: grab; user-select: none; padding: 4px 2px; opacity: 0.5; line-height: 1.6; }
-[data-fieldspec] .fs-handle:hover { opacity: 1; }
+[data-fieldspec] .fs-handle:hover, [data-fieldspec] .fs-handle:focus-visible { opacity: 1; }
 [data-fieldspec] .fs-item[data-dragging] { opacity: 0.4; }
 [data-fieldspec] .fs-item[data-drop="before"] { box-shadow: 0 -2px 0 #3b82f6; }
 [data-fieldspec] .fs-item[data-drop="after"] { box-shadow: 0 2px 0 #3b82f6; }

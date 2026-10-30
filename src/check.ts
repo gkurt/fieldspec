@@ -187,6 +187,7 @@ function checkDecl(c: Checker, decl: unknown, at: string, scope: Scope, self: re
     if (decl[prop] !== undefined) checkText(c, decl[prop], `${at}/${prop}`, scope);
   }
   if (decl.optional !== undefined && typeof decl.optional !== "boolean") c.fault(`${at}/optional`, "must be true or false");
+  if (decl.order !== undefined && (typeof decl.order !== "number" || !Number.isFinite(decl.order))) c.fault(`${at}/order`, "must be a number; lower draws first");
   if (decl.deprecated !== undefined && typeof decl.deprecated !== "boolean" && typeof decl.deprecated !== "string") {
     c.fault(`${at}/deprecated`, "must be true, or a string saying what to use instead");
   }

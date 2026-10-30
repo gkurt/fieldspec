@@ -138,6 +138,11 @@ export interface FieldBase {
   readonly required?: Condition;
   /** The id of a group in the same scope. */
   readonly group?: string;
+  /**
+   * Where the field draws among its siblings: lower first. Fields without one count as 0, and
+   * equal ones keep the order they are declared in. It moves the field, not its value.
+   */
+  readonly order?: number;
   /** How this field draws: a control element, or a layout of its parts (or, for an object, of its fields). */
   readonly render?: RenderNode;
   /** Anything else, for the application. Never interpreted. */

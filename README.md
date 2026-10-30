@@ -46,7 +46,12 @@ differ from a built-in only by case.
 
 - A field has a `type` (a kind), or a `use` (see Presets), plus what every field may say:
   `label`, `description`, `hint`, `placeholder`, `examples`, `aliases`, `deprecated`, `default`,
-  `optional`, `readOnly`, `visible`, `enabled`, `required`, `group`, `render`, `meta`.
+  `optional`, `readOnly`, `visible`, `enabled`, `required`, `group`, `order`, `render`, `meta`.
+- **Order**: fields draw in the order they are declared. `order` moves one: lower draws first,
+  a field without it counts as 0, and equal ones keep their declared order, so `order: -1` puts
+  a field at the top and `order: 1` at the bottom. It moves the field, not its value, and a group
+  draws where its first field does. (JavaScript puts keys like `"2"` before all others, whatever
+  order you write them in; `order` puts them back.)
 - **Kinds**: `string`, `number`, `int`, `boolean`, `enum`, `date`, `bigint`, `url`, `regexp`,
   `bytes`, `json`, and the containers `array`, `set`, `record`, `map`, `object`, `variant`
   (a discriminated union). Values are real JS values (`Date`, `bigint`, `URL`, `Map`, `Set`,
@@ -137,11 +142,13 @@ control edits, so `"render": "slider"` on a string, or `"collapsed": "yes"`, is 
 `fieldspec/react` draws it with one renderer table keyed by element name: `FormView`,
 `useForm`, `useField`, and `defineRenderers(format, { GradientPicker })` to add or replace
 any element. A control with no renderer falls back to its kind's default control. List items
-reorder by dragging their handle (or with the arrow buttons), and a record's or map's keys are
+reorder by dragging their handle, or with the arrow keys while it has the focus, and a record's or map's keys are
 edited in place: a rename keeps the entry's value and position, and a taken or unreadable key is
 refused with the reason. An absent object (an optional one, say) shows an Add button rather
 than its fields, and an optional one that is there can be removed, so a definition that may
-contain itself draws only as deep as its values go.
+contain itself draws only as deep as its values go. A container field's label and a titled
+group's title both sit on their frame's border, and a list's or record's items show no label
+of their own: their position or key names them (screen readers still hear it).
 
 ## Extending
 

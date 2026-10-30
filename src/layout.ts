@@ -11,8 +11,8 @@
  * - In `layouts`, it arranges the whole form.
  * - A container without `children` is filled with what is in scope. With children, whatever
  *   in scope they do not place follows them, or goes where they put `rest`.
- * - Without any `render`, fields draw in declaration order; a grouped field brings its group,
- *   drawn where its first field would be.
+ * - Without any `render`, fields draw in declaration order, or by `order` where fields give
+ *   one; a grouped field brings its group, drawn where its first field would be.
  */
 import { deref, useName, type Lookup } from "./defs.ts";
 import { PARTS, type ElementDef } from "./elements.ts";
@@ -73,6 +73,8 @@ interface Ctx {
 
 interface ScopeInfo {
   readonly fields: Fields;
+  /** The fields in drawing order: by `order`, then as declared. */
+  readonly ordered: readonly (readonly [string, FieldDecl])[];
   readonly groups: Groups;
   readonly ctx: Ctx;
   /** The groups being drawn, so one placed inside itself is refused instead of drawn forever. */
@@ -125,11 +127,20 @@ function takesChildren(ctx: Ctx, type: string): boolean {
 }
 
 function scopeOf(fields: Fields, groups: Groups, ctx: Ctx): ScopeInfo {
-  return { fields, groups, ctx, drawing: new Set(), chains: new Map() };
+  const rank = (decl: FieldDecl) => {
+    const order = deref(ctx.lookup, decl).order;
+    return typeof order === "number" && Number.isFinite(order) ? order : 0;
+  };
+  // Sorting is stable, so equal ranks keep declaration order.
+  const ordered = Object.entries(fields)
+    .map(([key, decl]) => [key, decl, rank(decl)] as const)
+    .sort((a, b) => a[2] - b[2])
+    .map(([key, decl]) => [key, decl] as const);
+  return { fields, ordered, groups, ctx, drawing: new Set(), chains: new Map() };
 }
 
 function layoutScope(scope: ScopeInfo, fragment: RenderNode | undefined, key: string): LayoutNode {
-  if (fragment === undefined) return stack(key, autoNodes(scope, Object.keys(scope.fields), key));
+  if (fragment === undefined) return stack(key, autoNodes(scope, scope.ordered.map(([k]) => k), key));
   const placed: Placed = { fields: new Set(), groups: new Set() };
   const resolved = resolveNode(scope, fragment, `${key}.f`, placed);
   return fillRest(resolved, scope, unplaced(scope, placed, undefined), key);
@@ -143,7 +154,7 @@ const groupOf = (scope: ScopeInfo, decl: FieldDecl) => deref(scope.ctx.lookup, d
 
 /** Fields not placed, directly or through their group. Limited to `members` when given. */
 function unplaced(scope: ScopeInfo, placed: Placed, members: Set<string> | undefined): string[] {
-  return Object.entries(scope.fields)
+  return scope.ordered
     .filter(([key, decl]) => {
       if (placed.fields.has(key)) return false;
       if (members && !members.has(key)) return false;
@@ -186,14 +197,14 @@ function fillRest(node: LayoutNode, scope: ScopeInfo, keys: string[], key: strin
 }
 
 /**
- * Nodes for these fields in declaration order. A grouped field brings the outermost group
- * below `within` that holds it, once.
+ * Nodes for these fields in drawing order. A grouped field brings the outermost group below
+ * `within` that holds it, once.
  */
 function autoNodes(scope: ScopeInfo, keys: readonly string[], key: string, within?: string): LayoutNode[] {
   const out: LayoutNode[] = [];
   const wanted = new Set(keys);
   const emitted = new Set<string>();
-  for (const [name, decl] of Object.entries(scope.fields)) {
+  for (const [name, decl] of scope.ordered) {
     if (!wanted.has(name)) continue;
     const chain = chainOf(scope, groupOf(scope, decl));
     const stop = within === undefined ? chain.length : chain.indexOf(within);

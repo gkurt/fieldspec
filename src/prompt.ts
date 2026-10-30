@@ -32,7 +32,7 @@ export function prompt(format: Format = coreFormat, options: PromptOptions = {})
     '{ "$schema": "…", "title": "…", "fields": { "<key>": <field> }, "groups": { "<id>": <group> }, "defs": { "<Name>": <field> }, "layouts": { "<name>": <render> } }',
     "```",
     "",
-    "Only `fields` is required. Keys are lowerCamelCase. Field order is display order.",
+    "Only `fields` is required. Keys are lowerCamelCase. Field order is display order; a field's `order` (lower first, 0 when absent) moves it.",
     "",
     `Start the spec with \`"$schema": "${SCHEMA_URL}"\`: it names the version of the format it is written in.`,
     "",
