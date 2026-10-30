@@ -1,0 +1,52 @@
+{
+  "name": "fieldspec",
+  "version": "0.1.0",
+  "description": "A typed, serializable, headless format for configs and the forms that edit them.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./react": "./src/react/index.tsx",
+    "./zod": "./src/zod.ts",
+    "./schema.json": "./schema/spec.json"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc",
+    "schema": "bun scripts/schema.ts",
+    "demo": "vite demo --port 4192"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "zod": ">=4"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "zod": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@happy-dom/global-registrator": "21.0.2",
+    "@json-render/core": "0.21.1",
+    "@json-render/react": "0.21.1",
+    "@json-render/shadcn": "0.21.1",
+    "@types/bun": "latest",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.1.2",
+    "ajv": "8",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "typescript": "7.0.2",
+    "vite": "^8.3.5",
+    "zod": "^4.6.7"
+  },
+  "files": [
+    "src",
+    "schema",
+    "README.md"
+  ]
+}

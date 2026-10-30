@@ -1,0 +1,3269 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+  "title": "fieldspec spec 0.1.0",
+  "description": "A fieldspec spec: the fields of a config or form, their kinds, constraints, defaults and conditions, and how a form for them is drawn. Built-in names are lowercase; names an application or a spec defines are capitalized.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "This schema's URL, which names the version the spec is written for."
+    },
+    "title": {
+      "$ref": "#/$defs/text"
+    },
+    "description": {
+      "$ref": "#/$defs/text"
+    },
+    "fields": {
+      "type": "object",
+      "description": "The fields, in display order.",
+      "additionalProperties": {
+        "$ref": "#/$defs/field"
+      }
+    },
+    "groups": {
+      "type": "object",
+      "description": "Groups fields may join, for display.",
+      "additionalProperties": {
+        "$ref": "#/$defs/group"
+      }
+    },
+    "defs": {
+      "type": "object",
+      "description": "Named declarations fields build on with `use`. Names are capitalized.",
+      "propertyNames": {
+        "pattern": "^[A-Z][A-Za-z0-9]*(\\.[A-Z][A-Za-z0-9]*)*$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/field"
+      }
+    },
+    "layouts": {
+      "type": "object",
+      "description": "Named arrangements of the whole form.",
+      "additionalProperties": {
+        "$ref": "#/$defs/render"
+      }
+    },
+    "functions": {
+      "type": "object",
+      "description": "Functions `$computed` may call, implemented by the application.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "args": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "returns": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "fields"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "field": {
+      "anyOf": [
+        {
+          "type": "object",
+          "title": "string",
+          "description": "Text.",
+          "properties": {
+            "type": {
+              "const": "string"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            },
+            "minLength": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Fewest characters."
+            },
+            "maxLength": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Most characters."
+            },
+            "pattern": {
+              "type": "string",
+              "description": "A regular expression the whole value must match."
+            },
+            "format": {
+              "type": "string",
+              "description": "A known shape: email, uri, uuid, hostname, ipv4, color. Others are kept as hints."
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "number",
+          "description": "A finite number.",
+          "properties": {
+            "type": {
+              "const": "number"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            },
+            "min": {
+              "type": "number",
+              "description": "Smallest allowed value, inclusive."
+            },
+            "max": {
+              "type": "number",
+              "description": "Largest allowed value, inclusive."
+            },
+            "step": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Granularity a control moves in."
+            },
+            "unit": {
+              "type": "string",
+              "description": "Shown beside the value, e.g. px, ms, %."
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "int",
+          "description": "A whole number.",
+          "properties": {
+            "type": {
+              "const": "int"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            },
+            "min": {
+              "type": "number",
+              "description": "Smallest allowed value, inclusive."
+            },
+            "max": {
+              "type": "number",
+              "description": "Largest allowed value, inclusive."
+            },
+            "step": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Granularity a control moves in."
+            },
+            "unit": {
+              "type": "string",
+              "description": "Shown beside the value, e.g. px, ms, %."
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "boolean",
+          "description": "On or off.",
+          "properties": {
+            "type": {
+              "const": "boolean"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "enum",
+          "description": "One of a fixed list of options. Options are values or { value, label, description, visible }.",
+          "properties": {
+            "type": {
+              "const": "enum"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            },
+            "options": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": [
+                          "string",
+                          "number",
+                          "boolean"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "value": {
+                            "type": [
+                              "string",
+                              "number",
+                              "boolean"
+                            ]
+                          },
+                          "label": {
+                            "$ref": "#/$defs/text"
+                          },
+                          "description": {
+                            "$ref": "#/$defs/text"
+                          },
+                          "visible": {
+                            "$ref": "#/$defs/condition"
+                          }
+                        },
+                        "required": [
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                {
+                  "$ref": "#/$defs/expr"
+                }
+              ],
+              "description": "The choices. An expression ($computed or $state) makes them dynamic."
+            }
+          },
+          "required": [
+            "type",
+            "options"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "date",
+          "description": "A date, or a date and time with `time: true`. JSON form: ISO 8601.",
+          "properties": {
+            "type": {
+              "const": "date"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            },
+            "min": {
+              "type": "string",
+              "description": "Earliest, ISO 8601."
+            },
+            "max": {
+              "type": "string",
+              "description": "Latest, ISO 8601."
+            },
+            "time": {
+              "type": "boolean",
+              "description": "Whether the time of day matters."
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "bigint",
+          "description": "An integer of any size. JSON form: a decimal string.",
+          "properties": {
+            "type": {
+              "const": "bigint"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            },
+            "min": {
+              "type": "string",
+              "pattern": "^-?\\d+$",
+              "description": "Smallest, as a decimal string."
+            },
+            "max": {
+              "type": "string",
+              "pattern": "^-?\\d+$",
+              "description": "Largest, as a decimal string."
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "url",
+          "description": "An absolute URL. JSON form: a string.",
+          "properties": {
+            "type": {
+              "const": "url"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            },
+            "protocols": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": ":$"
+              },
+              "description": "Allowed protocols with their colon, e.g. [\"https:\"]."
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "regexp",
+          "description": "A regular expression. JSON form: \"/source/flags\".",
+          "properties": {
+            "type": {
+              "const": "regexp"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "bytes",
+          "description": "Binary data, e.g. an uploaded file. JSON form: base64.",
+          "properties": {
+            "type": {
+              "const": "bytes"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            },
+            "maxBytes": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Largest size in bytes."
+            },
+            "accept": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "MIME types a picker may offer."
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "json",
+          "description": "Any JSON value.",
+          "properties": {
+            "type": {
+              "const": "json"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "array",
+          "description": "An ordered list of items of one declaration.",
+          "properties": {
+            "type": {
+              "const": "array"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            },
+            "items": {
+              "$ref": "#/$defs/field",
+              "description": "The declaration every item follows."
+            },
+            "minItems": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Fewest items."
+            },
+            "maxItems": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Most items."
+            }
+          },
+          "required": [
+            "type",
+            "items"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "set",
+          "description": "Distinct items of one declaration. A set of an enum draws as checkboxes. JSON form: an array.",
+          "properties": {
+            "type": {
+              "const": "set"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            },
+            "items": {
+              "$ref": "#/$defs/field",
+              "description": "The declaration every item follows."
+            },
+            "minItems": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Fewest items."
+            },
+            "maxItems": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Most items."
+            }
+          },
+          "required": [
+            "type",
+            "items"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "record",
+          "description": "Entries under keys the user chooses, every value following one declaration.",
+          "properties": {
+            "type": {
+              "const": "record"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            },
+            "values": {
+              "$ref": "#/$defs/field",
+              "description": "The declaration every value follows."
+            },
+            "keyPattern": {
+              "type": "string",
+              "description": "A regular expression every key must match."
+            }
+          },
+          "required": [
+            "type",
+            "values"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "map",
+          "description": "Entries whose keys follow their own declaration (string, int, number or enum). JSON form: [key, value] pairs.",
+          "properties": {
+            "type": {
+              "const": "map"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            },
+            "keys": {
+              "$ref": "#/$defs/field",
+              "description": "The declaration keys follow."
+            },
+            "values": {
+              "$ref": "#/$defs/field",
+              "description": "The declaration values follow."
+            }
+          },
+          "required": [
+            "type",
+            "keys",
+            "values"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "object",
+          "description": "Named fields, each with its own declaration. Its value is an object.",
+          "properties": {
+            "type": {
+              "const": "object"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            },
+            "fields": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/field"
+              },
+              "description": "The fields, in display order."
+            },
+            "groups": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/group"
+              },
+              "description": "Groups the fields here may join."
+            },
+            "unknown": {
+              "enum": [
+                "error",
+                "strip",
+                "keep"
+              ],
+              "description": "Keys no field claims: report them (default), drop them, or keep them."
+            }
+          },
+          "required": [
+            "type",
+            "fields"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "variant",
+          "description": "One of several shapes, chosen by the value of `key`. Each variant has its own fields.",
+          "properties": {
+            "type": {
+              "const": "variant"
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            },
+            "key": {
+              "type": "string",
+              "description": "The property that names the variant."
+            },
+            "variants": {
+              "type": "object",
+              "minProperties": 1,
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "$ref": "#/$defs/text"
+                  },
+                  "description": {
+                    "$ref": "#/$defs/text"
+                  },
+                  "fields": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/$defs/field"
+                    }
+                  },
+                  "groups": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/$defs/group"
+                    }
+                  }
+                },
+                "required": [
+                  "fields"
+                ],
+                "additionalProperties": false
+              },
+              "description": "Each variant's name and fields."
+            }
+          },
+          "required": [
+            "type",
+            "key",
+            "variants"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "use",
+          "description": "Builds on a preset or definition; its own properties override the base's.",
+          "properties": {
+            "use": {
+              "type": "string",
+              "description": "A preset or a definition this field builds on; its own properties override the base's. Replaces `type`."
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            }
+          },
+          "required": [
+            "use"
+          ],
+          "not": {
+            "required": [
+              "type"
+            ]
+          }
+        },
+        {
+          "type": "object",
+          "title": "extension kind",
+          "description": "A kind an extended format adds. Its name is capitalized.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Za-z0-9]*(\\.[A-Z][A-Za-z0-9]*)*$",
+              "description": "The kind."
+            },
+            "label": {
+              "$ref": "#/$defs/text",
+              "description": "What the field is called."
+            },
+            "description": {
+              "$ref": "#/$defs/text",
+              "description": "What it does, in a sentence."
+            },
+            "hint": {
+              "$ref": "#/$defs/text",
+              "description": "A short line under the control."
+            },
+            "placeholder": {
+              "$ref": "#/$defs/text",
+              "description": "Shown in an empty control."
+            },
+            "examples": {
+              "type": "array",
+              "description": "Sample values."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other keys the value is read from."
+            },
+            "deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true, or what to use instead."
+            },
+            "default": {
+              "$ref": "#/$defs/expr",
+              "description": "The value when absent. May be an expression."
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "The value may be absent."
+            },
+            "readOnly": {
+              "type": "boolean",
+              "description": "Shown but not editable."
+            },
+            "visible": {
+              "$ref": "#/$defs/condition",
+              "description": "Shown, and validated, only while this holds."
+            },
+            "enabled": {
+              "$ref": "#/$defs/condition",
+              "description": "Editable only while this holds."
+            },
+            "required": {
+              "$ref": "#/$defs/condition",
+              "description": "Must be non-empty while this holds."
+            },
+            "group": {
+              "type": "string",
+              "description": "The id of a group in the same scope."
+            },
+            "render": {
+              "$ref": "#/$defs/render",
+              "description": "A control element (`slider`), or a layout of the field's parts; see Rendering."
+            },
+            "meta": {
+              "type": "object",
+              "description": "Free-form data for the application."
+            }
+          },
+          "required": [
+            "type"
+          ]
+        }
+      ]
+    },
+    "group": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/text"
+        },
+        "description": {
+          "$ref": "#/$defs/text"
+        },
+        "render": {
+          "$ref": "#/$defs/render"
+        },
+        "visible": {
+          "$ref": "#/$defs/condition"
+        },
+        "group": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "render": {
+      "anyOf": [
+        {
+          "enum": [
+            "stack",
+            "row",
+            "columns",
+            "collapsible",
+            "scroll",
+            "tabs",
+            "text",
+            "divider",
+            "field",
+            "group",
+            "rest",
+            "label",
+            "help",
+            "errors",
+            "control",
+            "input",
+            "textarea",
+            "select",
+            "radio",
+            "segmented",
+            "checkbox",
+            "switch",
+            "slider",
+            "date",
+            "color",
+            "file",
+            "checks",
+            "list",
+            "entries",
+            "variant",
+            "fields"
+          ]
+        },
+        {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*(\\.[A-Z][A-Za-z0-9]*)*$"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "field": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "field"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "group": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "group"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "anyOf": [
+            {
+              "type": "object",
+              "title": "stack",
+              "description": "Children one under another. With a title, a framed block.",
+              "properties": {
+                "type": {
+                  "const": "stack"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "$ref": "#/$defs/text",
+                      "description": "A heading; a group's label fills it."
+                    },
+                    "description": {
+                      "$ref": "#/$defs/text",
+                      "description": "A line under the heading."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "children": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/render"
+                  }
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "row",
+              "description": "Children side by side, sharing the width; wraps when narrow.",
+              "properties": {
+                "type": {
+                  "const": "row"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "$ref": "#/$defs/text",
+                      "description": "A heading; a group's label fills it."
+                    },
+                    "description": {
+                      "$ref": "#/$defs/text",
+                      "description": "A line under the heading."
+                    },
+                    "gap": {
+                      "enum": [
+                        "none",
+                        "sm",
+                        "md",
+                        "lg"
+                      ],
+                      "description": "Space between."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "children": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/render"
+                  }
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "columns",
+              "description": "Children in a grid of equal columns.",
+              "properties": {
+                "type": {
+                  "const": "columns"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "$ref": "#/$defs/text",
+                      "description": "A heading; a group's label fills it."
+                    },
+                    "description": {
+                      "$ref": "#/$defs/text",
+                      "description": "A line under the heading."
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 6,
+                      "description": "How many columns. Default 2."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "children": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/render"
+                  }
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "collapsible",
+              "description": "A titled block that opens and closes.",
+              "properties": {
+                "type": {
+                  "const": "collapsible"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "$ref": "#/$defs/text",
+                      "description": "A heading; a group's label fills it."
+                    },
+                    "description": {
+                      "$ref": "#/$defs/text",
+                      "description": "A line under the heading."
+                    },
+                    "collapsed": {
+                      "type": "boolean",
+                      "description": "Starts closed."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "children": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/render"
+                  }
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "scroll",
+              "description": "Children in a box no taller than maxHeight; past it, the box scrolls.",
+              "properties": {
+                "type": {
+                  "const": "scroll"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "$ref": "#/$defs/text",
+                      "description": "A heading; a group's label fills it."
+                    },
+                    "description": {
+                      "$ref": "#/$defs/text",
+                      "description": "A line under the heading."
+                    },
+                    "maxHeight": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        },
+                        {
+                          "type": "string",
+                          "pattern": "^\\d+(\\.\\d+)?(px|rem|em|vh|%)$"
+                        }
+                      ],
+                      "description": "The tallest it grows: pixels, or a CSS length (`20rem`, `50vh`). Default `20rem`."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "children": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/render"
+                  }
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "tabs",
+              "description": "Each child is a tab, named by its title.",
+              "properties": {
+                "type": {
+                  "const": "tabs"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "$ref": "#/$defs/text",
+                      "description": "A heading; a group's label fills it."
+                    },
+                    "description": {
+                      "$ref": "#/$defs/text",
+                      "description": "A line under the heading."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "children": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/render"
+                  }
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "text",
+              "description": "A line of prose.",
+              "properties": {
+                "type": {
+                  "const": "text"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "text": {
+                      "$ref": "#/$defs/text",
+                      "description": "What it says."
+                    },
+                    "tone": {
+                      "enum": [
+                        "default",
+                        "muted",
+                        "warning"
+                      ],
+                      "description": "Emphasis."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "divider",
+              "description": "A rule between blocks.",
+              "properties": {
+                "type": {
+                  "const": "divider"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "field",
+              "description": "A whole field: label, control, help and errors.",
+              "properties": {
+                "type": {
+                  "const": "field"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "group",
+              "description": "A whole group from this scope.",
+              "properties": {
+                "type": {
+                  "const": "group"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "group": {
+                      "type": "string",
+                      "description": "The group's id."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "rest",
+              "description": "Every field and group of this scope not placed elsewhere, in order.",
+              "properties": {
+                "type": {
+                  "const": "rest"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "label",
+              "description": "A field's label, or any `text` as a label.",
+              "properties": {
+                "type": {
+                  "const": "label"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    },
+                    "text": {
+                      "$ref": "#/$defs/text",
+                      "description": "Shown instead of the field's label."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "help",
+              "description": "A field's description and hint.",
+              "properties": {
+                "type": {
+                  "const": "help"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "errors",
+              "description": "The errors of one field, or of several.",
+              "properties": {
+                "type": {
+                  "const": "errors"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    },
+                    "fields": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Several fields at once."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "control",
+              "description": "A field's control, whichever it is.",
+              "properties": {
+                "type": {
+                  "const": "control"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    },
+                    "placeholder": {
+                      "$ref": "#/$defs/text",
+                      "description": "Shown while empty."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "input",
+              "description": "A one-line text box. Edits string, number, int, bigint, url, regexp, json fields.",
+              "properties": {
+                "type": {
+                  "const": "input"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    },
+                    "placeholder": {
+                      "$ref": "#/$defs/text",
+                      "description": "Shown while empty."
+                    },
+                    "secret": {
+                      "type": "boolean",
+                      "description": "Masks what is typed."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "textarea",
+              "description": "A multi-line text box. Edits string, json fields.",
+              "properties": {
+                "type": {
+                  "const": "textarea"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    },
+                    "placeholder": {
+                      "$ref": "#/$defs/text",
+                      "description": "Shown while empty."
+                    },
+                    "rows": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "Visible lines."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "select",
+              "description": "A drop-down of options. Edits enum fields.",
+              "properties": {
+                "type": {
+                  "const": "select"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "radio",
+              "description": "Options as radio buttons. Edits enum fields.",
+              "properties": {
+                "type": {
+                  "const": "radio"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "segmented",
+              "description": "Options as a row of toggle buttons. Edits enum fields.",
+              "properties": {
+                "type": {
+                  "const": "segmented"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "checkbox",
+              "description": "A check box. Edits boolean fields.",
+              "properties": {
+                "type": {
+                  "const": "checkbox"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "switch",
+              "description": "An on/off switch. Edits boolean fields.",
+              "properties": {
+                "type": {
+                  "const": "switch"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "slider",
+              "description": "A slider between min and max. Edits number, int fields.",
+              "properties": {
+                "type": {
+                  "const": "slider"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    },
+                    "format": {
+                      "enum": [
+                        "number",
+                        "percent"
+                      ],
+                      "description": "How the value is shown beside it."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "date",
+              "description": "A date (and time) picker. Edits date fields.",
+              "properties": {
+                "type": {
+                  "const": "date"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "color",
+              "description": "A colour picker. Edits string fields.",
+              "properties": {
+                "type": {
+                  "const": "color"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    },
+                    "swatches": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Colours worth one click."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "file",
+              "description": "A file picker. Edits bytes fields.",
+              "properties": {
+                "type": {
+                  "const": "file"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "checks",
+              "description": "A check box per option of a set of an enum. Edits set fields.",
+              "properties": {
+                "type": {
+                  "const": "checks"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "list",
+              "description": "Items one under another, added, removed and reordered. Edits array, set fields.",
+              "properties": {
+                "type": {
+                  "const": "list"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    },
+                    "addLabel": {
+                      "$ref": "#/$defs/text",
+                      "description": "The add button's label."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "entries",
+              "description": "Key and value pairs. Edits record, map fields.",
+              "properties": {
+                "type": {
+                  "const": "entries"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "variant",
+              "description": "A choice of variant, then its fields. Edits variant fields.",
+              "properties": {
+                "type": {
+                  "const": "variant"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "fields",
+              "description": "An object's fields, arranged by its render. Edits object fields.",
+              "properties": {
+                "type": {
+                  "const": "fields"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "extension element",
+              "description": "An element an extended format adds. Its name is capitalized.",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "pattern": "^[A-Z][A-Za-z0-9]*(\\.[A-Z][A-Za-z0-9]*)*$"
+                },
+                "props": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/$defs/expr"
+                  }
+                },
+                "children": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/render"
+                  }
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      ]
+    },
+    "condition": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/condition"
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "$and": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/condition"
+              }
+            }
+          },
+          "required": [
+            "$and"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "$or": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/condition"
+              }
+            }
+          },
+          "required": [
+            "$or"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "$state": {
+              "type": "string"
+            },
+            "$item": {
+              "type": "string"
+            },
+            "$index": {
+              "const": true
+            },
+            "$computed": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "eq": {
+              "$ref": "#/$defs/expr"
+            },
+            "neq": {
+              "$ref": "#/$defs/expr"
+            },
+            "gt": {
+              "$ref": "#/$defs/expr"
+            },
+            "gte": {
+              "$ref": "#/$defs/expr"
+            },
+            "lt": {
+              "$ref": "#/$defs/expr"
+            },
+            "lte": {
+              "$ref": "#/$defs/expr"
+            },
+            "in": {
+              "$ref": "#/$defs/expr"
+            },
+            "not": {
+              "const": true
+            }
+          },
+          "oneOf": [
+            {
+              "required": [
+                "$state"
+              ]
+            },
+            {
+              "required": [
+                "$item"
+              ]
+            },
+            {
+              "required": [
+                "$index"
+              ]
+            },
+            {
+              "required": [
+                "$computed"
+              ]
+            }
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "expr": {
+      "anyOf": [
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ]
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/expr"
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "$state": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "$state"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "$item": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "$item"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "$index": {
+              "const": true
+            }
+          },
+          "required": [
+            "$index"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "$computed": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/expr"
+              }
+            }
+          },
+          "required": [
+            "$computed"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "$cond": {
+              "$ref": "#/$defs/condition"
+            },
+            "$then": {
+              "$ref": "#/$defs/expr"
+            },
+            "$else": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "$cond",
+            "$then",
+            "$else"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "$template": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "$template"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/expr"
+          }
+        }
+      ]
+    },
+    "text": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/expr"
+        }
+      ]
+    }
+  }
+}

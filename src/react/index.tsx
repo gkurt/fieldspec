@@ -1,0 +1,896 @@
+/**
+ * React rendering. The form is headless; this draws its layout tree with one table of
+ * renderers, keyed by element name: layout (`stack`, `row`, …), parts (`label`, `errors`, …)
+ * and controls (`input`, `slider`, …) alike. Every entry can be replaced, and your own
+ * elements (capitalized) are added the same way. A control with no renderer falls back to its
+ * kind's default control, then to `input`.
+ */
+import {
+  createContext,
+  createElement,
+  useContext,
+  useEffect,
+  useId,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
+import { deref } from "../defs.ts";
+import type { Scope } from "../expr.ts";
+import { createForm, type FieldState, type Form, type FormOptions } from "../form.ts";
+import type { Format } from "../format.ts";
+import type { Infer } from "../infer.ts";
+import { optionsOf } from "../kinds.ts";
+import { defaultControl, type LayoutNode } from "../layout.ts";
+import { joinPointer, resolvePointer } from "../pointer.ts";
+import type { EnumField, Expr, FieldDecl, VariantField } from "../types.ts";
+import { initialValue } from "../values.ts";
+
+// ── Hooks ────────────────────────────────────────────────────────────────────────────────
+
+/** A form for this spec, created once. */
+export function useForm<S extends Parameters<typeof createForm>[0]>(spec: S, options?: FormOptions): Form<Infer<S>> {
+  const [form] = useState(() => createForm(spec, options));
+  return form as Form<Infer<S>>;
+}
+
+/** Re-render when the form changes. Returns its version. */
+export function useFormVersion(form: Form<unknown>): number {
+  return useSyncExternalStore(form.subscribe, () => form.version, () => form.version);
+}
+
+/** A field's live state, or undefined if the path is not a field. */
+export function useField(form: Form<unknown>, path: string): FieldState | undefined {
+  useFormVersion(form);
+  return form.field(path);
+}
+
+// ── The renderer table ───────────────────────────────────────────────────────────────────
+
+export interface ElementProps {
+  readonly node: LayoutNode;
+  /** The element's props, evaluated. */
+  readonly props: Readonly<Record<string, unknown>>;
+  readonly children: ReactNode;
+  readonly form: Form<unknown>;
+  /** For `field`, parts and controls: the field. */
+  readonly field?: FieldState;
+  /** For `errors` over several fields. */
+  readonly fields?: readonly FieldState[];
+  /** The id a field's control carries, for labels to point at. */
+  readonly id?: string;
+  /** For controls: whether editing is off. */
+  readonly disabled?: boolean;
+  /** For controls: write the field's value. */
+  set?(value: unknown): void;
+  /** For controls: mark the field touched. */
+  touch?(): void;
+  /** For `field`: draw the field's control. */
+  control?(): ReactNode;
+  /** For container controls (`list`, `entries`, `variant`, `fields`): the field's layout node, with its insides. */
+  readonly fieldNode?: LayoutNode;
+  /** For container controls: draw a node anchored at a pointer. */
+  render?(node: LayoutNode, anchor: string, scope?: Partial<Scope>): ReactNode;
+}
+
+export type ElementRenderer = (props: ElementProps) => ReactNode;
+export type Renderers = { readonly [element: string]: ElementRenderer };
+
+/** The default renderers with yours laid over. Your own element names are capitalized. */
+export function defineRenderers(_format: Format<any, any>, overrides: Partial<Record<string, ElementRenderer>>): Renderers {
+  return { ...defaultRenderers, ...(overrides as Record<string, ElementRenderer>) };
+}
+
+// ── Drawing ──────────────────────────────────────────────────────────────────────────────
+
+interface DrawContext {
+  readonly form: Form<unknown>;
+  readonly renderers: Renderers;
+  readonly idPrefix: string;
+}
+
+const Ctx = createContext<DrawContext | null>(null);
+/** The field node whose own render is being drawn, so its parts can reach its insides. */
+const OwnField = createContext<LayoutNode | undefined>(undefined);
+
+export interface FormViewProps {
+  readonly form: Form<any>;
+  /** A named layout from the spec. */
+  readonly view?: string;
+  readonly renderers?: Renderers;
+  readonly className?: string;
+}
+
+/** Draws a whole form. */
+export function FormView({ form, view, renderers = defaultRenderers, className }: FormViewProps) {
+  useFormVersion(form);
+  const idPrefix = useId();
+  return (
+    <Ctx.Provider value={{ form, renderers, idPrefix }}>
+      <div className={cx("fs-form", className)} data-fieldspec="">
+        <Node node={form.layout(view)} scope={{ base: "" }} />
+      </div>
+    </Ctx.Provider>
+  );
+}
+
+function useDraw(): DrawContext {
+  const ctx = useContext(Ctx);
+  if (!ctx) throw new Error("fieldspec: draw inside <FormView>");
+  return ctx;
+}
+
+const idFor = (prefix: string, path: string) => `${prefix}${path.replace(/[^A-Za-z0-9_-]/g, "_")}`;
+
+/** One layout node, at a scope whose `base` is the anchor its field pointers start from. */
+function Node({ node, scope }: { node: LayoutNode; scope: Scope }): ReactNode {
+  const { form, renderers, idPrefix } = useDraw();
+  const own = useContext(OwnField);
+  if (node.visible !== undefined && !form.test(node.visible, scope)) return null;
+  const anchor = scope.base;
+  const props: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(node.props)) props[k] = form.evaluate(v, scope);
+  const role = form.format.elements.get(node.type)?.role;
+
+  if (node.type === "field") {
+    const field = form.field(resolvePointer(node.field ?? "", anchor));
+    if (!field || !field.visible) return null;
+    if (node.fragment) {
+      return (
+        <OwnField.Provider value={node}>
+          <Node node={node.fragment} scope={scope} />
+        </OwnField.Provider>
+      );
+    }
+    const id = idFor(idPrefix, field.path);
+    const control = () => <Control element={node.control?.type} elementProps={node.control?.props} field={field} fieldNode={node} />;
+    return createElement(renderers.field ?? defaultRenderers.field!, { node, props, children: null, form, field, control, id });
+  }
+
+  if (role === "part" || role === "control") {
+    const many = node.fields?.map((f) => form.field(resolvePointer(f, anchor))).filter((f): f is FieldState => !!f && f.visible);
+    const field = node.field !== undefined ? form.field(resolvePointer(node.field, anchor)) : undefined;
+    if (node.field !== undefined && (!field || !field.visible)) return null;
+    const fieldNode = field && own && resolvePointer(own.field ?? "", anchor) === field.path ? own : undefined;
+    if (field && (role === "control" || node.type === "control")) {
+      // `control` is the field's own control; a control element names the one to use.
+      const element = node.type === "control" ? (fieldNode?.control?.type ?? undefined) : node.type;
+      const elementProps = node.type === "control" ? { ...fieldNode?.control?.props, ...node.props } : node.props;
+      return <Control element={element} elementProps={elementProps} field={field} fieldNode={fieldNode} />;
+    }
+    const id = field ? idFor(idPrefix, field.path) : undefined;
+    const renderer = renderers[node.type] ?? defaultRenderers[node.type] ?? (() => null);
+    return createElement(renderer, { node, props, children: null, form, ...(field && { field }), ...(many && { fields: many }), ...(id && { id }) });
+  }
+
+  const children = node.children.map((child) => <Node key={child.key} node={child} scope={scope} />);
+  return createElement(renderers[node.type] ?? renderers.stack ?? defaultRenderers.stack!, { node, props, children, form });
+}
+
+/** A field's control: the element named, else the kind's default, else `input`. */
+function Control({ element, elementProps, field, fieldNode }: { element: string | undefined; elementProps?: { readonly [k: string]: Expr }; field: FieldState; fieldNode: LayoutNode | undefined }) {
+  const { form, renderers, idPrefix } = useDraw();
+  const fallback = defaultControl(form.format, field.decl);
+  const name = element !== undefined && renderers[element] ? element : renderers[fallback] ? fallback : "input";
+  const props: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(elementProps ?? {})) props[k] = form.evaluate(v, field.scope);
+  return createElement(renderers[name]!, {
+    node: fieldNode ?? { type: name, key: field.path, props: {}, children: [] },
+    props,
+    children: null,
+    form,
+    field,
+    id: idFor(idPrefix, field.path),
+    disabled: !field.enabled || field.readOnly,
+    set: (value: unknown) => form.set(field.path, value),
+    touch: () => form.touch(field.path),
+    ...(fieldNode && { fieldNode }),
+    render: (n: LayoutNode, at: string, extra?: Partial<Scope>) => <Node key={`${n.key}@${at}`} node={n} scope={{ base: at, ...extra }} />,
+  });
+}
+
+// ── Layout and parts ─────────────────────────────────────────────────────────────────────
+
+const gaps = { none: 0, sm: 8, md: 12, lg: 20 } as const;
+const text = (v: unknown) => (v === undefined || v === null ? undefined : String(v));
+/** A length for CSS: a number is pixels. */
+const cssLength = (v: unknown) => (typeof v === "number" ? `${v}px` : String(v));
+/** What a control shows for a field whose values differ. */
+const MIXED = "Mixed";
+const indeterminate = (field: FieldState) => (el: HTMLInputElement | null) => {
+  if (el) el.indeterminate = field.mixed;
+};
+const cx = (...names: (string | false | undefined)[]) => names.filter(Boolean).join(" ");
+const column: CSSProperties = { display: "flex", flexDirection: "column", gap: 12 };
+
+/** Set by `tabs` for its panes, whose titles are already on their tabs. */
+const InTab = createContext(false);
+
+/** A container's body, framed and headed when it has a title. */
+function Frame({ props, className, children }: { props: Readonly<Record<string, unknown>>; className: string; children: ReactNode }) {
+  const inTab = useContext(InTab);
+  if (props.title === undefined || inTab) {
+    return (
+      <div className={className}>
+        <InTab.Provider value={false}>{children}</InTab.Provider>
+      </div>
+    );
+  }
+  return (
+    <section className={cx("fs-section", className)}>
+      <h3 className="fs-title">{text(props.title)}</h3>
+      {props.description !== undefined && <p className="fs-help">{text(props.description)}</p>}
+      {children}
+    </section>
+  );
+}
+
+const CONTAINER_KINDS = new Set(["object", "variant", "array", "set", "record", "map"]);
+
+function FieldFrame({ field, control, id, node }: ElementProps) {
+  const f = field!;
+  const inline = node.control?.type === "checkbox" || node.control?.type === "switch";
+  if (CONTAINER_KINDS.has(f.decl.type)) {
+    return (
+      <fieldset className="fs-field fs-group" data-kind={f.decl.type} data-mixed={f.mixed ? "" : undefined}>
+        <legend className="fs-label">{f.label}</legend>
+        <Help field={f} />
+        {control!()}
+        <Errors fields={[f]} />
+      </fieldset>
+    );
+  }
+  return (
+    <div
+      className={cx("fs-field", inline && "fs-inline")}
+      data-kind={f.decl.type}
+      data-invalid={f.showIssues && f.issues.length > 0 ? "" : undefined}
+      data-mixed={f.mixed ? "" : undefined}
+    >
+      {inline ? (
+        <label className="fs-label" htmlFor={id}>
+          {control!()} {f.label}
+        </label>
+      ) : (
+        <>
+          <label className="fs-label" htmlFor={id}>
+            {f.label}
+            {f.required && <span aria-hidden="true"> *</span>}
+          </label>
+          {control!()}
+        </>
+      )}
+      <Help field={f} />
+      <Errors fields={[f]} />
+    </div>
+  );
+}
+
+function Help({ field }: { field: FieldState }) {
+  const lines = [field.description, field.hint].filter(Boolean);
+  if (lines.length === 0) return null;
+  return <div className="fs-help">{lines.join(" ")}</div>;
+}
+
+function Errors({ fields }: { fields: readonly FieldState[] }) {
+  const shown = fields.flatMap((f) => (f.showIssues ? f.issues.map((i) => ({ ...i, label: f.label })) : []));
+  if (shown.length === 0) return null;
+  return (
+    <ul className="fs-errors" role="alert">
+      {shown.map((i) => (
+        <li key={`${i.path}:${i.code}`}>{fields.length > 1 ? `${i.label} ${i.message}` : i.message}</li>
+      ))}
+    </ul>
+  );
+}
+
+function Tabs({ node, children, props }: ElementProps) {
+  const [active, setActive] = useState(0);
+  const panes = Array.isArray(children) ? children : [children];
+  const titles = node.children.map((c, i) => text(c.props.title) ?? `Tab ${i + 1}`);
+  return (
+    <Frame props={props} className="fs-tabs">
+      <div role="tablist" style={{ display: "flex", gap: 4, marginBottom: 12 }}>
+        {titles.map((t, i) => (
+          <button key={t + i} type="button" role="tab" aria-selected={i === active} onClick={() => setActive(i)}>
+            {t}
+          </button>
+        ))}
+      </div>
+      <div role="tabpanel">
+        <InTab.Provider value>{panes[active]}</InTab.Provider>
+      </div>
+    </Frame>
+  );
+}
+
+const layoutRenderers: Renderers = {
+  stack: ({ children, props }) => (
+    <Frame props={props} className="fs-stack">
+      <div style={column}>{children}</div>
+    </Frame>
+  ),
+  row: ({ children, props }) => (
+    <Frame props={props} className="fs-row">
+      <div style={{ display: "flex", flexWrap: "wrap", gap: gaps[(props.gap as keyof typeof gaps) ?? "md"] ?? 12 }}>
+        {Array.isArray(children)
+          ? children.map((c, i) => (c ? <div key={i} style={{ flex: "1 1 10rem", minWidth: 0 }}>{c}</div> : null))
+          : children}
+      </div>
+    </Frame>
+  ),
+  columns: ({ children, props }) => (
+    <Frame props={props} className="fs-columns">
+      <div style={{ display: "grid", gap: 12, gridTemplateColumns: `repeat(${Number(props.count ?? 2)}, minmax(0, 1fr))` }}>{children}</div>
+    </Frame>
+  ),
+  collapsible: ({ children, props }) => (
+    <details className="fs-collapsible" open={!props.collapsed}>
+      <summary className="fs-title">{text(props.title)}</summary>
+      {props.description !== undefined && <p className="fs-help">{text(props.description)}</p>}
+      <div style={column}>{children}</div>
+    </details>
+  ),
+  scroll: ({ children, props }) => (
+    <Frame props={props} className="fs-scroll">
+      {/* Focusable, so the keyboard can scroll it too. */}
+      <div className="fs-scroll-body" tabIndex={0} style={{ ...column, maxHeight: cssLength(props.maxHeight ?? "20rem"), overflowY: "auto" }}>
+        {children}
+      </div>
+    </Frame>
+  ),
+  tabs: Tabs,
+  text: ({ props }) => <p className={cx("fs-text", props.tone ? `fs-${String(props.tone)}` : undefined)}>{text(props.text)}</p>,
+  divider: () => <hr className="fs-divider" />,
+  field: FieldFrame,
+  label: ({ field, props, id }) => (
+    <label className="fs-label" htmlFor={id}>
+      {text(props.text) ?? field?.label}
+    </label>
+  ),
+  help: ({ field }) => (field ? <Help field={field} /> : null),
+  errors: ({ field, fields }) => <Errors fields={fields ?? (field ? [field] : [])} />,
+};
+
+// ── Controls ─────────────────────────────────────────────────────────────────────────────
+
+const ok = (value: unknown) => ({ ok: true as const, value });
+const fail = (error: string) => ({ ok: false as const, error });
+
+type Parse = { show(value: unknown): string; read(text: string): { ok: true; value: unknown } | { ok: false; error: string } };
+
+/** How a text box reads and shows each kind's values. */
+const PARSERS: Record<string, Parse> = {
+  string: { show: (v) => (typeof v === "string" ? v : ""), read: ok },
+  number: {
+    show: String,
+    read: (t) => (t.trim() !== "" && Number.isFinite(Number(t)) ? ok(Number(t)) : fail("Enter a number")),
+  },
+  int: {
+    show: String,
+    read: (t) => (t.trim() !== "" && Number.isInteger(Number(t)) ? ok(Number(t)) : fail("Enter a whole number")),
+  },
+  bigint: { show: String, read: (t) => (/^-?\d+$/.test(t.trim()) ? ok(BigInt(t.trim())) : fail("Enter a whole number")) },
+  url: { show: (v) => (v instanceof URL ? v.href : ""), read: (t) => (URL.canParse(t) ? ok(new URL(t)) : fail("Enter a full URL, like https://example.com")) },
+  regexp: {
+    show: String,
+    read: (t) => {
+      const m = /^\/(.*)\/([dgimsuvy]*)$/s.exec(t);
+      try {
+        return ok(m ? new RegExp(m[1]!, m[2]) : new RegExp(t));
+      } catch (e) {
+        return fail((e as Error).message);
+      }
+    },
+  },
+  json: {
+    show: (v) => JSON.stringify(v, null, 2),
+    read: (t) => {
+      try {
+        return ok(JSON.parse(t));
+      } catch {
+        return fail("Enter valid JSON");
+      }
+    },
+  },
+};
+
+/** The parser for a field, following its kind's base chain. */
+function parserFor(format: Format, type: string): Parse {
+  for (let name: string | undefined = type, i = 0; name !== undefined && i < 8; name = format.kinds.get(name)?.base, i++) {
+    if (PARSERS[name]) return PARSERS[name]!;
+  }
+  return PARSERS.string!;
+}
+
+/** A text box that parses: what is typed stays as typed until it parses. */
+function ParsedText({ p, parse, multiline, type, extra }: { p: ElementProps; parse: Parse; multiline?: boolean; type?: string; extra?: Record<string, unknown> }) {
+  const field = p.field!;
+  // A mixed field shows no value until it is edited.
+  const shown = field.value === undefined || field.mixed ? "" : parse.show(field.value);
+  const [draft, setDraft] = useState(shown);
+  const [error, setError] = useState<string | undefined>();
+  useEffect(() => {
+    setDraft((d) => {
+      const parsed = parse.read(d);
+      return parsed.ok && parse.show(parsed.value) === shown ? d : shown;
+    });
+  }, [shown]);
+  const common = {
+    id: p.id,
+    value: draft,
+    disabled: p.disabled,
+    placeholder: field.mixed ? MIXED : (text(p.props.placeholder) ?? field.placeholder),
+    "aria-invalid": error !== undefined || (field.showIssues && field.issues.length > 0),
+    onChange: (e: { target: { value: string } }) => {
+      const t = e.target.value;
+      setDraft(t);
+      if (t === "" && field.decl.optional) {
+        setError(undefined);
+        return p.set!(undefined);
+      }
+      const parsed = parse.read(t);
+      if (parsed.ok) {
+        setError(undefined);
+        p.set!(parsed.value);
+      } else setError(parsed.error);
+    },
+    onBlur: p.touch,
+    ...extra,
+  };
+  return (
+    <>
+      {multiline ? <textarea {...common} className="fs-textarea" rows={Number(p.props.rows ?? 4)} /> : <input {...common} className="fs-input" type={type ?? "text"} />}
+      {error && <div className="fs-errors">{error}</div>}
+    </>
+  );
+}
+
+function Input(p: ElementProps) {
+  const decl = p.field!.decl;
+  const parse = parserFor(p.form.format, decl.type);
+  const format = (decl as { format?: string }).format;
+  const numeric = decl.type === "number" || decl.type === "int";
+  const type = p.props.secret ? "password" : numeric ? "number" : format === "email" ? "email" : format === "uri" || decl.type === "url" ? "url" : "text";
+  const d = decl as { min?: number; max?: number; step?: number };
+  return <ParsedText p={p} parse={parse} type={type} extra={numeric ? { min: d.min, max: d.max, step: d.step ?? (decl.type === "int" ? 1 : "any") } : undefined} />;
+}
+
+function Slider({ field, id, disabled, set, touch, props }: ElementProps) {
+  const d = field!.decl as { min?: number; max?: number; step?: number; unit?: string };
+  const value = typeof field!.value === "number" ? field!.value : (d.min ?? 0);
+  const shown = props.format === "percent" ? `${Math.round(value * 100)}%` : `${value}${d.unit ?? ""}`;
+  return (
+    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <input
+        id={id}
+        className="fs-slider"
+        type="range"
+        min={d.min ?? 0}
+        max={d.max ?? 100}
+        step={d.step ?? (field!.decl.type === "int" ? 1 : "any")}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => set!(Number(e.target.value))}
+        onPointerUp={touch}
+        style={{ flex: 1 }}
+      />
+      <output htmlFor={id} className={field!.mixed ? "fs-mixed" : undefined} style={{ minWidth: "4ch", textAlign: "right" }}>
+        {field!.mixed ? MIXED : shown}
+      </output>
+    </div>
+  );
+}
+
+function Choices({ field, id, disabled, set, touch, segmented }: ElementProps & { segmented: boolean }) {
+  const options = field!.options ?? [];
+  const index = field!.mixed ? -1 : options.findIndex((o) => Object.is(o.value, field!.value));
+  return (
+    <div role="radiogroup" id={id} className={segmented ? "fs-segmented" : "fs-radio"} style={{ display: "flex", gap: segmented ? 0 : 12, flexWrap: "wrap" }}>
+      {options.map((o, i) => (
+        <label key={String(o.value)} title={o.description} data-checked={i === index ? "" : undefined}>
+          <input type="radio" name={id} checked={i === index} disabled={disabled} onChange={() => set!(o.value)} onBlur={touch} /> {o.label}
+        </label>
+      ))}
+    </div>
+  );
+}
+
+function Select({ field, id, disabled, set, touch }: ElementProps) {
+  const options = field!.options ?? [];
+  const index = field!.mixed ? -1 : options.findIndex((o) => Object.is(o.value, field!.value));
+  return (
+    <select id={id} className="fs-select" value={index} disabled={disabled} onChange={(e) => set!(options[Number(e.target.value)]?.value)} onBlur={touch}>
+      {index === -1 && <option value={-1}>{field!.mixed ? MIXED : field!.decl.optional ? "—" : "Choose…"}</option>}
+      {options.map((o, i) => (
+        <option key={String(o.value)} value={i} title={o.description}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function dateText(value: unknown, time: boolean): string {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) return "";
+  if (!time) return value.toISOString().slice(0, 10);
+  const local = new Date(value.getTime() - value.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+function ItemButtons({ onUp, onDown, onRemove, disabled }: { onUp?: () => void; onDown?: () => void; onRemove: () => void; disabled: boolean }) {
+  return (
+    <div style={{ display: "flex", gap: 4, alignItems: "start" }} className="fs-item-buttons">
+      <button type="button" aria-label="Move up" disabled={disabled || !onUp} onClick={onUp}>↑</button>
+      <button type="button" aria-label="Move down" disabled={disabled || !onDown} onClick={onDown}>↓</button>
+      <button type="button" aria-label="Remove" disabled={disabled} onClick={onRemove}>✕</button>
+    </div>
+  );
+}
+
+function List(p: ElementProps) {
+  const field = p.field!;
+  const isSet = field.decl.type === "set";
+  const list = Array.isArray(field.value) ? field.value : field.value instanceof Set ? [...field.value] : [];
+  const d = field.decl as { maxItems?: number };
+  const item = p.fieldNode?.item;
+  const [drag, setDrag] = useState<{ from: number; over: number } | undefined>();
+  if (isSet) {
+    // A set's items have no stable position to point at, so they are edited as lines.
+    const items = deref({ defs: p.form.spec.defs, presets: p.form.format.presets }, (field.decl as { items: FieldDecl }).items);
+    const numeric = items.type === "int" || items.type === "number";
+    return (
+      <textarea
+        id={p.id}
+        className="fs-textarea"
+        disabled={p.disabled}
+        defaultValue={list.join("\n")}
+        placeholder="One per line"
+        onBlur={(e) => {
+          const lines = e.target.value.split("\n").map((l) => l.trim()).filter(Boolean);
+          p.set!(new Set<unknown>(numeric ? lines.map(Number) : lines));
+          p.touch!();
+        }}
+      />
+    );
+  }
+  // Items reorder by dragging their handle (the arrows do the same from the keyboard).
+  const move = (from: number, to: number) => from !== to && p.form.moveItem(field.path, from, to);
+  return (
+    <div className="fs-list" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {list.map((_, i) => {
+        const at = joinPointer(field.path, i);
+        const dropping = drag !== undefined && drag.over === i && drag.from !== i ? (drag.from < i ? "after" : "before") : undefined;
+        return (
+          <div
+            key={i}
+            className="fs-item"
+            style={{ display: "flex", gap: 8, alignItems: "start" }}
+            data-dragging={drag?.from === i ? "" : undefined}
+            data-drop={dropping}
+            onDragOver={(e) => {
+              if (!drag) return;
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              if (drag.over !== i) setDrag({ ...drag, over: i });
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (drag) move(drag.from, i);
+              setDrag(undefined);
+            }}
+          >
+            <span
+              className="fs-handle"
+              draggable={!p.disabled}
+              aria-hidden="true"
+              title="Drag to reorder"
+              onDragStart={(e) => {
+                e.dataTransfer.effectAllowed = "move";
+                e.dataTransfer.setData("text/plain", String(i));
+                const row = e.currentTarget.parentElement;
+                if (row) e.dataTransfer.setDragImage(row, 12, 12);
+                setDrag({ from: i, over: i });
+              }}
+              onDragEnd={() => setDrag(undefined)}
+            >
+              ⠿
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>{item && p.render!(item, at, { item: at, index: i })}</div>
+            <ItemButtons
+              disabled={!!p.disabled}
+              onUp={i > 0 ? () => move(i, i - 1) : undefined}
+              onDown={i < list.length - 1 ? () => move(i, i + 1) : undefined}
+              onRemove={() => p.form.removeItem(at)}
+            />
+          </div>
+        );
+      })}
+      <div>
+        <button type="button" disabled={p.disabled || (d.maxItems !== undefined && list.length >= d.maxItems)} onClick={() => p.form.addItem(field.path)}>
+          {text(p.props.addLabel) ?? "Add"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Checks(p: ElementProps) {
+  const field = p.field!;
+  const items = deref({ defs: p.form.spec.defs, presets: p.form.format.presets }, (field.decl as { items: FieldDecl }).items);
+  const set = field.value instanceof Set ? field.value : new Set();
+  if (items.type !== "enum") return <List {...p} />;
+  const options = optionsOf(items as EnumField, { values: p.form.values }, field.scope);
+  return (
+    <div className="fs-checks" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+      {options.map((o) => (
+        <label key={String(o.value)}>
+          <input
+            type="checkbox"
+            disabled={p.disabled}
+            checked={set.has(o.value)}
+            onChange={(e) => {
+              const next = new Set(set);
+              if (e.target.checked) next.add(o.value);
+              else next.delete(o.value);
+              p.set!(next);
+            }}
+          />{" "}
+          {p.form.text(o.label, field.scope) ?? String(o.value)}
+        </label>
+      ))}
+    </div>
+  );
+}
+
+function Entries(p: ElementProps) {
+  const field = p.field!;
+  const isMap = field.decl.type === "map";
+  const entries: [unknown, unknown][] = isMap
+    ? field.value instanceof Map ? [...field.value] : []
+    : field.value && typeof field.value === "object" ? Object.entries(field.value) : [];
+  const [key, setKey] = useState("");
+  const keyDecl = isMap ? deref({ defs: p.form.spec.defs, presets: p.form.format.presets }, (field.decl as { keys: FieldDecl }).keys) : undefined;
+  const numeric = keyDecl?.type === "int" || keyDecl?.type === "number";
+  /** A typed key as the key it stands for, or what is wrong with it. */
+  const readKey = (typed: string): { key: unknown } | { error: string } => {
+    if (typed === "") return { error: "Enter a key" };
+    const k = numeric ? Number(typed) : typed;
+    if (numeric && (Number.isNaN(k) || (keyDecl?.type === "int" && !Number.isInteger(k)))) return { error: keyDecl?.type === "int" ? "Enter a whole number" : "Enter a number" };
+    if (entries.some(([existing]) => String(existing) === String(k))) return { error: `"${typed}" is already a key` };
+    return { key: k };
+  };
+  const add = () => {
+    const read = readKey(key);
+    if ("error" in read) return;
+    const values = (field.decl as { values: FieldDecl }).values;
+    const at = joinPointer(field.path, String(read.key));
+    const initial = initialValue(p.form.spec, values, p.form.values, at, { format: p.form.format });
+    if (isMap) {
+      const next = new Map(field.value instanceof Map ? field.value : []);
+      next.set(read.key, initial);
+      p.set!(next);
+    } else p.form.set(at, initial ?? "");
+    setKey("");
+  };
+  /** Renames an entry in place, keeping its value and its position. */
+  const rename = (from: unknown, typed: string): string | undefined => {
+    if (typed === String(from)) return undefined;
+    const read = readKey(typed);
+    if ("error" in read) return read.error;
+    const renamed = entries.map(([k, v]): [unknown, unknown] => [Object.is(k, from) ? read.key : k, v]);
+    p.set!(isMap ? new Map(renamed) : Object.fromEntries(renamed));
+    return undefined;
+  };
+  const item = p.fieldNode?.item;
+  return (
+    <div className="fs-entries" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {entries.map(([k], i) => {
+        const at = joinPointer(field.path, String(k));
+        return (
+          // By position, so a row keeps its focus and drafts while its key changes.
+          <div key={i} style={{ display: "flex", gap: 8, alignItems: "start" }}>
+            <KeyInput value={String(k)} disabled={!!p.disabled} rename={(typed) => rename(k, typed)} />
+            <div style={{ flex: 1, minWidth: 0 }}>{item && p.render!(item, at, { item: at })}</div>
+            <button type="button" aria-label="Remove" disabled={p.disabled} onClick={() => p.form.removeItem(at)}>
+              ✕
+            </button>
+          </div>
+        );
+      })}
+      <div style={{ display: "flex", gap: 8 }}>
+        <input className="fs-input" placeholder="New key" value={key} disabled={p.disabled} onChange={(e) => setKey(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), add())} />
+        <button type="button" disabled={p.disabled || key === ""} onClick={add}>
+          Add
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** An entry's key, edited in place: it takes effect on Enter or leaving the box, and Escape puts it back. */
+function KeyInput({ value, disabled, rename }: { value: string; disabled: boolean; rename(typed: string): string | undefined }) {
+  const [draft, setDraft] = useState(value);
+  const [error, setError] = useState<string | undefined>();
+  useEffect(() => setDraft(value), [value]);
+  const commit = () => setError(rename(draft));
+  return (
+    <div className="fs-key" style={{ width: "10rem", flex: "none" }}>
+      <input
+        className="fs-input"
+        aria-label="Key"
+        value={draft}
+        disabled={disabled}
+        aria-invalid={error !== undefined}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          } else if (e.key === "Escape") {
+            setDraft(value);
+            setError(undefined);
+          }
+        }}
+      />
+      {error && <div className="fs-errors">{error}</div>}
+    </div>
+  );
+}
+
+function Variant(p: ElementProps) {
+  const field = p.field!;
+  const v = field.decl as VariantField;
+  // Mixed, the values are of different variants: choosing one sets it, fresh, everywhere.
+  const current = field.mixed ? undefined : (field.value as Record<string, unknown> | undefined)?.[v.key];
+  const inner = typeof current === "string" ? p.fieldNode?.variants?.[current] : undefined;
+  return (
+    <div style={column}>
+      <select id={p.id} className="fs-select" value={typeof current === "string" ? current : ""} disabled={p.disabled} onChange={(e) => p.set!({ [v.key]: e.target.value })}>
+        {current === undefined && <option value="">{field.mixed ? MIXED : "Choose…"}</option>}
+        {Object.keys(v.variants).map((name) => (
+          <option key={name} value={name}>
+            {p.form.text(v.variants[name]!.label, field.scope) ?? name}
+          </option>
+        ))}
+      </select>
+      {inner && p.render!(inner, field.path)}
+    </div>
+  );
+}
+
+const controlRenderers: Renderers = {
+  input: Input,
+  textarea: (p) => <ParsedText p={p} parse={parserFor(p.form.format, p.field!.decl.type)} multiline />,
+  select: Select,
+  radio: (p) => <Choices {...p} segmented={false} />,
+  segmented: (p) => <Choices {...p} segmented />,
+  checkbox: ({ field, id, disabled, set, touch }) => (
+    <input id={id} type="checkbox" ref={indeterminate(field!)} checked={!field!.mixed && field!.value === true} disabled={disabled} onChange={(e) => set!(e.target.checked)} onBlur={touch} />
+  ),
+  switch: ({ field, id, disabled, set, touch }) => (
+    <input
+      id={id}
+      type="checkbox"
+      role="switch"
+      className="fs-switch"
+      ref={indeterminate(field!)}
+      checked={!field!.mixed && field!.value === true}
+      disabled={disabled}
+      onChange={(e) => set!(e.target.checked)}
+      onBlur={touch}
+    />
+  ),
+  slider: Slider,
+  date: (p) => {
+    const time = (p.field!.decl as { time?: boolean }).time === true;
+    return (
+      <ParsedText
+        p={p}
+        type={time ? "datetime-local" : "date"}
+        parse={{
+          show: (v) => dateText(v, time),
+          read: (t) => {
+            const d = time ? new Date(t) : new Date(`${t}T00:00:00Z`);
+            return Number.isNaN(d.getTime()) ? fail("Enter a date") : ok(d);
+          },
+        }}
+      />
+    );
+  },
+  color: ({ field, id, disabled, set, touch, props }) => (
+    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+      <input id={id} type="color" value={typeof field!.value === "string" && field!.value ? field!.value : "#000000"} disabled={disabled} onChange={(e) => set!(e.target.value)} onBlur={touch} />
+      <code className={field!.mixed ? "fs-mixed" : undefined}>{field!.mixed ? MIXED : String(field!.value ?? "")}</code>
+      {Array.isArray(props.swatches) &&
+        props.swatches.map((c) => (
+          <button
+            key={String(c)}
+            type="button"
+            className="fs-swatch"
+            aria-label={`Use ${String(c)}`}
+            aria-pressed={!field!.mixed && field!.value === c}
+            disabled={disabled}
+            onClick={() => set!(c)}
+            style={{ background: String(c), width: 22, height: 22, padding: 0, borderRadius: 999 }}
+          />
+        ))}
+    </div>
+  ),
+  file: ({ field, id, disabled, set, touch }) => {
+    const size = field!.value instanceof Uint8Array ? field!.value.length : 0;
+    const accept = (field!.decl as { accept?: readonly string[] }).accept;
+    return (
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <input
+          id={id}
+          type="file"
+          disabled={disabled}
+          {...(accept && { accept: accept.join(",") })}
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (file) set!(new Uint8Array(await file.arrayBuffer()));
+            touch!();
+          }}
+        />
+        <span className="fs-help">{size > 0 ? `${size.toLocaleString()} bytes` : "Empty"}</span>
+      </div>
+    );
+  },
+  checks: Checks,
+  list: List,
+  entries: Entries,
+  variant: Variant,
+  fields: (p) => (p.fieldNode?.inner ? p.render!(p.fieldNode.inner, p.field!.path) : null),
+};
+
+export const defaultRenderers: Renderers = { ...layoutRenderers, ...controlRenderers };
+
+/** Optional default look. Everything is classed `fs-*`; style it your own way instead if you like. */
+export const defaultStyles = `
+[data-fieldspec] { font: inherit; color: inherit; }
+[data-fieldspec] .fs-field { display: flex; flex-direction: column; gap: 4px; }
+[data-fieldspec] .fs-label { font-weight: 600; font-size: 0.875rem; }
+[data-fieldspec] .fs-inline .fs-label { font-weight: 500; display: flex; gap: 8px; align-items: center; }
+[data-fieldspec] .fs-input, [data-fieldspec] .fs-select, [data-fieldspec] .fs-textarea {
+  font: inherit; padding: 6px 8px; border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-radius: 6px; background: transparent; color: inherit; width: 100%; box-sizing: border-box;
+}
+[data-fieldspec] .fs-textarea { min-height: 5rem; }
+[data-fieldspec] [aria-invalid="true"] { border-color: #d14343; }
+[data-fieldspec] .fs-help { font-size: 0.8125rem; opacity: 0.7; margin: 0; }
+[data-fieldspec] .fs-errors { color: #d14343; font-size: 0.8125rem; margin: 0; padding: 0; list-style: none; }
+[data-fieldspec] .fs-title { font-size: 1rem; margin: 0 0 8px; }
+[data-fieldspec] .fs-section, [data-fieldspec] .fs-collapsible, [data-fieldspec] .fs-group {
+  border: 1px solid color-mix(in srgb, currentColor 15%, transparent); border-radius: 10px; padding: 12px 14px; margin: 0;
+}
+[data-fieldspec] .fs-group > legend { padding: 0 4px; }
+[data-fieldspec] .fs-collapsible > summary { cursor: pointer; }
+[data-fieldspec] .fs-segmented { border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: 6px; overflow: hidden; width: fit-content; }
+[data-fieldspec] .fs-segmented label { padding: 4px 12px; cursor: pointer; }
+[data-fieldspec] .fs-segmented label + label { border-left: 1px solid color-mix(in srgb, currentColor 25%, transparent); }
+[data-fieldspec] .fs-segmented input { position: absolute; opacity: 0; pointer-events: none; }
+[data-fieldspec] .fs-segmented [data-checked] { background: color-mix(in srgb, currentColor 14%, transparent); font-weight: 600; }
+[data-fieldspec] .fs-switch { appearance: none; width: 2.1em; height: 1.2em; border-radius: 999px; background: color-mix(in srgb, currentColor 22%, transparent); position: relative; cursor: pointer; margin: 0; transition: background 0.15s; }
+[data-fieldspec] .fs-switch::after { content: ""; position: absolute; top: 0.15em; left: 0.15em; width: 0.9em; height: 0.9em; border-radius: 50%; background: white; transition: transform 0.15s; }
+[data-fieldspec] .fs-switch:checked { background: #3b82f6; }
+[data-fieldspec] .fs-switch:checked::after { transform: translateX(0.9em); }
+[data-fieldspec] .fs-switch:indeterminate::after { transform: translateX(0.45em); }
+[data-fieldspec] .fs-mixed { opacity: 0.6; font-style: italic; }
+[data-fieldspec] .fs-handle { cursor: grab; user-select: none; padding: 4px 2px; opacity: 0.5; line-height: 1.6; }
+[data-fieldspec] .fs-handle:hover { opacity: 1; }
+[data-fieldspec] .fs-item[data-dragging] { opacity: 0.4; }
+[data-fieldspec] .fs-item[data-drop="before"] { box-shadow: 0 -2px 0 #3b82f6; }
+[data-fieldspec] .fs-item[data-drop="after"] { box-shadow: 0 2px 0 #3b82f6; }
+[data-fieldspec] .fs-key .fs-input { width: 100%; box-sizing: border-box; }
+[data-fieldspec] .fs-warning { color: #b7791f; }
+[data-fieldspec] .fs-muted { opacity: 0.7; }
+[data-fieldspec] button { font: inherit; padding: 4px 10px; border-radius: 6px; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); background: transparent; color: inherit; cursor: pointer; }
+[data-fieldspec] button:disabled { opacity: 0.4; cursor: default; }
+[data-fieldspec] [role="tab"][aria-selected="true"] { background: color-mix(in srgb, currentColor 12%, transparent); }
+[data-fieldspec] .fs-divider { border: 0; border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent); width: 100%; }
+`;
+
+export { type FieldState, type Form };
