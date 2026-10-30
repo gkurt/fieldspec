@@ -103,7 +103,7 @@ p code, li code, td code { background: var(--code-bg); border: 1px solid var(--l
 .nav-links a { color: var(--muted); }
 .nav-links a:hover { color: var(--fg); text-decoration: none; }
 .icon-button { font: inherit; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); cursor: pointer; }
-@media (max-width: 720px) { .nav-links a:not(:nth-child(2)) { display: none; } }
+@media (max-width: 720px) { .nav-links a:not([data-keep]) { display: none; } }
 
 main { max-width: 1160px; margin: 0 auto; padding: 0 16px; }
 
@@ -253,6 +253,43 @@ h3 { font-size: 1.02rem; font-weight: 650; }
 .stat { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; display: grid; gap: 6px; }
 .stat strong { font-size: 2.4rem; letter-spacing: -0.03em; line-height: 1; color: var(--accent); }
 .stat span { color: var(--muted); font-size: 0.92rem; }
+
+/* ── With AI models ─────────────────────────────────────────── */
+.models-hero { grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); }
+.hero-stats { grid-template-columns: minmax(0, 1fr); }
+.pickers { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; margin-bottom: 18px; }
+.quote {
+  margin: 0 0 18px; padding: 14px 18px; border-left: 3px solid var(--accent); background: var(--card);
+  border-radius: 0 12px 12px 0; font-size: 1.02rem; box-shadow: var(--shadow);
+}
+.quote cite { display: block; margin-top: 8px; color: var(--muted); font-size: 0.82rem; font-style: normal; }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 920px) { .split { grid-template-columns: minmax(0, 1fr); } }
+.notes { padding: 18px; display: grid; gap: 10px; font-size: 0.9rem; }
+.notes h3 { font-size: 0.92rem; margin-top: 4px; }
+.notes .meta { margin: 0; color: var(--muted); }
+.notes details summary { cursor: pointer; color: var(--muted); }
+.notes details .code { margin-top: 8px; }
+.notes details pre { max-height: 360px; }
+.decisions { margin: 0; padding-left: 18px; display: grid; gap: 4px; overflow-wrap: anywhere; }
+.decisions em { color: var(--muted); }
+.decisions.mono { font: 0.8rem/1.5 var(--mono); }
+.decisions .dropped { color: var(--muted); text-decoration: line-through; }
+.marks { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.marks th, .marks td { text-align: left; vertical-align: top; padding: 7px 6px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.marks thead th { color: var(--muted); font-weight: 600; font-size: 0.78rem; }
+.marks tbody th { font-weight: 600; width: 32%; }
+.marks small { color: var(--muted); }
+.marks .tick { font-weight: 700; }
+.marks .right .tick { color: var(--good); }
+.marks .wrong .tick { color: var(--bad); }
+.pill { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; background: var(--accent-soft); color: var(--accent); }
+.table-wrap { overflow-x: auto; margin-top: 22px; }
+.scoreboard { min-width: 640px; margin-top: 0; }
+.scoreboard tbody th small { display: block; color: var(--muted); font-weight: 400; font-size: 0.8rem; max-width: 46ch; }
+.grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 920px) { .grid.three { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 920px) { .models-hero { grid-template-columns: minmax(0, 1fr); } }
 
 .footer {
   display: flex; gap: 16px; justify-content: space-between; flex-wrap: wrap; align-items: center;

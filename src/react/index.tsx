@@ -426,7 +426,7 @@ function parserFor(format: Format, type: string): Parse {
 }
 
 /** A text box that parses: what is typed stays as typed until it parses. */
-function ParsedText({ p, parse, multiline, type, extra }: { p: ElementProps; parse: Parse; multiline?: boolean; type?: string; extra?: Record<string, unknown> }) {
+function ParsedText({ p, parse, multiline, type, extra, unit }: { p: ElementProps; parse: Parse; multiline?: boolean; type?: string; extra?: Record<string, unknown>; unit?: string }) {
   const field = p.field!;
   // A mixed field shows no value until it is edited.
   const shown = field.value === undefined || field.mixed ? "" : parse.show(field.value);
@@ -460,9 +460,17 @@ function ParsedText({ p, parse, multiline, type, extra }: { p: ElementProps; par
     onBlur: p.touch,
     ...extra,
   };
+  const input = multiline ? <textarea {...common} className="fs-textarea" rows={Number(p.props.rows ?? 4)} /> : <input {...common} className="fs-input" type={type ?? "text"} />;
   return (
     <>
-      {multiline ? <textarea {...common} className="fs-textarea" rows={Number(p.props.rows ?? 4)} /> : <input {...common} className="fs-input" type={type ?? "text"} />}
+      {unit ? (
+        <div className="fs-with-unit">
+          {input}
+          <span className="fs-unit">{unit}</span>
+        </div>
+      ) : (
+        input
+      )}
       {error && <div className="fs-errors">{error}</div>}
     </>
   );
@@ -474,8 +482,8 @@ function Input(p: ElementProps) {
   const format = (decl as { format?: string }).format;
   const numeric = decl.type === "number" || decl.type === "int";
   const type = p.props.secret ? "password" : numeric ? "number" : format === "email" ? "email" : format === "uri" || decl.type === "url" ? "url" : "text";
-  const d = decl as { min?: number; max?: number; step?: number };
-  return <ParsedText p={p} parse={parse} type={type} extra={numeric ? { min: d.min, max: d.max, step: d.step ?? (decl.type === "int" ? 1 : "any") } : undefined} />;
+  const d = decl as { min?: number; max?: number; step?: number; unit?: string };
+  return <ParsedText p={p} parse={parse} type={type} unit={numeric ? d.unit : undefined} extra={numeric ? { min: d.min, max: d.max, step: d.step ?? (decl.type === "int" ? 1 : "any") } : undefined} />;
 }
 
 function Slider({ field, id, disabled, set, touch, props }: ElementProps) {
@@ -920,6 +928,8 @@ export const defaultStyles = `
   border-radius: 6px; background: transparent; color: inherit; width: 100%; box-sizing: border-box;
 }
 [data-fieldspec] .fs-textarea { min-height: 5rem; }
+[data-fieldspec] .fs-with-unit { display: flex; align-items: center; gap: 8px; }
+[data-fieldspec] .fs-unit { font-size: 0.875rem; opacity: 0.7; white-space: nowrap; }
 [data-fieldspec] [aria-invalid="true"] { border-color: #d14343; }
 [data-fieldspec] .fs-help { font-size: 0.8125rem; opacity: 0.7; margin: 0; }
 [data-fieldspec] .fs-errors { color: #d14343; font-size: 0.8125rem; margin: 0; padding: 0; list-style: none; }

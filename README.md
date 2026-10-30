@@ -254,3 +254,21 @@ bun run schema
 bun run demo
 bun run site        # the homepage: every example on it is live
 ```
+
+## Experiments with small models
+
+`experiments/` tries two models that answer with typed values rather than text: Jev
+(TypeSafe), which chooses, and Clairic (Cloudflare Workers AI), which reads values out of text.
+Code proposes, the models decide, and the checker and `parse` have the last word. The homepage's
+[models page](site/models.html) shows the recorded results.
+
+```bash
+bun experiments/jev-specs/generate.ts       # specs from descriptions, with Jev (TYPESAFE_API_KEY)
+bun experiments/clairic-specs/hybrid.ts     # the same, with Clairic reading what the text states
+bun experiments/fill/fill.ts                # filling forms from messages, scored field by field
+bun experiments/delegate/delegate.ts        # handing what they cannot do to a writer model
+```
+
+Keys go in `.env.local` (ignored by git): `TYPESAFE_API_KEY` for Jev, and `ANTHROPIC_API_KEY`
+for Claude Haiku 5.5 as the writer. Clairic and the fallback writer run through the `cf` CLI's
+sign-in.
