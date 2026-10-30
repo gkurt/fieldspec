@@ -6,8 +6,8 @@ import { evaluate, isDynamic, test, type Env, type Functions, type Scope } from 
 import { formatOf, functionsOf, type Format } from "./format.ts";
 import type { Infer } from "./infer.ts";
 import { CONTAINER_KINDS, isJson, type AnyKind } from "./kinds.ts";
-import { deref, type Lookup } from "./defs.ts";
-import { getAt, joinPointer, setAt } from "./pointer.ts";
+import { deref, requiresItself, useName, type Lookup } from "./defs.ts";
+import { child, getAt, joinPointer, setAt } from "./pointer.ts";
 import type {
   ArrayField,
   Condition,
@@ -266,20 +266,43 @@ interface Pending {
   readonly scope: Scope;
 }
 
-function fillFields(ctx: Ctx, fields: Fields, value: Record<string, unknown>, at: string, pending: Pending[], extra?: string) {
+/**
+ * The definitions the values around a field are of, outermost first. A definition that requires
+ * itself (the checker says so) is not filled in again inside itself: its value would never end,
+ * on two branches it would double at each step, and each later fill would add a level.
+ */
+type Trail = readonly string[];
+
+const loops = new WeakMap<object, Map<string, boolean>>();
+/** Whether a definition requires itself, worked out once per spec. */
+function loopsBack(ctx: Ctx, name: string): boolean {
+  if (!ctx.defs) return false;
+  let known = loops.get(ctx.defs);
+  if (!known) loops.set(ctx.defs, (known = new Map()));
+  let answer = known.get(name);
+  if (answer === undefined) known.set(name, (answer = requiresItself(ctx.defs, name) !== undefined));
+  return answer;
+}
+
+const along = (trail: Trail, decl: FieldDecl): Trail => {
+  const name = useName(decl);
+  return name === undefined ? trail : [...trail, name];
+};
+
+function fillFields(ctx: Ctx, fields: Fields, value: Record<string, unknown>, at: string, pending: Pending[], extra?: string, trail: Trail = []) {
   const out: Record<string, unknown> = { ...value };
   for (const [key, decl] of Object.entries(fields)) {
     if (key === extra) continue;
     const pointer = joinPointer(at, key);
-    const filled = fillField(ctx, decl, value[key], pointer, pending, { base: at });
+    const filled = fillField(ctx, decl, value[key], pointer, pending, { base: at }, trail);
     if (filled === undefined) delete out[key];
     else out[key] = filled;
   }
   return out;
 }
 
-function fillField(ctx: Ctx, decl: FieldDecl, value: unknown, at: string, pending: Pending[], scope: Scope = { base: at }): unknown {
-  decl = deref(lk(ctx), decl);
+function fillField(ctx: Ctx, raw: FieldDecl, value: unknown, at: string, pending: Pending[], scope: Scope = { base: at }, trail: Trail = []): unknown {
+  const decl = deref(lk(ctx), raw);
   if (depthOf(at) > MAX_DEPTH) return value;
   if (value === undefined) {
     if (decl.default !== undefined) {
@@ -291,31 +314,34 @@ function fillField(ctx: Ctx, decl: FieldDecl, value: unknown, at: string, pendin
     } else if (decl.optional) {
       return undefined;
     } else {
+      const name = useName(raw);
+      if (name !== undefined && trail.includes(name) && loopsBack(ctx, name)) return undefined;
       value = zeroOf(ctx, decl);
       if (value === undefined) return undefined;
     }
   }
-  return fillInside(ctx, decl, value, at, pending);
+  return fillInside(ctx, decl, value, at, pending, along(trail, raw));
 }
 
 /** Fill the inside of a container value. */
-function fillInside(ctx: Ctx, decl: FieldDecl, value: unknown, at: string, pending: Pending[]): unknown {
+function fillInside(ctx: Ctx, decl: FieldDecl, value: unknown, at: string, pending: Pending[], trail: Trail = []): unknown {
   decl = deref(lk(ctx), decl);
   if (depthOf(at) > MAX_DEPTH) return value;
   switch (decl.type) {
     case "object":
-      return isPlainObject(value) ? fillFields(ctx, (decl as ObjectField).fields, value, at, pending) : value;
+      return isPlainObject(value) ? fillFields(ctx, (decl as ObjectField).fields, value, at, pending, undefined, trail) : value;
     case "variant": {
       const v = decl as VariantField;
       const chosen = fieldsOf(decl, value);
-      return chosen && isPlainObject(value) ? fillFields(ctx, chosen.fields, value, at, pending, v.key) : value;
+      return chosen && isPlainObject(value) ? fillFields(ctx, chosen.fields, value, at, pending, v.key, trail) : value;
     }
     case "array": {
       if (!Array.isArray(value)) return value;
       const items = (decl as ArrayField).items;
+      const inner = along(trail, items);
       return value.map((x, i) => {
         const pointer = joinPointer(at, i);
-        return x === undefined ? x : fillInside(ctx, items, x, pointer, pending);
+        return x === undefined ? x : fillInside(ctx, items, x, pointer, pending, inner);
       });
     }
     default:
@@ -564,10 +590,12 @@ export function declAt(spec: Spec, values: unknown, pointer: string, format: For
   let groups: Groups = spec.groups;
   let decl: FieldDecl | undefined;
   let at = "";
+  let node: unknown = values;
   let scope: Scope = { base: "" };
   for (const segment of segments) {
     const parentAt = at;
     at = joinPointer(at, segment);
+    node = child(node, segment);
     if (fields) {
       const variantKey = decl?.type === "variant" ? (decl as VariantField).key : undefined;
       if (segment === variantKey) {
@@ -592,7 +620,7 @@ export function declAt(spec: Spec, values: unknown, pointer: string, format: For
       groups = undefined;
     } else return undefined;
     if (!decl) return undefined;
-    const inner = fieldsOf(decl, getAt(values, at));
+    const inner = fieldsOf(decl, node);
     const located = { decl, scope, groups };
     if (at === pointer) return located;
     fields = inner?.fields;
@@ -606,6 +634,8 @@ export function suggest(word: string, candidates: readonly string[]): string | u
   let best: string | undefined;
   let bestScore = Math.max(2, Math.floor(word.length / 3));
   for (const c of candidates) {
+    // The distance is at least the difference in length, so far longer or shorter names are skipped unmeasured.
+    if (Math.abs(c.length - word.length) > bestScore) continue;
     const d = distance(word.toLowerCase(), c.toLowerCase());
     if (d <= bestScore) {
       best = c;

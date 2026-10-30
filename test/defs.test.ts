@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { z } from "zod";
-import { checkSpec, createForm, define, layout, parse, prompt, toJsonRender, walk, type Infer } from "../src/index.ts";
+import { checkSpec, createForm, define, layout, parse, prompt, toJSONSchema, toJsonRender, toJsonRenderState, walk, type Infer, type Spec } from "../src/index.ts";
 import { toZod } from "../src/zod.ts";
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
@@ -136,5 +136,67 @@ describe("checking definitions", () => {
     expect(messages).toContain("/defs/Unused: is never used");
     expect(messages).toContainEqual(expect.stringContaining('/fields/d/visible/$state: "../../x" climbs above the root'));
     expect(messages.filter((m) => m.startsWith("/fields/e"))).toEqual([]);
+  });
+});
+
+describe("definitions that never end, or explode", () => {
+  /** D0 … D(n-1), each holding the next twice. */
+  const doubling = (n: number) =>
+    Object.fromEntries(
+      Array.from({ length: n }, (_, i) => {
+        const next = i + 1 < n ? { use: `D${i + 1}` } : { type: "string" };
+        return [`D${i}`, { type: "object", fields: { l: next, r: next } }];
+      }),
+    );
+
+  test("definitions naming each other in a ring stand for nothing, everywhere", () => {
+    const spec = { fields: { x: { use: "A" }, y: { use: "B" } }, defs: { A: { use: "B" }, B: { use: "A" } } } as const;
+    expect(checkSpec(spec).some((f) => f.severity === "error")).toBe(true);
+    // A lazy Zod schema of itself, or a `$ref` to itself, would never resolve.
+    expect(toZod(spec as never).safeParse({ x: 1, y: "z" }).success).toBe(true);
+    const schema = toJSONSchema(spec as never);
+    expect(JSON.stringify(schema)).not.toContain('"$ref":"#/$defs/A"');
+  });
+
+  test("a definition that requires itself twice over is filled without end nowhere", () => {
+    const spec: Spec = {
+      fields: { v: { use: "V" } },
+      defs: { V: { type: "variant", key: "kind", variants: { more: { fields: { a: { use: "V" }, b: { use: "V" } } }, end: { fields: {} } } } },
+    };
+    const result = parse(spec, {});
+    expect(result.value).toEqual({ v: { kind: "more" } });
+    expect(result.issues.map((i) => i.path)).toEqual(["/v/a", "/v/b"]);
+    // Given values are followed as deep as they go.
+    expect(parse(spec, { v: { kind: "more", a: { kind: "end" }, b: { kind: "more", a: { kind: "end" }, b: { kind: "end" } } } }).ok).toBe(true);
+  });
+
+  test("definitions that double at each step are checked quickly, and warned of", () => {
+    const start = performance.now();
+    const faults = checkSpec({ fields: { x: { use: "D0", optional: true } }, defs: doubling(40) });
+    expect(performance.now() - start).toBeLessThan(1000);
+    expect(faults.map((f) => `${f.severity} ${f.path}: ${f.message}`)).toEqual([
+      "warning /defs/D0: its smallest value holds more than 100,000 values, since each use of a definition repeats it whole; make some uses optional, or hold them in a list",
+    ]);
+    expect(checkSpec({ fields: { x: { use: "D0" } }, defs: doubling(8) })).toEqual([]);
+  });
+
+  test("json-render output stops at maxElements", () => {
+    const spec = { fields: { x: { use: "D0", optional: true } }, defs: doubling(40) };
+    const out = toJsonRender(spec as never, { maxElements: 500 });
+    const count = Object.keys(out.elements).length;
+    expect(count).toBeGreaterThan(500);
+    expect(count).toBeLessThan(700);
+    expect(Object.values(out.elements).some((e) => String(e.props.text).endsWith("not drawn; the output reached 500 elements"))).toBe(true);
+  });
+
+  test("json-render state holds a list wherever it repeats, whatever the values", () => {
+    const spec = define({
+      fields: {
+        list: { type: "array", items: { type: "string" } },
+        record: { type: "record", values: { type: "int" } },
+        map: { type: "map", keys: { type: "int" }, values: { type: "string" } },
+      },
+    });
+    expect(toJsonRenderState(spec, { list: "x", record: 3, map: "y" })).toEqual({ list: [], record: [], map: [] });
   });
 });

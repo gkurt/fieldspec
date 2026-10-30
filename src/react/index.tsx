@@ -489,7 +489,7 @@ function Choices({ field, id, disabled, set, touch, segmented }: ElementProps & 
   return (
     <div role="radiogroup" id={id} className={segmented ? "fs-segmented" : "fs-radio"} style={{ display: "flex", gap: segmented ? 0 : 12, flexWrap: "wrap" }}>
       {options.map((o, i) => (
-        <label key={String(o.value)} title={o.description} data-checked={i === index ? "" : undefined}>
+        <label key={i} title={o.description} data-checked={i === index ? "" : undefined}>
           <input type="radio" name={id} checked={i === index} disabled={disabled} onChange={() => set!(o.value)} onBlur={touch} /> {o.label}
         </label>
       ))}
@@ -504,7 +504,7 @@ function Select({ field, id, disabled, set, touch }: ElementProps) {
     <select id={id} className="fs-select" value={index} disabled={disabled} onChange={(e) => set!(options[Number(e.target.value)]?.value)} onBlur={touch}>
       {index === -1 && <option value={-1}>{field!.mixed ? MIXED : field!.decl.optional ? "—" : "Choose…"}</option>}
       {options.map((o, i) => (
-        <option key={String(o.value)} value={i} title={o.description}>
+        <option key={i} value={i} title={o.description}>
           {o.label}
         </option>
       ))}
@@ -624,8 +624,9 @@ function Checks(p: ElementProps) {
   const options = optionsOf(items as EnumField, { values: p.form.values }, field.scope);
   return (
     <div className="fs-checks" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-      {options.map((o) => (
-        <label key={String(o.value)}>
+      {/* By position: options may repeat a value, or differ only in type (1 and "1"). */}
+      {options.map((o, i) => (
+        <label key={i}>
           <input
             type="checkbox"
             disabled={p.disabled}
@@ -706,6 +707,38 @@ function Entries(p: ElementProps) {
         </button>
       </div>
     </div>
+  );
+}
+
+/**
+ * An object's fields. An absent object (an optional one, say) is offered rather than drawn: its
+ * fields would have nothing to show, and a definition that may contain itself would draw
+ * itself without end.
+ */
+function Fields(p: ElementProps) {
+  const field = p.field!;
+  const value = field.value;
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    const add = () => p.set!(initialValue(p.form.spec, { ...field.decl, optional: false }, p.form.values, field.path, { format: p.form.format }) ?? {});
+    return (
+      <div>
+        <button type="button" disabled={p.disabled} onClick={add}>
+          Add
+        </button>
+      </div>
+    );
+  }
+  return (
+    <>
+      {p.fieldNode?.inner && p.render!(p.fieldNode.inner, field.path)}
+      {field.decl.optional && (
+        <div>
+          <button type="button" disabled={p.disabled} onClick={() => p.set!(undefined)}>
+            Remove
+          </button>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -843,7 +876,7 @@ const controlRenderers: Renderers = {
   list: List,
   entries: Entries,
   variant: Variant,
-  fields: (p) => (p.fieldNode?.inner ? p.render!(p.fieldNode.inner, p.field!.path) : null),
+  fields: Fields,
 };
 
 export const defaultRenderers: Renderers = { ...layoutRenderers, ...controlRenderers };
@@ -867,6 +900,7 @@ export const defaultStyles = `
   border: 1px solid color-mix(in srgb, currentColor 15%, transparent); border-radius: 10px; padding: 12px 14px; margin: 0;
 }
 [data-fieldspec] .fs-group > legend { padding: 0 4px; }
+[data-fieldspec] fieldset { min-width: 0; } /* browsers keep fieldsets as wide as their content; let nested ones shrink */
 [data-fieldspec] .fs-collapsible > summary { cursor: pointer; }
 [data-fieldspec] .fs-segmented { border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: 6px; overflow: hidden; width: fit-content; }
 [data-fieldspec] .fs-segmented label { padding: 4px 12px; cursor: pointer; }

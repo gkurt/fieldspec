@@ -105,6 +105,12 @@ export interface ToJsonRenderOptions {
   readonly components?: Partial<Record<string, string>>;
   /** How many levels deep a definition that contains itself is drawn. Default 3. */
   readonly depth?: number;
+  /**
+   * The most elements to draw; past it, fields are left out with a note. Definitions that use
+   * one another several times over double the drawing at each level, and json-render has no
+   * way to draw one part twice. Default 20 000.
+   */
+  readonly maxElements?: number;
 }
 
 export interface JsonRenderStateOptions {
@@ -183,6 +189,7 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
   const base = options.statePath ?? "/form";
   const ui = options.uiStatePath ?? "/ui";
   const depth = options.depth ?? 3;
+  const maxElements = options.maxElements ?? 20_000;
   const components = { ...COMPONENTS, ...options.components } as Record<string, string>;
   const elements: Record<string, FlatElement> = {};
   const uiState: Record<string, unknown> = {};
@@ -349,6 +356,7 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
     const isItem = node.field === "";
     const label = decl.label !== undefined ? text(decl.label, anchor, cx) : isItem ? itemLabel : humanize(path.slice(path.lastIndexOf("/") + 1));
     const visible = visibleOf([node.visible, decl.visible], anchor, cx);
+    if (n >= maxElements) return note(`${String(label ?? path)}: not drawn; the output reached ${maxElements} elements`);
     if (node.use !== undefined) {
       const seen = cx.uses.get(node.use) ?? 0;
       if (seen >= depth) return note(`${String(label ?? path)}: drawn ${depth} levels deep; deeper levels are not shown`);
@@ -515,17 +523,19 @@ function stateOf(format: Format, lookup: Lookup, decl: Resolved, json: unknown):
       for (const [k, d] of Object.entries(variant.fields)) if (k in json) out[k] = at(d, json[k]);
       return out;
     }
+    // json-render repeats over collections, and anything but a list there stops its renderer: a
+    // value of the wrong shape, which fails validation anyway, shows as empty.
     case "array":
     case "set":
-      if (!Array.isArray(json)) return json;
-      if (asChecks(format, decl)) return json.map(String).join(",");
+      if (asChecks(format, decl)) return Array.isArray(json) ? json.map(String).join(",") : json === undefined ? json : "";
+      if (!Array.isArray(json)) return json === undefined ? json : [];
       return json.map((item) => at((decl as ArrayField).items, item));
     case "record":
-      return isObject(json) ? Object.entries(json).map(([key, value]) => ({ key, value: at((decl as RecordField).values, value) })) : json;
+      if (!isObject(json)) return json === undefined ? json : [];
+      return Object.entries(json).map(([key, value]) => ({ key, value: at((decl as RecordField).values, value) }));
     case "map":
-      return Array.isArray(json)
-        ? json.map((pair) => (Array.isArray(pair) ? { key: at((decl as MapField).keys, pair[0]), value: at((decl as MapField).values, pair[1]) } : pair))
-        : json;
+      if (!Array.isArray(json)) return json === undefined ? json : [];
+      return json.map((pair) => (Array.isArray(pair) ? { key: at((decl as MapField).keys, pair[0]), value: at((decl as MapField).values, pair[1]) } : pair));
     default:
       return json;
   }

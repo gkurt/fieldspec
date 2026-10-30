@@ -12,9 +12,12 @@
   },
   "scripts": {
     "test": "bun test",
+    "stress": "bun test/stress/explore.ts && bun test/stress/fuzz.ts 0 1000",
     "typecheck": "tsc",
     "schema": "bun scripts/schema.ts",
-    "demo": "vite demo --port 4192"
+    "demo": "vite demo --port 4192",
+    "site": "vite site",
+    "site:build": "vite build site"
   },
   "peerDependencies": {
     "react": ">=18",

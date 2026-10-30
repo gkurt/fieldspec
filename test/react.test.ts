@@ -68,6 +68,29 @@ describe("React controls", () => {
     await act(() => root.unmount());
   });
 
+  test("an absent object is offered, not drawn, so one that may contain itself ends", async () => {
+    const chain = define({ fields: { head: { use: "Node" } }, defs: { Node: { type: "object", fields: { name: { type: "string" }, next: { use: "Node", optional: true } } } } });
+    const form = createForm(chain, { values: { head: { name: "a" } } });
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = client.createRoot(host);
+    const act = (fn: () => void) => React.act(async () => fn());
+    await act(() => root.render(React.createElement(ui.FormView, { form })));
+    const button = (label: string) => [...host.querySelectorAll("button")].filter((b) => b.textContent === label);
+    expect(host.querySelectorAll("input")).toHaveLength(1);
+    expect(button("Add")).toHaveLength(1);
+
+    await act(() => button("Add")[0]!.click());
+    expect(form.values.head).toEqual({ name: "a", next: { name: "" } });
+    expect(host.querySelectorAll("input")).toHaveLength(2);
+    expect(button("Add")).toHaveLength(1);
+
+    await act(() => button("Remove")[0]!.click());
+    expect(form.values.head).toEqual({ name: "a" });
+    expect(host.querySelectorAll("input")).toHaveLength(1);
+    await act(() => root.unmount());
+  });
+
   test("a list item moves where its handle is dropped", async () => {
     const { form, act, host, root } = await mount({ steps: ["one", "two", "three"] });
     const rows = () => [...host.querySelectorAll<HTMLElement>(".fs-item")];

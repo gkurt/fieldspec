@@ -108,6 +108,7 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
   const layouts = new Map<string, LayoutNode>();
   let values = resolve(spec, decode(spec, options.values ?? {}, vo), vo);
   let issues: Issue[] | undefined;
+  let issuesByPath: Map<string, Issue[]> | undefined;
   let fieldCache = new Map<string, FieldState | undefined>();
   let version = 0;
   let submitted = false;
@@ -116,6 +117,7 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
   const changed = () => {
     version++;
     issues = undefined;
+    issuesByPath = undefined;
     fieldCache = new Map();
     for (const listener of listeners) listener();
   };
@@ -172,7 +174,15 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
           ...(o.description !== undefined && { description: text(o.description, scope) }),
         }));
     }
-    const own = currentIssues().filter((i) => i.path === path);
+    if (!issuesByPath) {
+      issuesByPath = new Map();
+      for (const issue of currentIssues()) {
+        const list = issuesByPath.get(issue.path);
+        if (list) list.push(issue);
+        else issuesByPath.set(issue.path, [issue]);
+      }
+    }
+    const own = issuesByPath.get(path) ?? [];
     return {
       path,
       key,

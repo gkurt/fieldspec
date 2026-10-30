@@ -66,7 +66,8 @@ export function getAt(root: unknown, pointer: string): unknown {
   return node;
 }
 
-function child(node: unknown, segment: string): unknown {
+/** One step into a value: a key of an object or map, or an index of an array. */
+export function child(node: unknown, segment: string): unknown {
   if (node instanceof Map) {
     if (node.has(segment)) return node.get(segment);
     for (const [key, value] of node) if (String(key) === segment) return value;

@@ -8,7 +8,7 @@ import { SCHEMA_URL, SCHEMA_URL_PATTERN, VERSION } from "./version.ts";
 import { EXPR_KEYS, isDynamic, OPERATORS, type Functions } from "./expr.ts";
 import { BASE_PROPS, formatOf, functionsOf, type Format, type Rule } from "./format.ts";
 import { CONTAINER_KINDS, type AnyKind } from "./kinds.ts";
-import { deref, type Lookup } from "./defs.ts";
+import { deref, requiresItself, type Lookup } from "./defs.ts";
 import { escapeSegment, joinPointer, resolveSegments } from "./pointer.ts";
 import type {
   ArrayField,
@@ -655,7 +655,7 @@ function checkDefs(c: Checker, defs: { readonly [name: string]: FieldDecl }) {
     const builtin = Object.keys(c.format.presets).find((p) => isBuiltinName(p) && p.toLowerCase() === name.toLowerCase());
     if (builtin) c.fault(at, `differs from the built-in preset "${builtin}" only by case, which reads as a mistake`, "warning");
     checkDecl(c, decl, at, floating, [name]);
-    const loop = requiresItself(c.spec, name);
+    const loop = requiresItself(c.spec.defs ?? {}, name);
     if (loop) {
       c.fault(at, `requires itself (${loop.join(" → ")}), so its value could never end. Make a step optional, or hold it in an array, set, record or map.`);
     }
@@ -668,30 +668,58 @@ function checkDefs(c: Checker, defs: { readonly [name: string]: FieldDecl }) {
   for (const name of Object.keys(defs)) {
     if (!used.has(name)) c.fault(`/defs/${escapeSegment(name)}`, "is never used", "warning");
   }
+  // Each use of a definition repeats it whole, so definitions that use one another several
+  // times over double their value at each step. Said once, at the outermost such definition.
+  const size = smallestSizes(c.spec);
+  const huge = Object.keys(defs).filter((name) => size(name) > HUGE);
+  const inside = new Set(huge.flatMap((name) => [...usesIn(defs[name])]));
+  for (const name of huge) {
+    if (inside.has(name)) continue;
+    c.fault(
+      `/defs/${escapeSegment(name)}`,
+      `its smallest value holds more than ${HUGE.toLocaleString("en")} values, since each use of a definition repeats it whole; make some uses optional, or hold them in a list`,
+      "warning",
+    );
+  }
 }
 
-/** The path by which a definition's zero value would contain itself, if one does. */
-function requiresItself(spec: Spec, start: string): string[] | undefined {
+/** More values than any form could hold or draw. */
+const HUGE = 100_000;
+
+/** The `use` names inside a declaration. */
+function usesIn(decl: unknown): Set<string> {
+  const names = new Set<string>();
+  JSON.stringify(decl, (key, value) => {
+    if (key === "use" && typeof value === "string") names.add(value);
+    return value;
+  });
+  return names;
+}
+
+/** How many values a definition's smallest value holds: itself and every field it requires, all the way down. */
+function smallestSizes(spec: Spec): (name: string) => number {
   const defs = spec.defs ?? {};
-  const visit = (decl: FieldDecl, trail: string[], seen: Set<string>): string[] | undefined => {
-    if (!isObject(decl) || decl.optional || decl.default !== undefined) return undefined;
-    if (decl.use !== undefined && decl.type === undefined) {
-      const name = String(decl.use);
-      if (name === start) return trail;
-      if (seen.has(name) || !defs[name]) return undefined;
-      return visit(defs[name]!, trail, new Set([...seen, name]));
-    }
+  const memo = new Map<string, number>();
+  const ofDecl = (decl: FieldDecl): number => {
+    if (!isObject(decl) || decl.optional || decl.default !== undefined) return 1;
+    if (decl.use !== undefined && decl.type === undefined) return ofName(String(decl.use));
     let fields: Fields | undefined;
     if (decl.type === "object") fields = (decl as unknown as ObjectField).fields;
     if (decl.type === "variant") fields = Object.values((decl as unknown as VariantField).variants ?? {})[0]?.fields;
-    for (const [key, field] of Object.entries(fields ?? {})) {
-      const found = visit(field, [...trail, key], seen);
-      if (found) return found;
-    }
-    return undefined;
+    let total = 1;
+    for (const field of Object.values(fields ?? {})) total += ofDecl(field);
+    return total;
   };
-  const def = defs[start];
-  return def ? visit(def, [start], new Set([start])) : undefined;
+  const ofName = (name: string): number => {
+    const known = memo.get(name);
+    if (known !== undefined) return known;
+    if (!isObject(defs[name])) return 1;
+    memo.set(name, 1); // a definition that requires itself is reported on its own
+    const total = ofDecl(defs[name]!);
+    memo.set(name, total);
+    return total;
+  };
+  return ofName;
 }
 
 function checkText(c: Checker, text: unknown, at: string, scope: Scope) {

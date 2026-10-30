@@ -95,7 +95,9 @@ A spec's own `defs` work the same way, which is also how it reuses and recurses:
 
 Lowercase names look up built-in presets; capitalized ones look up `defs`, then the format's
 presets. A definition may use itself through an array, set, record, map or optional field;
-the checker rejects one whose value could never end. `Infer` follows `use`, recursively.
+the checker rejects one whose value could never end, and warns of definitions whose smallest
+value is huge because they use one another several times over (each use repeats its definition
+whole, so two uses per step double it). `Infer` follows `use`, recursively.
 
 ## Rendering: `render`
 
@@ -137,7 +139,9 @@ control edits, so `"render": "slider"` on a string, or `"collapsed": "yes"`, is 
 any element. A control with no renderer falls back to its kind's default control. List items
 reorder by dragging their handle (or with the arrow buttons), and a record's or map's keys are
 edited in place: a rename keeps the entry's value and position, and a taken or unreadable key is
-refused with the reason.
+refused with the reason. An absent object (an optional one, say) shows an Add button rather
+than its fields, and an optional one that is there can be removed, so a definition that may
+contain itself draws only as deep as its values go.
 
 ## Extending
 
@@ -210,11 +214,13 @@ checks meaning (references, conditions, defaults).
 - `toJsonRender(spec, { values })`: the whole form as a json-render spec, bound to its state and
   drawn with `@json-render/shadcn`'s components (rename them with `components`). Lists, sets,
   records and maps repeat over state with add and remove buttons; a definition that contains
-  itself is drawn `depth` levels deep (default 3). It is tested against json-render itself: its
+  itself is drawn `depth` levels deep (default 3), and the output stops at `maxElements`
+  (default 20 000), past which fields are left out with a note. It is tested against json-render itself: its
   spec validator, the shadcn components' props, and its React renderer in a DOM.
   json-render's state holds JSON, except records and maps are lists of `{ key, value }`, enum
   values are strings, a set edited with `checks` is a comma-separated string, and a `json` field
-  is text: `toJsonRenderState` / `fromJsonRenderState` convert. A list inside a list item
+  is text: `toJsonRenderState` / `fromJsonRenderState` convert (a collection holding a value of
+  the wrong shape becomes an empty list, which json-render can repeat over). A list inside a list item
   removes its items with the `removeItem` action: declare `JSON_RENDER_ACTIONS` in your catalog
   and pass `jsonRenderActions(store)` as handlers. A `scroll` box is a `Stack` with Tailwind
   classes (`overflow-y-auto max-h-[18rem]`), so Tailwind must see the class.
@@ -235,7 +241,9 @@ Experimental. Not yet:
 ```bash
 bun install
 bun test
+bun run stress      # the stress cases and 1000 random specs, each run with a time limit
 bun run typecheck
 bun run schema
 bun run demo
+bun run site        # the homepage: every example on it is live
 ```

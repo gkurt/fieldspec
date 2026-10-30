@@ -5,7 +5,7 @@
  */
 import { coreFormat, formatOf, type Format } from "./format.ts";
 import { isDynamic } from "./expr.ts";
-import { deref, useName, type Lookup } from "./defs.ts";
+import { circular, deref, useName, type Lookup } from "./defs.ts";
 import { isBuiltinName, toUserName } from "./names.ts";
 import type { AnyKind, JsonSchema } from "./kinds.ts";
 import type {
@@ -105,7 +105,8 @@ const pointerName = (name: string) => name.replace(/~/g, "~0").replace(/\//g, "~
  */
 function useSchema(ctx: Out, decl: FieldDecl, name: string): JsonSchema {
   const { use: _use, ...own } = decl as FieldDecl & { use: string };
-  const isDef = !isBuiltinName(name) && ctx.lookup.defs?.[name] !== undefined;
+  // Definitions that only name each other in a ring stand for nothing: written out, not a `$ref` to itself.
+  const isDef = !isBuiltinName(name) && ctx.lookup.defs?.[name] !== undefined && !circular(ctx.lookup, decl);
   const s: JsonSchema = isDef ? { $ref: `#/$defs/${pointerName(name)}` } : fieldSchema(ctx, deref(ctx.lookup, decl));
   if (isDef) annotate(s, own as Resolved);
   s["x-use"] = name;

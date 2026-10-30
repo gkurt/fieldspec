@@ -75,6 +75,10 @@ interface ScopeInfo {
   readonly fields: Fields;
   readonly groups: Groups;
   readonly ctx: Ctx;
+  /** The groups being drawn, so one placed inside itself is refused instead of drawn forever. */
+  readonly drawing: Set<string>;
+  /** Each group's chain of parents, worked out once. */
+  readonly chains: Map<string | undefined, readonly string[]>;
 }
 
 /** What a fragment placed, so the rest can follow it. */
@@ -90,7 +94,7 @@ export function layout(spec: Spec, view?: string, format: Format = formatOf(spec
   const fragment = view === undefined ? undefined : spec.layouts?.[view];
   if (view !== undefined && fragment === undefined) throw new Error(`no layout named "${view}"`);
   const ctx: Ctx = { format, lookup: { defs: spec.defs, presets: format.presets } };
-  return layoutScope({ fields: spec.fields, groups: spec.groups, ctx }, fragment, "root");
+  return layoutScope(scopeOf(spec.fields, spec.groups, ctx), fragment, "root");
 }
 
 /** The control element that edits a declaration unless its `render` names one. */
@@ -120,6 +124,10 @@ function takesChildren(ctx: Ctx, type: string): boolean {
   return def ? def.children === true : true;
 }
 
+function scopeOf(fields: Fields, groups: Groups, ctx: Ctx): ScopeInfo {
+  return { fields, groups, ctx, drawing: new Set(), chains: new Map() };
+}
+
 function layoutScope(scope: ScopeInfo, fragment: RenderNode | undefined, key: string): LayoutNode {
   if (fragment === undefined) return stack(key, autoNodes(scope, Object.keys(scope.fields), key));
   const placed: Placed = { fields: new Set(), groups: new Set() };
@@ -139,19 +147,20 @@ function unplaced(scope: ScopeInfo, placed: Placed, members: Set<string> | undef
     .filter(([key, decl]) => {
       if (placed.fields.has(key)) return false;
       if (members && !members.has(key)) return false;
-      for (const id of groupChain(scope.groups, groupOf(scope, decl))) if (placed.groups.has(id)) return false;
+      for (const id of chainOf(scope, groupOf(scope, decl))) if (placed.groups.has(id)) return false;
       return true;
     })
     .map(([key]) => key);
 }
 
 /** A group and its parents, innermost first. */
-function groupChain(groups: Groups, id: string | undefined): string[] {
-  const chain: string[] = [];
-  while (id !== undefined && groups?.[id] && !chain.includes(id)) {
-    chain.push(id);
-    id = groups[id]!.group;
-  }
+function chainOf(scope: ScopeInfo, start: string | undefined): readonly string[] {
+  let chain = scope.chains.get(start);
+  if (chain) return chain;
+  const seen = new Set<string>();
+  for (let id = start; id !== undefined && scope.groups?.[id] && !seen.has(id); id = scope.groups[id]!.group) seen.add(id);
+  chain = [...seen];
+  scope.chains.set(start, chain);
   return chain;
 }
 
@@ -186,7 +195,7 @@ function autoNodes(scope: ScopeInfo, keys: readonly string[], key: string, withi
   const emitted = new Set<string>();
   for (const [name, decl] of Object.entries(scope.fields)) {
     if (!wanted.has(name)) continue;
-    const chain = groupChain(scope.groups, groupOf(scope, decl));
+    const chain = chainOf(scope, groupOf(scope, decl));
     const stop = within === undefined ? chain.length : chain.indexOf(within);
     const outer = stop > 0 ? chain[stop - 1] : undefined;
     if (outer === undefined) {
@@ -201,10 +210,23 @@ function autoNodes(scope: ScopeInfo, keys: readonly string[], key: string, withi
 
 /** A group, drawn on its own: its `render` as container, titled by its label. `limit` restricts it to fields still to be drawn. */
 function groupNode(scope: ScopeInfo, id: string, key: string, limit?: readonly string[]): LayoutNode {
+  // Placed in its own render, or reached again through groups nested in a cycle (both reported by the checker).
+  if (scope.drawing.has(id)) return insideItself(id, key);
+  scope.drawing.add(id);
+  try {
+    return drawGroup(scope, id, key, limit);
+  } finally {
+    scope.drawing.delete(id);
+  }
+}
+
+const insideItself = (id: string, key: string): LayoutNode => ({ type: "text", key, props: { text: `Group "${id}" is placed inside itself`, tone: "warning" }, children: [] });
+
+function drawGroup(scope: ScopeInfo, id: string, key: string, limit?: readonly string[]): LayoutNode {
   const group = scope.groups![id]!;
   const members = new Set(
     Object.entries(scope.fields)
-      .filter(([name, decl]) => groupChain(scope.groups, groupOf(scope, decl)).includes(id) && (!limit || limit.includes(name)))
+      .filter(([name, decl]) => chainOf(scope, groupOf(scope, decl)).includes(id) && (!limit || limit.includes(name)))
       .map(([name]) => name),
   );
   const el = asElement(group.render ?? "stack");
@@ -247,7 +269,7 @@ function fieldNode(ctx: Ctx, raw: FieldDecl, ref: string, key: string, visible?:
   switch (decl.type) {
     case "object": {
       const o = decl as ObjectField;
-      lazy("inner", () => layoutScope({ fields: o.fields, groups: o.groups, ctx }, arranged, `${key}.o`));
+      lazy("inner", () => layoutScope(scopeOf(o.fields, o.groups, ctx), arranged, `${key}.o`));
       return node as unknown as LayoutNode;
     }
     case "variant": {
@@ -255,7 +277,7 @@ function fieldNode(ctx: Ctx, raw: FieldDecl, ref: string, key: string, visible?:
       lazy("variants", () => {
         const variants: Record<string, LayoutNode> = {};
         for (const [name, variant] of Object.entries(v.variants)) {
-          variants[name] = layoutScope({ fields: variant.fields, groups: variant.groups, ctx }, undefined, `${key}.v.${name}`);
+          variants[name] = layoutScope(scopeOf(variant.fields, variant.groups, ctx), undefined, `${key}.v.${name}`);
         }
         return variants;
       });
@@ -348,6 +370,8 @@ function placeField(scope: ScopeInfo, ref: string, key: string, placed: Placed, 
 
 function placeGroup(scope: ScopeInfo, id: string, key: string, placed: Placed): LayoutNode {
   if (!scope.groups?.[id]) return { type: "text", key, props: { text: `Unknown group "${id}"`, tone: "warning" }, children: [] };
+  // Refused, it is not placed: its fields still follow.
+  if (scope.drawing.has(id)) return insideItself(id, key);
   placed.groups.add(id);
   return groupNode(scope, id, key);
 }

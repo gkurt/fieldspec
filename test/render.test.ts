@@ -94,6 +94,31 @@ describe("render", () => {
     ]);
   });
 
+  test("a group placed inside itself is refused, and its fields still drawn", () => {
+    const own = { fields: { a: { type: "string", group: "g" } }, groups: { g: { render: { type: "stack", children: [{ group: "g" }] } } } };
+    expect(checkSpec(own).map((f) => `${f.path}: ${f.message}`)).toEqual(['/groups/g/render/children/0/group: "g" is not a subgroup of this group']);
+    const tree = layout(own);
+    expect([...walk(tree)].filter((n) => n.type === "text").map((n) => n.props.text)).toEqual(['Group "g" is placed inside itself']);
+    expect([...walk(tree)].filter((n) => n.type === "field").map((n) => n.field)).toEqual(["a"]);
+    // Groups nested in a cycle, one of whose renders places another: drawn once round, then refused.
+    const ring = {
+      fields: { a: { type: "string", group: "g0" }, b: { type: "string", group: "g1" } },
+      groups: { g0: { group: "g2" }, g1: { group: "g0" }, g2: { group: "g1", render: { type: "stack", children: [{ group: "g0" }] } } },
+    };
+    expect(checkSpec(ring).filter((f) => f.message === "groups nest in a cycle")).toHaveLength(3);
+    expect([...walk(layout(ring))].some((n) => n.type === "text" && String(n.props.text).endsWith("is placed inside itself"))).toBe(true);
+  });
+
+  test("groups nested hundreds deep are laid out quickly", () => {
+    const n = 400;
+    const groups = Object.fromEntries(Array.from({ length: n }, (_, i) => [`g${i}`, { label: `G${i}`, ...(i > 0 && { group: `g${i - 1}` }) }]));
+    const fields = Object.fromEntries(Array.from({ length: n }, (_, i) => [`f${i}`, { type: "string", group: `g${i}` }]));
+    const start = performance.now();
+    const nodes = [...walk(layout({ fields, groups }))];
+    expect(performance.now() - start).toBeLessThan(2000);
+    expect(nodes.filter((node) => node.type === "field")).toHaveLength(n);
+  });
+
   test("on an object: a layout arranges its fields", () => {
     const tree = layout(define({
       fields: { size: { type: "object", fields: { w: { type: "int" }, h: { type: "int" } }, render: { type: "columns", props: { count: 2 } } } },
