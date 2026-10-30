@@ -13,7 +13,8 @@
     "react",
     "validation",
     "typescript",
-    "json-render"
+    "json-render",
+    "dialkit"
   ],
   "homepage": "https://gkurt.com/fieldspec/",
   "repository": {
@@ -38,6 +39,10 @@
       "types": "./dist/zod.d.ts",
       "default": "./dist/zod.js"
     },
+    "./dialkit": {
+      "types": "./dist/dialkit.d.ts",
+      "default": "./dist/dialkit.js"
+    },
     "./schema.json": "./schema/spec.json",
     "./package.json": "./package.json"
   },
@@ -48,6 +53,9 @@
       ],
       "zod": [
         "./dist/zod.d.ts"
+      ],
+      "dialkit": [
+        "./dist/dialkit.d.ts"
       ]
     }
   },
@@ -64,7 +72,8 @@
   },
   "peerDependencies": {
     "react": ">=18",
-    "zod": ">=4"
+    "zod": ">=4",
+    "dialkit": ">=2"
   },
   "peerDependenciesMeta": {
     "react": {
@@ -72,19 +81,24 @@
     },
     "zod": {
       "optional": true
+    },
+    "dialkit": {
+      "optional": true
     }
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
-    "@happy-dom/global-registrator": "21.0.2",
-    "@json-render/core": "0.21.1",
-    "@json-render/react": "0.21.1",
-    "@json-render/shadcn": "0.21.1",
+    "@happy-dom/global-registrator": "21.0.4",
+    "@json-render/core": "0.21.3",
+    "@json-render/react": "0.21.3",
+    "@json-render/shadcn": "0.21.3",
     "@types/bun": "latest",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.1.2",
     "ajv": "8",
+    "dialkit": "^2.1.0",
+    "motion": "^14.9.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "typescript": "7.0.2",

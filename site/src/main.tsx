@@ -5,6 +5,7 @@ import { parse, prompt, toJSONSchema, toJsonRender, VERSION, type Form } from ".
 import { defaultStyles, FormView, useForm, useFormVersion } from "../../src/react/index.tsx";
 import { toZod } from "../../src/zod.ts";
 import { Canvas } from "./Canvas.tsx";
+import { cardSource, DialKitDemo } from "./DialKit.tsx";
 import { Footer, Heading, Nav, REPO } from "./chrome.tsx";
 import { Code, Json } from "./Code.tsx";
 import { Playground } from "./Playground.tsx";
@@ -16,6 +17,7 @@ const LINKS = [
   ["tutorial.html", "Tutorial", true],
   ["#playground", "Playground", true],
   ["#interop", "Interop"],
+  ["#dialkit", "DialKit"],
   ["models.html", "With AI models", true],
   ["#start", "Get started"],
 ] as const;
@@ -84,6 +86,15 @@ function App() {
           <Playground />
         </section>
         <Interop form={hero} />
+        <section className="section" id="dialkit">
+          <Heading kicker="With DialKit" title="The same spec, as a tuning panel">
+            <code>fieldspec/dialkit</code> turns a spec into a <a href="https://github.com/joshpuckett/dialkit">DialKit</a> panel: bounded numbers become sliders, enums
+            selects, colours pickers, objects and groups folders. What the panel holds comes back through <code>parse</code>, decoded and checked. Both panels below edit
+            the same values; drag either one.
+          </Heading>
+          <DialKitDemo />
+          <Code code={cardSource} label="card.tsx" className="dial-code" />
+        </section>
         <Extend />
         <Sturdy />
         <Start />

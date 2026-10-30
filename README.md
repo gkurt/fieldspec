@@ -34,8 +34,9 @@ feature at a time, with a live form at every step.
 npm install fieldspec
 ```
 
-ES modules, with types. `fieldspec/react` needs `react` 18 or later and `fieldspec/zod` needs
-`zod` 4; both are optional peer dependencies, so the core needs neither.
+ES modules, with types. `fieldspec/react` needs `react` 18 or later, `fieldspec/zod` needs `zod` 4, and
+`fieldspec/dialkit` needs `dialkit` 2 (with `motion`); all are optional peer dependencies, so the
+core needs none of them.
 
 ## Names
 
@@ -243,6 +244,14 @@ checks meaning (references, conditions, defaults).
   removes its items with the `removeItem` action: declare `JSON_RENDER_ACTIONS` in your catalog
   and pass `jsonRenderActions(store)` as handlers. A `scroll` box is a `Stack` with Tailwind
   classes (`overflow-y-auto max-h-[18rem]`), so Tailwind must see the class.
+- `fieldspec/dialkit`: `toDialKit(spec, { values })` gives a [DialKit](https://github.com/joshpuckett/dialkit)
+  panel config (bounded numbers become sliders, booleans toggles, enums selects, colours
+  pickers, other text-valued kinds text fields, objects and groups folders) with `dropped`,
+  what it left out and why (lists, unions, maps, JSON). `panel.read(dialValues, base?)` gives the
+  spec's values through `parse`, taking fields the panel does not show from `base`, and
+  `panel.updates(values)` is what `controller.setValues` takes. `useDialSpec(name, spec)` does
+  both in a component and returns `{ ok, value, issues, panel, dial }`. Conditions are not
+  applied to the panel; every field shows, and `read` still checks them.
 - `prompt(format)` and `metaSchema(format)`: a system prompt and a JSON Schema for structured
   outputs, both generated from the format's kinds, elements and presets. The prompt tells
   agents to start specs with `$schema`.

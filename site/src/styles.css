@@ -329,3 +329,24 @@ h3 { font-size: 1.02rem; font-weight: 650; }
 .diff pre code { display: block; min-width: max-content; }
 .link-button { font: inherit; padding: 0; border: 0; background: none; color: var(--accent); cursor: pointer; }
 .link-button:hover { text-decoration: underline; }
+
+/* ── DialKit ────────────────────────────────────────────────── */
+.dial-demo { display: grid; gap: 20px; }
+.dial-preview {
+  display: grid; place-items: center; min-height: 240px; padding: 32px 16px; border: 1px solid var(--line); border-radius: 14px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--fg) 12%, transparent) 1px, transparent 1px) 0 0 / 16px 16px, var(--bg-2);
+}
+.dial-card { display: flex; gap: 16px; align-items: flex-start; width: min(420px, 100%); background: var(--card); border: 1px solid var(--line); transition: all 0.12s; }
+.dial-card h3 { font-size: 1.15rem; display: flex; align-items: center; gap: 8px; }
+.dial-card p { margin: 4px 0 0; color: var(--muted); }
+.dial-card .dial-tags { font: 0.78rem var(--mono); color: var(--card-accent); margin-top: 10px; }
+.dial-card-mark { flex: none; width: 44px; height: 44px; border-radius: 12px; background: var(--card-accent); }
+.dial-badge { font: 600 0.7rem var(--mono); padding: 2px 8px; border-radius: 99px; color: #fff; background: var(--card-accent); letter-spacing: 0; }
+.dial-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.dial-pair figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+.dial-pair figcaption { font: 600 0.75rem var(--mono); color: var(--muted); }
+.dial-host { min-width: 0; }
+.dial-code { margin-top: 20px; }
+@media (max-width: 920px) { .dial-pair { grid-template-columns: minmax(0, 1fr); } }
+/* DialKit has no setting to turn versions off; with versions="menu" they are one menu, hidden here. */
+.dial-host .dialkit-preset-manager { display: none; }
