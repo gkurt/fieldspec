@@ -1,0 +1,1381 @@
+[
+  {
+    "criteria": "A sign-up form for a B2B SaaS: work email, password, company name, team size, and an optional newsletter opt-in.",
+    "spec": {
+      "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+      "title": "Sign-up form for a B2B SaaS",
+      "fields": {
+        "email": {
+          "use": "email",
+          "label": "Work email",
+          "required": true
+        },
+        "password": {
+          "use": "password",
+          "label": "Password",
+          "hint": "At least 12 characters.",
+          "required": true
+        },
+        "companyName": {
+          "type": "string",
+          "label": "Company name",
+          "required": true
+        },
+        "teamSize": {
+          "type": "enum",
+          "label": "Team size",
+          "options": [
+            {
+              "value": "1-10",
+              "label": "1–10"
+            },
+            {
+              "value": "11-50",
+              "label": "11–50"
+            },
+            {
+              "value": "51-200",
+              "label": "51–200"
+            },
+            {
+              "value": "201-",
+              "label": "201+"
+            }
+          ]
+        },
+        "newsletter": {
+          "type": "boolean",
+          "label": "Newsletter opt-in",
+          "render": "switch"
+        }
+      }
+    },
+    "explicit": true,
+    "phrases": [
+      {
+        "text": "A sign-up form for a B2B SaaS",
+        "field": 0.04,
+        "kind": "text",
+        "kindConfidence": 0.55,
+        "blank": 0.27,
+        "match": "none (0.87)"
+      },
+      {
+        "text": "work email",
+        "field": 0.98,
+        "kind": "email",
+        "kindConfidence": 0.99,
+        "blank": 0.07,
+        "match": "email (0.98)"
+      },
+      {
+        "text": "password",
+        "field": 0.98,
+        "kind": "password",
+        "kindConfidence": 1,
+        "blank": 0.09,
+        "match": "password (1.00)"
+      },
+      {
+        "text": "company name",
+        "field": 0.98,
+        "kind": "text",
+        "kindConfidence": 1,
+        "blank": 0.12,
+        "match": "companyName (1.00)"
+      },
+      {
+        "text": "team size",
+        "field": 0.97,
+        "kind": "whole_number",
+        "kindConfidence": 0.91,
+        "blank": 0.41,
+        "match": "teamSize (1.00)"
+      },
+      {
+        "text": "an optional newsletter opt-in",
+        "field": 0.92,
+        "kind": "yes_no",
+        "kindConfidence": 1,
+        "blank": 0.97,
+        "match": "newsletter (1.00)"
+      }
+    ],
+    "picks": [
+      {
+        "key": "password",
+        "p": 0.99
+      },
+      {
+        "key": "companyName",
+        "p": 0.99
+      },
+      {
+        "key": "email",
+        "p": 0.98
+      },
+      {
+        "key": "teamSize",
+        "p": 0.98
+      },
+      {
+        "key": "newsletter",
+        "p": 0.96
+      },
+      {
+        "key": "expected",
+        "p": 0.64
+      },
+      {
+        "key": "enabled",
+        "p": 0.53
+      },
+      {
+        "key": "notifyEmail",
+        "p": 0.51
+      },
+      {
+        "key": "acceptTerms",
+        "p": 0.33
+      },
+      {
+        "key": "guests",
+        "p": 0.15
+      },
+      {
+        "key": "fullName",
+        "p": 0.09
+      },
+      {
+        "key": "frequency",
+        "p": 0.08
+      }
+    ],
+    "sources": [
+      "email: \"work email\" → catalog email",
+      "password: \"password\" → catalog password",
+      "companyName: \"company name\" → catalog companyName",
+      "teamSize: \"team size\" → catalog teamSize",
+      "newsletter: \"an optional newsletter opt-in\" → catalog newsletter"
+    ],
+    "shownWhen": {},
+    "notes": [],
+    "faults": [],
+    "valid": true,
+    "calls": [
+      {
+        "questions": 145,
+        "tokens": 15198,
+        "ms": 329,
+        "model": "jev-1.14.0"
+      },
+      {
+        "questions": 5,
+        "tokens": 1250,
+        "ms": 180,
+        "model": "jev-1.14.0"
+      }
+    ]
+  },
+  {
+    "criteria": "Checkout delivery step for an online shop: delivery method (ship or pick up in store), shipping address, preferred delivery date, gift wrapping, and a note for the courier.",
+    "spec": {
+      "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+      "title": "Checkout delivery step for an online shop",
+      "fields": {
+        "deliveryMethod": {
+          "type": "enum",
+          "label": "Delivery method",
+          "options": [
+            {
+              "value": "ship",
+              "label": "Ship"
+            },
+            {
+              "value": "pick-up",
+              "label": "Pick up"
+            }
+          ],
+          "render": "segmented"
+        },
+        "address": {
+          "type": "object",
+          "label": "Shipping address",
+          "fields": {
+            "street": {
+              "type": "string",
+              "label": "Street and number",
+              "required": true
+            },
+            "postalCode": {
+              "type": "string",
+              "label": "Postal code",
+              "maxLength": 10,
+              "group": "place"
+            },
+            "city": {
+              "type": "string",
+              "label": "City",
+              "required": true,
+              "group": "place"
+            },
+            "country": {
+              "type": "enum",
+              "label": "Country",
+              "options": [
+                {
+                  "value": "netherlands",
+                  "label": "Netherlands"
+                },
+                {
+                  "value": "germany",
+                  "label": "Germany"
+                },
+                {
+                  "value": "france",
+                  "label": "France"
+                },
+                {
+                  "value": "united-kingdom",
+                  "label": "United Kingdom"
+                },
+                {
+                  "value": "united-states",
+                  "label": "United States"
+                },
+                {
+                  "value": "other",
+                  "label": "Other"
+                }
+              ]
+            }
+          },
+          "groups": {
+            "place": {
+              "render": "row"
+            }
+          },
+          "visible": {
+            "$state": "deliveryMethod",
+            "eq": "ship"
+          }
+        },
+        "deliveryDate": {
+          "type": "date",
+          "label": "Preferred delivery date",
+          "visible": {
+            "$state": "deliveryMethod",
+            "eq": "ship"
+          }
+        },
+        "giftWrap": {
+          "type": "boolean",
+          "label": "Gift wrapping",
+          "render": "switch"
+        },
+        "message": {
+          "use": "multiline",
+          "label": "Note for the courier"
+        }
+      }
+    },
+    "explicit": true,
+    "phrases": [
+      {
+        "text": "Checkout delivery step for an online shop",
+        "field": 0.07,
+        "kind": "text",
+        "kindConfidence": 0.36,
+        "blank": 0.39,
+        "match": "none (0.71)"
+      },
+      {
+        "text": "delivery method (ship or pick up in store)",
+        "field": 0.96,
+        "kind": "one_choice",
+        "kindConfidence": 0.98,
+        "blank": 0.17,
+        "match": "deliveryMethod (1.00)"
+      },
+      {
+        "text": "shipping address",
+        "field": 0.97,
+        "kind": "long_text",
+        "kindConfidence": 0.84,
+        "blank": 0.32,
+        "match": "address (1.00)"
+      },
+      {
+        "text": "preferred delivery date",
+        "field": 0.97,
+        "kind": "date",
+        "kindConfidence": 0.97,
+        "blank": 0.76,
+        "match": "deliveryDate (1.00)"
+      },
+      {
+        "text": "gift wrapping",
+        "field": 0.95,
+        "kind": "yes_no",
+        "kindConfidence": 0.95,
+        "blank": 0.87,
+        "match": "giftWrap (1.00)"
+      },
+      {
+        "text": "a note for the courier",
+        "field": 0.96,
+        "kind": "long_text",
+        "kindConfidence": 0.9,
+        "blank": 0.88,
+        "match": "message (0.96)"
+      }
+    ],
+    "picks": [
+      {
+        "key": "deliveryMethod",
+        "p": 0.99
+      },
+      {
+        "key": "deliveryDate",
+        "p": 0.99
+      },
+      {
+        "key": "giftWrap",
+        "p": 0.99
+      },
+      {
+        "key": "address",
+        "p": 0.96
+      },
+      {
+        "key": "message",
+        "p": 0.92
+      },
+      {
+        "key": "street",
+        "p": 0.92
+      },
+      {
+        "key": "city",
+        "p": 0.83
+      },
+      {
+        "key": "postalCode",
+        "p": 0.83
+      },
+      {
+        "key": "country",
+        "p": 0.75
+      },
+      {
+        "key": "enabled",
+        "p": 0.74
+      },
+      {
+        "key": "expected",
+        "p": 0.42
+      },
+      {
+        "key": "description",
+        "p": 0.23
+      }
+    ],
+    "sources": [
+      "deliveryMethod: \"delivery method (ship or pick up in store)\" → catalog deliveryMethod",
+      "address: \"shipping address\" → catalog address",
+      "deliveryDate: \"preferred delivery date\" → catalog deliveryDate",
+      "giftWrap: \"gift wrapping\" → catalog giftWrap",
+      "message: \"a note for the courier\" → catalog message"
+    ],
+    "shownWhen": {
+      "address": "deliveryMethod=ship (0.98)",
+      "deliveryDate": "deliveryMethod=ship (0.85)"
+    },
+    "notes": [],
+    "faults": [],
+    "valid": true,
+    "calls": [
+      {
+        "questions": 145,
+        "tokens": 15209,
+        "ms": 286,
+        "model": "jev-1.14.0"
+      },
+      {
+        "questions": 5,
+        "tokens": 954,
+        "ms": 193,
+        "model": "jev-1.14.0"
+      }
+    ]
+  },
+  {
+    "criteria": "Settings for a scheduled backup job: how often it runs (hourly, daily or weekly), retention in days, compress archives, encrypt backups, and an email to notify when a backup fails.",
+    "spec": {
+      "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+      "title": "Settings for a scheduled backup job",
+      "fields": {
+        "schedule": {
+          "type": "enum",
+          "label": "How often it runs",
+          "options": [
+            {
+              "value": "hourly",
+              "label": "Hourly"
+            },
+            {
+              "value": "daily",
+              "label": "Daily"
+            },
+            {
+              "value": "weekly",
+              "label": "Weekly"
+            }
+          ],
+          "render": "segmented"
+        },
+        "retentionDays": {
+          "type": "int",
+          "label": "Retention in days",
+          "min": 1,
+          "max": 365,
+          "unit": "days",
+          "default": 30
+        },
+        "compressArchives": {
+          "type": "boolean",
+          "render": "switch",
+          "label": "Compress archives"
+        },
+        "encryptBackups": {
+          "type": "boolean",
+          "render": "switch",
+          "label": "Encrypt backups"
+        },
+        "notifyEmail": {
+          "use": "email",
+          "label": "Email to notify when a backup fails"
+        }
+      }
+    },
+    "explicit": true,
+    "phrases": [
+      {
+        "text": "Settings for a scheduled backup job",
+        "field": 0.1,
+        "kind": "text",
+        "kindConfidence": 0.41,
+        "blank": 0.41,
+        "match": "none (0.66)"
+      },
+      {
+        "text": "how often it runs (hourly, daily or weekly)",
+        "field": 0.93,
+        "kind": "one_choice",
+        "kindConfidence": 0.97,
+        "blank": 0.53,
+        "match": "schedule (1.00)"
+      },
+      {
+        "text": "retention in days",
+        "field": 0.94,
+        "kind": "whole_number",
+        "kindConfidence": 1,
+        "blank": 0.56,
+        "match": "retentionDays (1.00)"
+      },
+      {
+        "text": "compress archives",
+        "field": 0.91,
+        "kind": "yes_no",
+        "kindConfidence": 0.99,
+        "blank": 0.71,
+        "match": "none (0.85)"
+      },
+      {
+        "text": "encrypt backups",
+        "field": 0.89,
+        "kind": "yes_no",
+        "kindConfidence": 0.99,
+        "blank": 0.77,
+        "match": "none (0.56)"
+      },
+      {
+        "text": "an email to notify when a backup fails",
+        "field": 0.89,
+        "kind": "email",
+        "kindConfidence": 0.67,
+        "blank": 0.77,
+        "match": "notifyEmail (0.95)"
+      }
+    ],
+    "picks": [
+      {
+        "key": "schedule",
+        "p": 0.99
+      },
+      {
+        "key": "retentionDays",
+        "p": 0.97
+      },
+      {
+        "key": "notifyEmail",
+        "p": 0.94
+      },
+      {
+        "key": "enabled",
+        "p": 0.84
+      },
+      {
+        "key": "email",
+        "p": 0.76
+      },
+      {
+        "key": "expected",
+        "p": 0.25
+      },
+      {
+        "key": "subject",
+        "p": 0.18
+      },
+      {
+        "key": "timezone",
+        "p": 0.18
+      },
+      {
+        "key": "contactMethod",
+        "p": 0.16
+      },
+      {
+        "key": "message",
+        "p": 0.13
+      },
+      {
+        "key": "description",
+        "p": 0.12
+      },
+      {
+        "key": "retries",
+        "p": 0.11
+      }
+    ],
+    "sources": [
+      "schedule: \"how often it runs (hourly, daily or weekly)\" → catalog schedule",
+      "retentionDays: \"retention in days\" → catalog retentionDays",
+      "compressArchives: \"compress archives\" → yes_no",
+      "encryptBackups: \"encrypt backups\" → yes_no",
+      "notifyEmail: \"an email to notify when a backup fails\" → catalog notifyEmail"
+    ],
+    "shownWhen": {},
+    "notes": [],
+    "faults": [],
+    "valid": true,
+    "calls": [
+      {
+        "questions": 145,
+        "tokens": 15219,
+        "ms": 280,
+        "model": "jev-1.14.0"
+      },
+      {
+        "questions": 5,
+        "tokens": 1188,
+        "ms": 229,
+        "model": "jev-1.14.0"
+      }
+    ]
+  },
+  {
+    "criteria": "Wedding RSVP: guest name, attending or not, number of guests, meal choice (beef, fish or vegetarian), dietary restrictions, and a song request.",
+    "spec": {
+      "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+      "title": "Wedding RSVP",
+      "fields": {
+        "fullName": {
+          "type": "string",
+          "label": "Guest name",
+          "required": true
+        },
+        "attendingOrNot": {
+          "type": "boolean",
+          "render": "switch",
+          "label": "Attending or not"
+        },
+        "guests": {
+          "type": "int",
+          "label": "Number of guests",
+          "min": 1,
+          "max": 20,
+          "default": 1,
+          "visible": {
+            "$state": "attendingOrNot",
+            "eq": true
+          }
+        },
+        "mealChoice": {
+          "type": "enum",
+          "label": "Meal choice",
+          "options": [
+            {
+              "value": "beef",
+              "label": "Beef"
+            },
+            {
+              "value": "fish",
+              "label": "Fish"
+            },
+            {
+              "value": "vegetarian",
+              "label": "Vegetarian"
+            }
+          ],
+          "render": "segmented",
+          "visible": {
+            "$state": "attendingOrNot",
+            "eq": true
+          }
+        },
+        "dietaryRestrictions": {
+          "type": "string",
+          "label": "Dietary restrictions"
+        },
+        "songRequest": {
+          "type": "string",
+          "label": "Song request"
+        }
+      }
+    },
+    "explicit": true,
+    "phrases": [
+      {
+        "text": "Wedding RSVP",
+        "field": 0.07,
+        "kind": "text",
+        "kindConfidence": 0.49,
+        "blank": 0.44,
+        "match": "none (0.89)"
+      },
+      {
+        "text": "guest name",
+        "field": 0.97,
+        "kind": "text",
+        "kindConfidence": 1,
+        "blank": 0.14,
+        "match": "fullName (0.99)"
+      },
+      {
+        "text": "attending or not",
+        "field": 0.96,
+        "kind": "yes_no",
+        "kindConfidence": 0.84,
+        "blank": 0.31,
+        "match": "none (0.74)"
+      },
+      {
+        "text": "number of guests",
+        "field": 0.96,
+        "kind": "whole_number",
+        "kindConfidence": 1,
+        "blank": 0.57,
+        "match": "guests (0.99)"
+      },
+      {
+        "text": "meal choice (beef, fish or vegetarian)",
+        "field": 0.97,
+        "kind": "one_choice",
+        "kindConfidence": 0.99,
+        "blank": 0.63,
+        "match": "none (0.95)"
+      },
+      {
+        "text": "dietary restrictions",
+        "field": 0.96,
+        "kind": "text",
+        "kindConfidence": 0.63,
+        "blank": 0.82,
+        "match": "none (0.95)"
+      },
+      {
+        "text": "a song request",
+        "field": 0.95,
+        "kind": "text",
+        "kindConfidence": 0.82,
+        "blank": 0.8,
+        "match": "none (0.65)"
+      }
+    ],
+    "picks": [
+      {
+        "key": "guests",
+        "p": 0.99
+      },
+      {
+        "key": "fullName",
+        "p": 0.82
+      },
+      {
+        "key": "message",
+        "p": 0.24
+      },
+      {
+        "key": "quantity",
+        "p": 0.24
+      },
+      {
+        "key": "enabled",
+        "p": 0.15
+      },
+      {
+        "key": "subject",
+        "p": 0.13
+      },
+      {
+        "key": "expected",
+        "p": 0.12
+      },
+      {
+        "key": "description",
+        "p": 0.1
+      },
+      {
+        "key": "notifyEmail",
+        "p": 0.1
+      },
+      {
+        "key": "phone",
+        "p": 0.08
+      },
+      {
+        "key": "topics",
+        "p": 0.08
+      },
+      {
+        "key": "email",
+        "p": 0.07
+      }
+    ],
+    "sources": [
+      "fullName: \"guest name\" → catalog fullName",
+      "attendingOrNot: \"attending or not\" → yes_no",
+      "guests: \"number of guests\" → catalog guests",
+      "mealChoice: \"meal choice (beef, fish or vegetarian)\" → one_choice (options from the text)",
+      "dietaryRestrictions: \"dietary restrictions\" → text",
+      "songRequest: \"a song request\" → text"
+    ],
+    "shownWhen": {
+      "guests": "attendingOrNot=yes (0.65)",
+      "mealChoice": "attendingOrNot=yes (0.89)"
+    },
+    "notes": [],
+    "faults": [],
+    "valid": true,
+    "calls": [
+      {
+        "questions": 150,
+        "tokens": 17198,
+        "ms": 304,
+        "model": "jev-1.14.0"
+      },
+      {
+        "questions": 6,
+        "tokens": 1280,
+        "ms": 193,
+        "model": "jev-1.14.0"
+      }
+    ]
+  },
+  {
+    "criteria": "3D printer profile: nozzle temperature, bed temperature, layer height, infill percentage, print speed, filament color.",
+    "spec": {
+      "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+      "title": "3D printer profile",
+      "fields": {
+        "nozzleTemperature": {
+          "type": "number",
+          "label": "Nozzle temperature"
+        },
+        "bedTemperature": {
+          "type": "number",
+          "label": "Bed temperature"
+        },
+        "layerHeight": {
+          "type": "number",
+          "label": "Layer height"
+        },
+        "infillPercentage": {
+          "use": "percent",
+          "label": "Infill percentage"
+        },
+        "printSpeed": {
+          "type": "number",
+          "label": "Print speed"
+        },
+        "filamentColor": {
+          "use": "color",
+          "label": "Filament color"
+        }
+      }
+    },
+    "explicit": true,
+    "phrases": [
+      {
+        "text": "3D printer profile",
+        "field": 0.25,
+        "kind": "text",
+        "kindConfidence": 0.61,
+        "blank": 0.51,
+        "match": "none (0.90)"
+      },
+      {
+        "text": "nozzle temperature",
+        "field": 0.93,
+        "kind": "measurement",
+        "kindConfidence": 1,
+        "blank": 0.58,
+        "match": "none (0.96)"
+      },
+      {
+        "text": "bed temperature",
+        "field": 0.94,
+        "kind": "measurement",
+        "kindConfidence": 0.99,
+        "blank": 0.66,
+        "match": "none (0.99)"
+      },
+      {
+        "text": "layer height",
+        "field": 0.94,
+        "kind": "measurement",
+        "kindConfidence": 0.99,
+        "blank": 0.58,
+        "match": "none (0.92)"
+      },
+      {
+        "text": "infill percentage",
+        "field": 0.94,
+        "kind": "percentage",
+        "kindConfidence": 0.99,
+        "blank": 0.63,
+        "match": "none (0.85)"
+      },
+      {
+        "text": "print speed",
+        "field": 0.93,
+        "kind": "measurement",
+        "kindConfidence": 0.95,
+        "blank": 0.65,
+        "match": "none (0.88)"
+      },
+      {
+        "text": "filament color",
+        "field": 0.95,
+        "kind": "color",
+        "kindConfidence": 0.99,
+        "blank": 0.73,
+        "match": "none (0.81)"
+      }
+    ],
+    "picks": [
+      {
+        "key": "theme",
+        "p": 0.58
+      },
+      {
+        "key": "subject",
+        "p": 0.2
+      },
+      {
+        "key": "description",
+        "p": 0.2
+      },
+      {
+        "key": "screenshot",
+        "p": 0.11
+      },
+      {
+        "key": "title",
+        "p": 0.1
+      },
+      {
+        "key": "message",
+        "p": 0.09
+      },
+      {
+        "key": "rating",
+        "p": 0.09
+      },
+      {
+        "key": "enabled",
+        "p": 0.08
+      },
+      {
+        "key": "expected",
+        "p": 0.07
+      },
+      {
+        "key": "deviceModel",
+        "p": 0.07
+      },
+      {
+        "key": "stepsToReproduce",
+        "p": 0.06
+      },
+      {
+        "key": "topics",
+        "p": 0.06
+      }
+    ],
+    "sources": [
+      "nozzleTemperature: \"nozzle temperature\" → measurement",
+      "bedTemperature: \"bed temperature\" → measurement",
+      "layerHeight: \"layer height\" → measurement",
+      "infillPercentage: \"infill percentage\" → percentage",
+      "printSpeed: \"print speed\" → measurement",
+      "filamentColor: \"filament color\" → color"
+    ],
+    "shownWhen": {},
+    "notes": [],
+    "faults": [],
+    "valid": true,
+    "calls": [
+      {
+        "questions": 150,
+        "tokens": 17178,
+        "ms": 300,
+        "model": "jev-1.14.0"
+      }
+    ]
+  },
+  {
+    "criteria": "A bug report form for a mobile app.",
+    "spec": {
+      "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+      "title": "Bug report form for a mobile app",
+      "fields": {
+        "title": {
+          "type": "string",
+          "label": "Title",
+          "maxLength": 120,
+          "group": "feedback"
+        },
+        "description": {
+          "use": "multiline",
+          "label": "Description",
+          "group": "feedback"
+        },
+        "stepsToReproduce": {
+          "use": "multiline",
+          "label": "Steps to reproduce",
+          "placeholder": "1. Open…\n2. Tap…",
+          "group": "feedback"
+        },
+        "expected": {
+          "use": "multiline",
+          "label": "What did you expect?",
+          "group": "feedback"
+        },
+        "severity": {
+          "type": "enum",
+          "label": "Severity",
+          "options": [
+            {
+              "value": "cosmetic",
+              "label": "Cosmetic"
+            },
+            {
+              "value": "annoying",
+              "label": "Annoying"
+            },
+            {
+              "value": "blocks-me",
+              "label": "Blocks me"
+            },
+            {
+              "value": "crash-or-data-loss",
+              "label": "Crash or data loss"
+            }
+          ],
+          "render": "radio",
+          "group": "feedback"
+        },
+        "screenshot": {
+          "type": "bytes",
+          "label": "Screenshot",
+          "accept": [
+            "image/*"
+          ],
+          "group": "feedback"
+        },
+        "platform": {
+          "type": "enum",
+          "label": "Platform",
+          "options": [
+            {
+              "value": "ios",
+              "label": "iOS"
+            },
+            {
+              "value": "android",
+              "label": "Android"
+            }
+          ],
+          "render": "segmented",
+          "group": "device"
+        },
+        "osVersion": {
+          "type": "string",
+          "label": "OS version",
+          "placeholder": "17.4",
+          "group": "device"
+        },
+        "appVersion": {
+          "type": "string",
+          "label": "App version",
+          "placeholder": "3.2.1",
+          "group": "device"
+        },
+        "deviceModel": {
+          "type": "string",
+          "label": "Device",
+          "placeholder": "Pixel 8",
+          "group": "device"
+        }
+      },
+      "groups": {
+        "feedback": {
+          "label": "Details"
+        },
+        "device": {
+          "label": "Device"
+        }
+      }
+    },
+    "explicit": false,
+    "phrases": [
+      {
+        "text": "A bug report form for a mobile app",
+        "field": 0.11,
+        "kind": "text",
+        "kindConfidence": 0.52,
+        "blank": 0.44,
+        "match": "none (0.49)"
+      }
+    ],
+    "picks": [
+      {
+        "key": "stepsToReproduce",
+        "p": 0.89
+      },
+      {
+        "key": "title",
+        "p": 0.86
+      },
+      {
+        "key": "description",
+        "p": 0.86
+      },
+      {
+        "key": "message",
+        "p": 0.84
+      },
+      {
+        "key": "appVersion",
+        "p": 0.82
+      },
+      {
+        "key": "platform",
+        "p": 0.81
+      },
+      {
+        "key": "expected",
+        "p": 0.8
+      },
+      {
+        "key": "deviceModel",
+        "p": 0.78
+      },
+      {
+        "key": "severity",
+        "p": 0.77
+      },
+      {
+        "key": "osVersion",
+        "p": 0.76
+      },
+      {
+        "key": "screenshot",
+        "p": 0.71
+      },
+      {
+        "key": "email",
+        "p": 0.59
+      }
+    ],
+    "sources": [
+      "title: catalog title (0.86)",
+      "description: catalog description (0.86)",
+      "stepsToReproduce: catalog stepsToReproduce (0.89)",
+      "expected: catalog expected (0.80)",
+      "severity: catalog severity (0.77)",
+      "screenshot: catalog screenshot (0.71)",
+      "platform: catalog platform (0.81)",
+      "osVersion: catalog osVersion (0.76)",
+      "appVersion: catalog appVersion (0.82)",
+      "deviceModel: catalog deviceModel (0.78)"
+    ],
+    "shownWhen": {},
+    "notes": [],
+    "faults": [],
+    "valid": true,
+    "calls": [
+      {
+        "questions": 120,
+        "tokens": 5217,
+        "ms": 231,
+        "model": "jev-1.14.0"
+      },
+      {
+        "questions": 10,
+        "tokens": 2350,
+        "ms": 198,
+        "model": "jev-1.14.0"
+      }
+    ]
+  },
+  {
+    "criteria": "Contact form for a dentist's website.",
+    "spec": {
+      "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+      "title": "Contact form for a dentist's website",
+      "fields": {
+        "email": {
+          "use": "email",
+          "label": "Email",
+          "required": true
+        },
+        "fullName": {
+          "type": "string",
+          "label": "Full name",
+          "required": true
+        },
+        "phone": {
+          "type": "string",
+          "label": "Phone",
+          "placeholder": "+31 6 1234 5678"
+        },
+        "message": {
+          "use": "multiline",
+          "label": "Message"
+        }
+      }
+    },
+    "explicit": false,
+    "phrases": [
+      {
+        "text": "Contact form for a dentist's website",
+        "field": 0.06,
+        "kind": "long_text",
+        "kindConfidence": 0.52,
+        "blank": 0.53,
+        "match": "none (0.59)"
+      }
+    ],
+    "picks": [
+      {
+        "key": "email",
+        "p": 0.86
+      },
+      {
+        "key": "fullName",
+        "p": 0.86
+      },
+      {
+        "key": "message",
+        "p": 0.86
+      },
+      {
+        "key": "phone",
+        "p": 0.81
+      },
+      {
+        "key": "reason",
+        "p": 0.66
+      },
+      {
+        "key": "newPatient",
+        "p": 0.65
+      },
+      {
+        "key": "appointmentDate",
+        "p": 0.63
+      },
+      {
+        "key": "city",
+        "p": 0.61
+      },
+      {
+        "key": "contactMethod",
+        "p": 0.58
+      },
+      {
+        "key": "notifyEmail",
+        "p": 0.58
+      },
+      {
+        "key": "postalCode",
+        "p": 0.57
+      },
+      {
+        "key": "expected",
+        "p": 0.54
+      }
+    ],
+    "sources": [
+      "email: catalog email (0.86)",
+      "fullName: catalog fullName (0.86)",
+      "phone: catalog phone (0.81)",
+      "message: catalog message (0.86)"
+    ],
+    "shownWhen": {},
+    "notes": [],
+    "faults": [],
+    "valid": true,
+    "calls": [
+      {
+        "questions": 120,
+        "tokens": 5215,
+        "ms": 237,
+        "model": "jev-1.14.0"
+      }
+    ]
+  },
+  {
+    "criteria": "Newsletter preferences page.",
+    "spec": {
+      "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+      "title": "Newsletter preferences page",
+      "fields": {
+        "topics": {
+          "type": "set",
+          "label": "Topics",
+          "items": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "product-news",
+                "label": "Product news"
+              },
+              {
+                "value": "tips-and-tutorials",
+                "label": "Tips and tutorials"
+              },
+              {
+                "value": "events",
+                "label": "Events"
+              },
+              {
+                "value": "offers",
+                "label": "Offers"
+              }
+            ]
+          },
+          "render": "checks",
+          "visible": {
+            "$state": "newsletter",
+            "eq": true
+          }
+        },
+        "newsletter": {
+          "type": "boolean",
+          "label": "Send me the newsletter",
+          "render": "switch"
+        }
+      }
+    },
+    "explicit": false,
+    "phrases": [
+      {
+        "text": "Newsletter preferences page",
+        "field": 0.14,
+        "kind": "text",
+        "kindConfidence": 0.38,
+        "blank": 0.45,
+        "match": "newsletter (0.65)"
+      }
+    ],
+    "picks": [
+      {
+        "key": "newsletter",
+        "p": 0.88
+      },
+      {
+        "key": "enabled",
+        "p": 0.78
+      },
+      {
+        "key": "topics",
+        "p": 0.76
+      },
+      {
+        "key": "frequency",
+        "p": 0.62
+      },
+      {
+        "key": "notifyEmail",
+        "p": 0.59
+      },
+      {
+        "key": "email",
+        "p": 0.57
+      },
+      {
+        "key": "unsubscribeAll",
+        "p": 0.55
+      },
+      {
+        "key": "language",
+        "p": 0.4
+      },
+      {
+        "key": "contactMethod",
+        "p": 0.35
+      },
+      {
+        "key": "country",
+        "p": 0.25
+      },
+      {
+        "key": "acceptTerms",
+        "p": 0.21
+      },
+      {
+        "key": "fullName",
+        "p": 0.21
+      }
+    ],
+    "sources": [
+      "topics: catalog topics (0.76)",
+      "newsletter: catalog newsletter (0.88)"
+    ],
+    "shownWhen": {
+      "topics": "newsletter=yes (0.53)"
+    },
+    "notes": [],
+    "faults": [],
+    "valid": true,
+    "calls": [
+      {
+        "questions": 120,
+        "tokens": 5207,
+        "ms": 231,
+        "model": "jev-1.14.0"
+      },
+      {
+        "questions": 1,
+        "tokens": 376,
+        "ms": 187,
+        "model": "jev-1.14.0"
+      }
+    ]
+  }
+]

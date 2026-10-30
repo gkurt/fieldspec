@@ -1,0 +1,580 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Specs from Jev</title>
+<style>
+[data-fieldspec] { font: inherit; color: inherit; }
+[data-fieldspec] .fs-field { display: flex; flex-direction: column; gap: 4px; }
+[data-fieldspec] .fs-label { font-weight: 600; font-size: 0.875rem; }
+[data-fieldspec] .fs-inline .fs-label { font-weight: 500; display: flex; gap: 8px; align-items: center; }
+[data-fieldspec] .fs-input, [data-fieldspec] .fs-select, [data-fieldspec] .fs-textarea {
+  font: inherit; padding: 6px 8px; border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-radius: 6px; background: transparent; color: inherit; width: 100%; box-sizing: border-box;
+}
+[data-fieldspec] .fs-textarea { min-height: 5rem; }
+[data-fieldspec] [aria-invalid="true"] { border-color: #d14343; }
+[data-fieldspec] .fs-help { font-size: 0.8125rem; opacity: 0.7; margin: 0; }
+[data-fieldspec] .fs-errors { color: #d14343; font-size: 0.8125rem; margin: 0; padding: 0; list-style: none; }
+[data-fieldspec] .fs-title { font-weight: 600; font-size: 0.875rem; }
+[data-fieldspec] .fs-section, [data-fieldspec] .fs-collapsible, [data-fieldspec] .fs-group {
+  border: 1px solid color-mix(in srgb, currentColor 15%, transparent); border-radius: 10px; padding: 12px 14px; margin: 0;
+  display: flex; flex-direction: column; gap: 12px;
+}
+[data-fieldspec] .fs-group { gap: 4px; }
+[data-fieldspec] .fs-section > legend, [data-fieldspec] .fs-collapsible > legend, [data-fieldspec] .fs-group > legend { padding: 0 4px; }
+[data-fieldspec] fieldset { min-width: 0; } /* browsers keep fieldsets as wide as their content; let nested ones shrink */
+[data-fieldspec] .fs-collapsible:not([data-open]) { padding-bottom: 0; }
+[data-fieldspec] .fs-toggle { border: 0; padding: 0; background: none; font-weight: 600; display: inline-flex; gap: 6px; align-items: center; }
+[data-fieldspec] .fs-toggle::before { content: "▸"; font-size: 0.75em; transition: transform 0.15s; }
+[data-fieldspec] .fs-toggle[aria-expanded="true"]::before { transform: rotate(90deg); }
+[data-fieldspec] .fs-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+[data-fieldspec] .fs-segmented { border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: 6px; overflow: hidden; width: fit-content; }
+[data-fieldspec] .fs-segmented label { padding: 4px 12px; cursor: pointer; }
+[data-fieldspec] .fs-segmented label + label { border-left: 1px solid color-mix(in srgb, currentColor 25%, transparent); }
+[data-fieldspec] .fs-segmented input { position: absolute; opacity: 0; pointer-events: none; }
+[data-fieldspec] .fs-segmented [data-checked] { background: color-mix(in srgb, currentColor 14%, transparent); font-weight: 600; }
+[data-fieldspec] .fs-switch { appearance: none; width: 2.1em; height: 1.2em; border-radius: 999px; background: color-mix(in srgb, currentColor 22%, transparent); position: relative; cursor: pointer; margin: 0; transition: background 0.15s; }
+[data-fieldspec] .fs-switch::after { content: ""; position: absolute; top: 0.15em; left: 0.15em; width: 0.9em; height: 0.9em; border-radius: 50%; background: white; transition: transform 0.15s; }
+[data-fieldspec] .fs-switch:checked { background: #3b82f6; }
+[data-fieldspec] .fs-switch:checked::after { transform: translateX(0.9em); }
+[data-fieldspec] .fs-switch:indeterminate::after { transform: translateX(0.45em); }
+[data-fieldspec] .fs-mixed { opacity: 0.6; font-style: italic; }
+[data-fieldspec] .fs-handle { cursor: grab; user-select: none; padding: 4px 2px; opacity: 0.5; line-height: 1.6; }
+[data-fieldspec] .fs-handle:hover, [data-fieldspec] .fs-handle:focus-visible { opacity: 1; }
+[data-fieldspec] .fs-item[data-dragging] { opacity: 0.4; }
+[data-fieldspec] .fs-item[data-drop="before"] { box-shadow: 0 -2px 0 #3b82f6; }
+[data-fieldspec] .fs-item[data-drop="after"] { box-shadow: 0 2px 0 #3b82f6; }
+[data-fieldspec] .fs-key .fs-input { width: 100%; box-sizing: border-box; }
+[data-fieldspec] .fs-warning { color: #b7791f; }
+[data-fieldspec] .fs-muted { opacity: 0.7; }
+[data-fieldspec] button { font: inherit; padding: 4px 10px; border-radius: 6px; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); background: transparent; color: inherit; cursor: pointer; }
+[data-fieldspec] button:disabled { opacity: 0.4; cursor: default; }
+[data-fieldspec] [role="tab"][aria-selected="true"] { background: color-mix(in srgb, currentColor 12%, transparent); }
+[data-fieldspec] .fs-divider { border: 0; border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent); width: 100%; }
+
+body { font: 14px/1.45 system-ui, sans-serif; margin: 0; padding: 24px 16px; background: #f6f6f4; color: #1d1d1f; }
+main { max-width: 1100px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 22px; margin: 0; } h2 { font-size: 15px; margin: 0 0 4px; }
+.case { background: #fff; border: 1px solid #e3e3e0; border-radius: 12px; padding: 16px; }
+.meta { margin: 0 0 12px; color: #666; font-size: 12.5px; }
+.tag { display: inline-block; padding: 1px 8px; border-radius: 99px; background: #eef2ff; color: #3949ab; font-weight: 600; }
+.tag.vague { background: #fff4e5; color: #a15c00; } .tag.ok { background: #e8f6ee; color: #1b7a43; } .tag.bad { background: #fdecec; color: #b42318; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+table { border-collapse: collapse; width: 100%; font-size: 12.5px; } td { border-top: 1px solid #eee; padding: 4px 6px; vertical-align: top; }
+pre { font-size: 11.5px; background: #f6f6f4; padding: 8px; border-radius: 8px; overflow: auto; max-height: 320px; }
+.note { color: #a15c00; font-size: 12.5px; } summary { cursor: pointer; margin-top: 8px; color: #555; }
+</style></head><body><main><h1>Specs generated with Jev</h1><section class="case">
+  <header><h2>A sign-up form for a B2B SaaS: work email, password, company name, team size, and an optional newsletter opt-in.</h2>
+  <p class="meta"><span class="tag ">explicit</span> <span class="tag ok">valid spec</span> 2 requests · 509 ms · 16,448 tokens</p></header>
+  <div class="cols">
+    <div class="form"><div class="fs-form" data-fieldspec=""><div class="fs-stack"><div style="display:flex;flex-direction:column;gap:12px"><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__email">Work email<span aria-hidden="true"> *</span></label><input id="_R_0__email" placeholder="name@example.com" aria-invalid="false" class="fs-input" type="email" value=""/></div><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__password">Password<span aria-hidden="true"> *</span></label><input id="_R_0__password" aria-invalid="false" class="fs-input" type="password" value=""/><div class="fs-help">At least 12 characters.</div></div><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__companyName">Company name<span aria-hidden="true"> *</span></label><input id="_R_0__companyName" aria-invalid="false" class="fs-input" type="text" value=""/></div><div class="fs-field" data-kind="enum"><label class="fs-label" for="_R_0__teamSize">Team size</label><select id="_R_0__teamSize" class="fs-select"><option value="0" selected="">1–10</option><option value="1">11–50</option><option value="2">51–200</option><option value="3">201+</option></select></div><div class="fs-field fs-inline" data-kind="boolean"><label class="fs-label" for="_R_0__newsletter"><input id="_R_0__newsletter" type="checkbox" role="switch" class="fs-switch"/> <span class="">Newsletter opt-in</span></label></div></div></div></div></div>
+    <div><table><tr><td><code>email</code></td><td>"work email" → catalog email</td></tr><tr><td><code>password</code></td><td>"password" → catalog password</td></tr><tr><td><code>companyName</code></td><td>"company name" → catalog companyName</td></tr><tr><td><code>teamSize</code></td><td>"team size" → catalog teamSize</td></tr><tr><td><code>newsletter</code></td><td>"an optional newsletter opt-in" → catalog newsletter</td></tr></table>
+    <details><summary>Spec</summary><pre>{
+  "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+  "title": "Sign-up form for a B2B SaaS",
+  "fields": {
+    "email": {
+      "use": "email",
+      "label": "Work email",
+      "required": true
+    },
+    "password": {
+      "use": "password",
+      "label": "Password",
+      "hint": "At least 12 characters.",
+      "required": true
+    },
+    "companyName": {
+      "type": "string",
+      "label": "Company name",
+      "required": true
+    },
+    "teamSize": {
+      "type": "enum",
+      "label": "Team size",
+      "options": [
+        {
+          "value": "1-10",
+          "label": "1–10"
+        },
+        {
+          "value": "11-50",
+          "label": "11–50"
+        },
+        {
+          "value": "51-200",
+          "label": "51–200"
+        },
+        {
+          "value": "201-",
+          "label": "201+"
+        }
+      ]
+    },
+    "newsletter": {
+      "type": "boolean",
+      "label": "Newsletter opt-in",
+      "render": "switch"
+    }
+  }
+}</pre></details></div>
+  </div>
+</section>
+<section class="case">
+  <header><h2>Checkout delivery step for an online shop: delivery method (ship or pick up in store), shipping address, preferred delivery date, gift wrapping, and a note for the courier.</h2>
+  <p class="meta"><span class="tag ">explicit</span> <span class="tag ok">valid spec</span> 2 requests · 479 ms · 16,163 tokens</p></header>
+  <div class="cols">
+    <div class="form"><div class="fs-form" data-fieldspec=""><div class="fs-stack"><div style="display:flex;flex-direction:column;gap:12px"><div class="fs-field" data-kind="enum"><label class="fs-label" for="_R_0__deliveryMethod">Delivery method</label><div role="radiogroup" id="_R_0__deliveryMethod" class="fs-segmented" style="display:flex;gap:0;flex-wrap:wrap"><label data-checked=""><input type="radio" name="_R_0__deliveryMethod" checked=""/> Ship</label><label><input type="radio" name="_R_0__deliveryMethod"/> Pick up</label></div></div><fieldset class="fs-field fs-group" data-kind="object"><legend class="fs-label">Shipping address</legend><div class="fs-stack"><div style="display:flex;flex-direction:column;gap:12px"><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__address_street">Street and number<span aria-hidden="true"> *</span></label><input id="_R_0__address_street" aria-invalid="false" class="fs-input" type="text" value=""/></div><div class="fs-row"><div style="display:flex;flex-wrap:wrap;gap:12px"><div style="flex:1 1 10rem;min-width:0"><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__address_postalCode">Postal code</label><input id="_R_0__address_postalCode" aria-invalid="false" class="fs-input" type="text" value=""/></div></div><div style="flex:1 1 10rem;min-width:0"><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__address_city">City<span aria-hidden="true"> *</span></label><input id="_R_0__address_city" aria-invalid="false" class="fs-input" type="text" value=""/></div></div></div></div><div class="fs-field" data-kind="enum"><label class="fs-label" for="_R_0__address_country">Country</label><select id="_R_0__address_country" class="fs-select"><option value="0" selected="">Netherlands</option><option value="1">Germany</option><option value="2">France</option><option value="3">United Kingdom</option><option value="4">United States</option><option value="5">Other</option></select></div></div></div></fieldset><div class="fs-field" data-kind="date"><label class="fs-label" for="_R_0__deliveryDate">Preferred delivery date</label><input id="_R_0__deliveryDate" aria-invalid="false" class="fs-input" type="date" value=""/></div><div class="fs-field fs-inline" data-kind="boolean"><label class="fs-label" for="_R_0__giftWrap"><input id="_R_0__giftWrap" type="checkbox" role="switch" class="fs-switch"/> <span class="">Gift wrapping</span></label></div><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__message">Note for the courier</label><textarea id="_R_0__message" aria-invalid="false" class="fs-textarea" rows="4"></textarea></div></div></div></div></div>
+    <div><table><tr><td><code>deliveryMethod</code></td><td>"delivery method (ship or pick up in store)" → catalog deliveryMethod</td></tr><tr><td><code>address</code></td><td>"shipping address" → catalog address<br><small>shown when deliveryMethod=ship (0.98)</small></td></tr><tr><td><code>deliveryDate</code></td><td>"preferred delivery date" → catalog deliveryDate<br><small>shown when deliveryMethod=ship (0.85)</small></td></tr><tr><td><code>giftWrap</code></td><td>"gift wrapping" → catalog giftWrap</td></tr><tr><td><code>message</code></td><td>"a note for the courier" → catalog message</td></tr></table>
+    <details><summary>Spec</summary><pre>{
+  "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+  "title": "Checkout delivery step for an online shop",
+  "fields": {
+    "deliveryMethod": {
+      "type": "enum",
+      "label": "Delivery method",
+      "options": [
+        {
+          "value": "ship",
+          "label": "Ship"
+        },
+        {
+          "value": "pick-up",
+          "label": "Pick up"
+        }
+      ],
+      "render": "segmented"
+    },
+    "address": {
+      "type": "object",
+      "label": "Shipping address",
+      "fields": {
+        "street": {
+          "type": "string",
+          "label": "Street and number",
+          "required": true
+        },
+        "postalCode": {
+          "type": "string",
+          "label": "Postal code",
+          "maxLength": 10,
+          "group": "place"
+        },
+        "city": {
+          "type": "string",
+          "label": "City",
+          "required": true,
+          "group": "place"
+        },
+        "country": {
+          "type": "enum",
+          "label": "Country",
+          "options": [
+            {
+              "value": "netherlands",
+              "label": "Netherlands"
+            },
+            {
+              "value": "germany",
+              "label": "Germany"
+            },
+            {
+              "value": "france",
+              "label": "France"
+            },
+            {
+              "value": "united-kingdom",
+              "label": "United Kingdom"
+            },
+            {
+              "value": "united-states",
+              "label": "United States"
+            },
+            {
+              "value": "other",
+              "label": "Other"
+            }
+          ]
+        }
+      },
+      "groups": {
+        "place": {
+          "render": "row"
+        }
+      },
+      "visible": {
+        "$state": "deliveryMethod",
+        "eq": "ship"
+      }
+    },
+    "deliveryDate": {
+      "type": "date",
+      "label": "Preferred delivery date",
+      "visible": {
+        "$state": "deliveryMethod",
+        "eq": "ship"
+      }
+    },
+    "giftWrap": {
+      "type": "boolean",
+      "label": "Gift wrapping",
+      "render": "switch"
+    },
+    "message": {
+      "use": "multiline",
+      "label": "Note for the courier"
+    }
+  }
+}</pre></details></div>
+  </div>
+</section>
+<section class="case">
+  <header><h2>Settings for a scheduled backup job: how often it runs (hourly, daily or weekly), retention in days, compress archives, encrypt backups, and an email to notify when a backup fails.</h2>
+  <p class="meta"><span class="tag ">explicit</span> <span class="tag ok">valid spec</span> 2 requests · 509 ms · 16,407 tokens</p></header>
+  <div class="cols">
+    <div class="form"><div class="fs-form" data-fieldspec=""><div class="fs-stack"><div style="display:flex;flex-direction:column;gap:12px"><div class="fs-field" data-kind="enum"><label class="fs-label" for="_R_0__schedule">How often it runs</label><div role="radiogroup" id="_R_0__schedule" class="fs-segmented" style="display:flex;gap:0;flex-wrap:wrap"><label data-checked=""><input type="radio" name="_R_0__schedule" checked=""/> Hourly</label><label><input type="radio" name="_R_0__schedule"/> Daily</label><label><input type="radio" name="_R_0__schedule"/> Weekly</label></div></div><div class="fs-field" data-kind="int"><label class="fs-label" for="_R_0__retentionDays">Retention in days</label><input id="_R_0__retentionDays" aria-invalid="false" min="1" max="365" step="1" class="fs-input" type="number" value="30"/></div><div class="fs-field fs-inline" data-kind="boolean"><label class="fs-label" for="_R_0__compressArchives"><input id="_R_0__compressArchives" type="checkbox" role="switch" class="fs-switch"/> <span class="">Compress archives</span></label></div><div class="fs-field fs-inline" data-kind="boolean"><label class="fs-label" for="_R_0__encryptBackups"><input id="_R_0__encryptBackups" type="checkbox" role="switch" class="fs-switch"/> <span class="">Encrypt backups</span></label></div><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__notifyEmail">Email to notify when a backup fails</label><input id="_R_0__notifyEmail" placeholder="name@example.com" aria-invalid="false" class="fs-input" type="email" value=""/></div></div></div></div></div>
+    <div><table><tr><td><code>schedule</code></td><td>"how often it runs (hourly, daily or weekly)" → catalog schedule</td></tr><tr><td><code>retentionDays</code></td><td>"retention in days" → catalog retentionDays</td></tr><tr><td><code>compressArchives</code></td><td>"compress archives" → yes_no</td></tr><tr><td><code>encryptBackups</code></td><td>"encrypt backups" → yes_no</td></tr><tr><td><code>notifyEmail</code></td><td>"an email to notify when a backup fails" → catalog notifyEmail</td></tr></table>
+    <details><summary>Spec</summary><pre>{
+  "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+  "title": "Settings for a scheduled backup job",
+  "fields": {
+    "schedule": {
+      "type": "enum",
+      "label": "How often it runs",
+      "options": [
+        {
+          "value": "hourly",
+          "label": "Hourly"
+        },
+        {
+          "value": "daily",
+          "label": "Daily"
+        },
+        {
+          "value": "weekly",
+          "label": "Weekly"
+        }
+      ],
+      "render": "segmented"
+    },
+    "retentionDays": {
+      "type": "int",
+      "label": "Retention in days",
+      "min": 1,
+      "max": 365,
+      "unit": "days",
+      "default": 30
+    },
+    "compressArchives": {
+      "type": "boolean",
+      "render": "switch",
+      "label": "Compress archives"
+    },
+    "encryptBackups": {
+      "type": "boolean",
+      "render": "switch",
+      "label": "Encrypt backups"
+    },
+    "notifyEmail": {
+      "use": "email",
+      "label": "Email to notify when a backup fails"
+    }
+  }
+}</pre></details></div>
+  </div>
+</section>
+<section class="case">
+  <header><h2>Wedding RSVP: guest name, attending or not, number of guests, meal choice (beef, fish or vegetarian), dietary restrictions, and a song request.</h2>
+  <p class="meta"><span class="tag ">explicit</span> <span class="tag ok">valid spec</span> 2 requests · 497 ms · 18,478 tokens</p></header>
+  <div class="cols">
+    <div class="form"><div class="fs-form" data-fieldspec=""><div class="fs-stack"><div style="display:flex;flex-direction:column;gap:12px"><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__fullName">Guest name<span aria-hidden="true"> *</span></label><input id="_R_0__fullName" aria-invalid="false" class="fs-input" type="text" value=""/></div><div class="fs-field fs-inline" data-kind="boolean"><label class="fs-label" for="_R_0__attendingOrNot"><input id="_R_0__attendingOrNot" type="checkbox" role="switch" class="fs-switch"/> <span class="">Attending or not</span></label></div><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__dietaryRestrictions">Dietary restrictions</label><input id="_R_0__dietaryRestrictions" aria-invalid="false" class="fs-input" type="text" value=""/></div><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__songRequest">Song request</label><input id="_R_0__songRequest" aria-invalid="false" class="fs-input" type="text" value=""/></div></div></div></div></div>
+    <div><table><tr><td><code>fullName</code></td><td>"guest name" → catalog fullName</td></tr><tr><td><code>attendingOrNot</code></td><td>"attending or not" → yes_no</td></tr><tr><td><code>guests</code></td><td>"number of guests" → catalog guests<br><small>shown when attendingOrNot=yes (0.65)</small></td></tr><tr><td><code>mealChoice</code></td><td>"meal choice (beef, fish or vegetarian)" → one_choice (options from the text)<br><small>shown when attendingOrNot=yes (0.89)</small></td></tr><tr><td><code>dietaryRestrictions</code></td><td>"dietary restrictions" → text</td></tr><tr><td><code>songRequest</code></td><td>"a song request" → text</td></tr></table>
+    <details><summary>Spec</summary><pre>{
+  "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+  "title": "Wedding RSVP",
+  "fields": {
+    "fullName": {
+      "type": "string",
+      "label": "Guest name",
+      "required": true
+    },
+    "attendingOrNot": {
+      "type": "boolean",
+      "render": "switch",
+      "label": "Attending or not"
+    },
+    "guests": {
+      "type": "int",
+      "label": "Number of guests",
+      "min": 1,
+      "max": 20,
+      "default": 1,
+      "visible": {
+        "$state": "attendingOrNot",
+        "eq": true
+      }
+    },
+    "mealChoice": {
+      "type": "enum",
+      "label": "Meal choice",
+      "options": [
+        {
+          "value": "beef",
+          "label": "Beef"
+        },
+        {
+          "value": "fish",
+          "label": "Fish"
+        },
+        {
+          "value": "vegetarian",
+          "label": "Vegetarian"
+        }
+      ],
+      "render": "segmented",
+      "visible": {
+        "$state": "attendingOrNot",
+        "eq": true
+      }
+    },
+    "dietaryRestrictions": {
+      "type": "string",
+      "label": "Dietary restrictions"
+    },
+    "songRequest": {
+      "type": "string",
+      "label": "Song request"
+    }
+  }
+}</pre></details></div>
+  </div>
+</section>
+<section class="case">
+  <header><h2>3D printer profile: nozzle temperature, bed temperature, layer height, infill percentage, print speed, filament color.</h2>
+  <p class="meta"><span class="tag ">explicit</span> <span class="tag ok">valid spec</span> 1 request · 300 ms · 17,178 tokens</p></header>
+  <div class="cols">
+    <div class="form"><div class="fs-form" data-fieldspec=""><div class="fs-stack"><div style="display:flex;flex-direction:column;gap:12px"><div class="fs-field" data-kind="number"><label class="fs-label" for="_R_0__nozzleTemperature">Nozzle temperature</label><input id="_R_0__nozzleTemperature" aria-invalid="false" step="any" class="fs-input" type="number" value="0"/></div><div class="fs-field" data-kind="number"><label class="fs-label" for="_R_0__bedTemperature">Bed temperature</label><input id="_R_0__bedTemperature" aria-invalid="false" step="any" class="fs-input" type="number" value="0"/></div><div class="fs-field" data-kind="number"><label class="fs-label" for="_R_0__layerHeight">Layer height</label><input id="_R_0__layerHeight" aria-invalid="false" step="any" class="fs-input" type="number" value="0"/></div><div class="fs-field" data-kind="number"><label class="fs-label" for="_R_0__infillPercentage">Infill percentage</label><div style="display:flex;gap:8px;align-items:center"><input id="_R_0__infillPercentage" class="fs-slider" type="range" min="0" max="1" step="0.05" style="flex:1" value="0"/><output for="_R_0__infillPercentage" style="min-width:4ch;text-align:right">0%</output></div></div><div class="fs-field" data-kind="number"><label class="fs-label" for="_R_0__printSpeed">Print speed</label><input id="_R_0__printSpeed" aria-invalid="false" step="any" class="fs-input" type="number" value="0"/></div><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__filamentColor">Filament color</label><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input id="_R_0__filamentColor" type="color" value="#000000"/><code>#000000</code></div></div></div></div></div></div>
+    <div><table><tr><td><code>nozzleTemperature</code></td><td>"nozzle temperature" → measurement</td></tr><tr><td><code>bedTemperature</code></td><td>"bed temperature" → measurement</td></tr><tr><td><code>layerHeight</code></td><td>"layer height" → measurement</td></tr><tr><td><code>infillPercentage</code></td><td>"infill percentage" → percentage</td></tr><tr><td><code>printSpeed</code></td><td>"print speed" → measurement</td></tr><tr><td><code>filamentColor</code></td><td>"filament color" → color</td></tr></table>
+    <details><summary>Spec</summary><pre>{
+  "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+  "title": "3D printer profile",
+  "fields": {
+    "nozzleTemperature": {
+      "type": "number",
+      "label": "Nozzle temperature"
+    },
+    "bedTemperature": {
+      "type": "number",
+      "label": "Bed temperature"
+    },
+    "layerHeight": {
+      "type": "number",
+      "label": "Layer height"
+    },
+    "infillPercentage": {
+      "use": "percent",
+      "label": "Infill percentage"
+    },
+    "printSpeed": {
+      "type": "number",
+      "label": "Print speed"
+    },
+    "filamentColor": {
+      "use": "color",
+      "label": "Filament color"
+    }
+  }
+}</pre></details></div>
+  </div>
+</section>
+<section class="case">
+  <header><h2>A bug report form for a mobile app.</h2>
+  <p class="meta"><span class="tag vague">vague</span> <span class="tag ok">valid spec</span> 2 requests · 429 ms · 7,567 tokens</p></header>
+  <div class="cols">
+    <div class="form"><div class="fs-form" data-fieldspec=""><div class="fs-stack"><div style="display:flex;flex-direction:column;gap:12px"><fieldset class="fs-section fs-stack"><legend class="fs-title">Details</legend><div style="display:flex;flex-direction:column;gap:12px"><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__title">Title</label><input id="_R_0__title" aria-invalid="false" class="fs-input" type="text" value=""/></div><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__description">Description</label><textarea id="_R_0__description" aria-invalid="false" class="fs-textarea" rows="4"></textarea></div><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__stepsToReproduce">Steps to reproduce</label><textarea id="_R_0__stepsToReproduce" placeholder="1. Open…
+2. Tap…" aria-invalid="false" class="fs-textarea" rows="4"></textarea></div><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__expected">What did you expect?</label><textarea id="_R_0__expected" aria-invalid="false" class="fs-textarea" rows="4"></textarea></div><div class="fs-field" data-kind="enum"><label class="fs-label" for="_R_0__severity">Severity</label><div role="radiogroup" id="_R_0__severity" class="fs-radio" style="display:flex;gap:12px;flex-wrap:wrap"><label data-checked=""><input type="radio" name="_R_0__severity" checked=""/> Cosmetic</label><label><input type="radio" name="_R_0__severity"/> Annoying</label><label><input type="radio" name="_R_0__severity"/> Blocks me</label><label><input type="radio" name="_R_0__severity"/> Crash or data loss</label></div></div><div class="fs-field" data-kind="bytes"><label class="fs-label" for="_R_0__screenshot">Screenshot</label><div style="display:flex;gap:8px;align-items:center"><input id="_R_0__screenshot" type="file" accept="image/*"/><span class="fs-help">Empty</span></div></div></div></fieldset><fieldset class="fs-section fs-stack"><legend class="fs-title">Device</legend><div style="display:flex;flex-direction:column;gap:12px"><div class="fs-field" data-kind="enum"><label class="fs-label" for="_R_0__platform">Platform</label><div role="radiogroup" id="_R_0__platform" class="fs-segmented" style="display:flex;gap:0;flex-wrap:wrap"><label data-checked=""><input type="radio" name="_R_0__platform" checked=""/> iOS</label><label><input type="radio" name="_R_0__platform"/> Android</label></div></div><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__osVersion">OS version</label><input id="_R_0__osVersion" placeholder="17.4" aria-invalid="false" class="fs-input" type="text" value=""/></div><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__appVersion">App version</label><input id="_R_0__appVersion" placeholder="3.2.1" aria-invalid="false" class="fs-input" type="text" value=""/></div><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__deviceModel">Device</label><input id="_R_0__deviceModel" placeholder="Pixel 8" aria-invalid="false" class="fs-input" type="text" value=""/></div></div></fieldset></div></div></div></div>
+    <div><table><tr><td><code>title</code></td><td>catalog title (0.86)</td></tr><tr><td><code>description</code></td><td>catalog description (0.86)</td></tr><tr><td><code>stepsToReproduce</code></td><td>catalog stepsToReproduce (0.89)</td></tr><tr><td><code>expected</code></td><td>catalog expected (0.80)</td></tr><tr><td><code>severity</code></td><td>catalog severity (0.77)</td></tr><tr><td><code>screenshot</code></td><td>catalog screenshot (0.71)</td></tr><tr><td><code>platform</code></td><td>catalog platform (0.81)</td></tr><tr><td><code>osVersion</code></td><td>catalog osVersion (0.76)</td></tr><tr><td><code>appVersion</code></td><td>catalog appVersion (0.82)</td></tr><tr><td><code>deviceModel</code></td><td>catalog deviceModel (0.78)</td></tr></table>
+    <details><summary>Spec</summary><pre>{
+  "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+  "title": "Bug report form for a mobile app",
+  "fields": {
+    "title": {
+      "type": "string",
+      "label": "Title",
+      "maxLength": 120,
+      "group": "feedback"
+    },
+    "description": {
+      "use": "multiline",
+      "label": "Description",
+      "group": "feedback"
+    },
+    "stepsToReproduce": {
+      "use": "multiline",
+      "label": "Steps to reproduce",
+      "placeholder": "1. Open…\n2. Tap…",
+      "group": "feedback"
+    },
+    "expected": {
+      "use": "multiline",
+      "label": "What did you expect?",
+      "group": "feedback"
+    },
+    "severity": {
+      "type": "enum",
+      "label": "Severity",
+      "options": [
+        {
+          "value": "cosmetic",
+          "label": "Cosmetic"
+        },
+        {
+          "value": "annoying",
+          "label": "Annoying"
+        },
+        {
+          "value": "blocks-me",
+          "label": "Blocks me"
+        },
+        {
+          "value": "crash-or-data-loss",
+          "label": "Crash or data loss"
+        }
+      ],
+      "render": "radio",
+      "group": "feedback"
+    },
+    "screenshot": {
+      "type": "bytes",
+      "label": "Screenshot",
+      "accept": [
+        "image/*"
+      ],
+      "group": "feedback"
+    },
+    "platform": {
+      "type": "enum",
+      "label": "Platform",
+      "options": [
+        {
+          "value": "ios",
+          "label": "iOS"
+        },
+        {
+          "value": "android",
+          "label": "Android"
+        }
+      ],
+      "render": "segmented",
+      "group": "device"
+    },
+    "osVersion": {
+      "type": "string",
+      "label": "OS version",
+      "placeholder": "17.4",
+      "group": "device"
+    },
+    "appVersion": {
+      "type": "string",
+      "label": "App version",
+      "placeholder": "3.2.1",
+      "group": "device"
+    },
+    "deviceModel": {
+      "type": "string",
+      "label": "Device",
+      "placeholder": "Pixel 8",
+      "group": "device"
+    }
+  },
+  "groups": {
+    "feedback": {
+      "label": "Details"
+    },
+    "device": {
+      "label": "Device"
+    }
+  }
+}</pre></details></div>
+  </div>
+</section>
+<section class="case">
+  <header><h2>Contact form for a dentist's website.</h2>
+  <p class="meta"><span class="tag vague">vague</span> <span class="tag ok">valid spec</span> 1 request · 237 ms · 5,215 tokens</p></header>
+  <div class="cols">
+    <div class="form"><div class="fs-form" data-fieldspec=""><div class="fs-stack"><div style="display:flex;flex-direction:column;gap:12px"><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__email">Email<span aria-hidden="true"> *</span></label><input id="_R_0__email" placeholder="name@example.com" aria-invalid="false" class="fs-input" type="email" value=""/></div><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__fullName">Full name<span aria-hidden="true"> *</span></label><input id="_R_0__fullName" aria-invalid="false" class="fs-input" type="text" value=""/></div><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__phone">Phone</label><input id="_R_0__phone" placeholder="+31 6 1234 5678" aria-invalid="false" class="fs-input" type="text" value=""/></div><div class="fs-field" data-kind="string"><label class="fs-label" for="_R_0__message">Message</label><textarea id="_R_0__message" aria-invalid="false" class="fs-textarea" rows="4"></textarea></div></div></div></div></div>
+    <div><table><tr><td><code>email</code></td><td>catalog email (0.86)</td></tr><tr><td><code>fullName</code></td><td>catalog fullName (0.86)</td></tr><tr><td><code>phone</code></td><td>catalog phone (0.81)</td></tr><tr><td><code>message</code></td><td>catalog message (0.86)</td></tr></table>
+    <details><summary>Spec</summary><pre>{
+  "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+  "title": "Contact form for a dentist's website",
+  "fields": {
+    "email": {
+      "use": "email",
+      "label": "Email",
+      "required": true
+    },
+    "fullName": {
+      "type": "string",
+      "label": "Full name",
+      "required": true
+    },
+    "phone": {
+      "type": "string",
+      "label": "Phone",
+      "placeholder": "+31 6 1234 5678"
+    },
+    "message": {
+      "use": "multiline",
+      "label": "Message"
+    }
+  }
+}</pre></details></div>
+  </div>
+</section>
+<section class="case">
+  <header><h2>Newsletter preferences page.</h2>
+  <p class="meta"><span class="tag vague">vague</span> <span class="tag ok">valid spec</span> 2 requests · 418 ms · 5,583 tokens</p></header>
+  <div class="cols">
+    <div class="form"><div class="fs-form" data-fieldspec=""><div class="fs-stack"><div style="display:flex;flex-direction:column;gap:12px"><div class="fs-field fs-inline" data-kind="boolean"><label class="fs-label" for="_R_0__newsletter"><input id="_R_0__newsletter" type="checkbox" role="switch" class="fs-switch"/> <span class="">Send me the newsletter</span></label></div></div></div></div></div>
+    <div><table><tr><td><code>topics</code></td><td>catalog topics (0.76)<br><small>shown when newsletter=yes (0.53)</small></td></tr><tr><td><code>newsletter</code></td><td>catalog newsletter (0.88)</td></tr></table>
+    <details><summary>Spec</summary><pre>{
+  "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+  "title": "Newsletter preferences page",
+  "fields": {
+    "topics": {
+      "type": "set",
+      "label": "Topics",
+      "items": {
+        "type": "enum",
+        "options": [
+          {
+            "value": "product-news",
+            "label": "Product news"
+          },
+          {
+            "value": "tips-and-tutorials",
+            "label": "Tips and tutorials"
+          },
+          {
+            "value": "events",
+            "label": "Events"
+          },
+          {
+            "value": "offers",
+            "label": "Offers"
+          }
+        ]
+      },
+      "render": "checks",
+      "visible": {
+        "$state": "newsletter",
+        "eq": true
+      }
+    },
+    "newsletter": {
+      "type": "boolean",
+      "label": "Send me the newsletter",
+      "render": "switch"
+    }
+  }
+}</pre></details></div>
+  </div>
+</section></main></body></html>
