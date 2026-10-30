@@ -162,7 +162,7 @@ h3 { font-size: 1.02rem; font-weight: 650; }
 [data-fieldspec] .fs-segmented [data-checked] { background: var(--accent-soft); color: var(--accent); }
 [data-fieldspec] .fs-section, [data-fieldspec] .fs-collapsible, [data-fieldspec] .fs-group { border-color: var(--line); }
 [data-fieldspec] input[type="range"], [data-fieldspec] input[type="checkbox"], [data-fieldspec] input[type="radio"] { accent-color: var(--accent); }
-[data-fieldspec] button { border-color: var(--line); background: var(--bg); }
+:where([data-fieldspec] button) { border-color: var(--line); background: var(--bg); }
 [data-fieldspec] .fs-errors { color: var(--bad); }
 
 /* ── Hero ───────────────────────────────────────────────────── */

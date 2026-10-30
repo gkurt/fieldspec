@@ -1,12 +1,11 @@
 /**
- * One spec drawn twice: as fieldspec's form and as a DialKit panel. Both edit the same values,
- * so a change in either shows in the other and in the card they style.
+ * One form drawn twice: with fieldspec's own controls and with DialKit's. Both views are the
+ * same form, so an edit in either shows in the other and in the card they style.
  */
-import { DialRoot, type DialTheme } from "dialkit";
 import "dialkit/styles.css";
 import { useEffect, useState } from "react";
-import { define, encode, type Infer } from "../../src/index.ts";
-import { useDialSpec } from "../../src/dialkit.ts";
+import { define, type Infer } from "../../src/index.ts";
+import { DialKitView } from "../../src/dialkit.tsx";
 import { FormView, useForm, useFormVersion } from "../../src/react/index.tsx";
 
 export const cardSpec = define({
@@ -30,16 +29,15 @@ export const cardSpec = define({
   groups: { shape: { label: "Shape", render: "row" } },
 });
 
-export const cardSource = `import { DialRoot } from "dialkit";
-import { useDialSpec } from "fieldspec/dialkit";
+export const cardSource = `import "dialkit/styles.css";
+import { DialKitView } from "fieldspec/dialkit";
+import { useForm } from "fieldspec/react";
 
 function Card() {
-  const { value, issues, panel, dial } = useDialSpec("Card", card);
-  // value: Infer<typeof card>, decoded and checked by parse
-  // panel.dropped: [{ path: "/tags", reason: "is an array, …" }]
+  const form = useForm(card); // values, conditions, checks: fieldspec
   return <>
-    <Preview card={value} />
-    <DialRoot />
+    <Preview card={form.values} />
+    <DialKitView form={form} title="Card" /> {/* drawn with DialKit's controls */}
   </>;
 }`;
 
@@ -48,18 +46,7 @@ type Card = Infer<typeof cardSpec>;
 export function DialKitDemo() {
   const form = useForm(cardSpec);
   useFormVersion(form);
-  const { panel, dial } = useDialSpec("Card", cardSpec);
   const theme = useSiteTheme();
-
-  // The panel follows the form…
-  useEffect(() => form.subscribe(() => dial.setValues(panel.updates(form.values))), [form, dial, panel]);
-  // …and the form follows the panel. Read over the form's own values, so what the panel does
-  // not show (the tags) is kept.
-  useEffect(() => {
-    const { value } = panel.read(dial.values, form.json());
-    if (value !== undefined && JSON.stringify(encode(cardSpec, value)) !== JSON.stringify(form.json())) form.reset(value);
-  }, [dial.values, form, panel]);
-
   return (
     <div className="dial-demo">
       <div className="dial-preview">
@@ -73,13 +60,8 @@ export function DialKitDemo() {
           </div>
         </figure>
         <figure>
-          <figcaption>DialKit</figcaption>
-          <div className="dial-host">
-            <DialRoot mode="inline" theme={theme} productionEnabled versions="menu" />
-          </div>
-          <p className="caption">
-            Left out: {panel.dropped.map((d) => `${d.path} ${d.reason}`).join("; ")}.
-          </p>
+          <figcaption>fieldspec/dialkit</figcaption>
+          <DialKitView form={form} title="Card" theme={theme} className="dial-host" />
         </figure>
       </div>
     </div>
@@ -105,9 +87,9 @@ function Preview({ card }: { card: Card }) {
   );
 }
 
-/** The site's theme as DialKit names it, following the theme button. */
-function useSiteTheme(): DialTheme {
-  const read = (): DialTheme => (document.documentElement.dataset.theme as "light" | "dark" | undefined) ?? "system";
+/** The site's theme, following the theme button. */
+function useSiteTheme(): "light" | "dark" | "system" {
+  const read = (): "light" | "dark" | "system" => (document.documentElement.dataset.theme as "light" | "dark" | undefined) ?? "system";
   const [theme, setTheme] = useState(read);
   useEffect(() => {
     const watch = new MutationObserver(() => setTheme(read()));

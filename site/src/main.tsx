@@ -87,10 +87,10 @@ function App() {
         </section>
         <Interop form={hero} />
         <section className="section" id="dialkit">
-          <Heading kicker="With DialKit" title="The same spec, as a tuning panel">
-            <code>fieldspec/dialkit</code> turns a spec into a <a href="https://github.com/joshpuckett/dialkit">DialKit</a> panel: bounded numbers become sliders, enums
-            selects, colours pickers, objects and groups folders. What the panel holds comes back through <code>parse</code>, decoded and checked. Both panels below edit
-            the same values; drag either one.
+          <Heading kicker="With DialKit" title="The same form, in DialKit's controls">
+            <code>fieldspec/dialkit</code> draws a form with <a href="https://github.com/joshpuckett/dialkit">DialKit</a>'s sliders, toggles, selects, colour pickers
+            and folders, while fieldspec keeps the values, conditions and checks. Lists and other shapes DialKit has no control for keep fieldspec's own, inside a
+            folder. Both views below are one form; edit either.
           </Heading>
           <DialKitDemo />
           <Code code={cardSource} label="card.tsx" className="dial-code" />

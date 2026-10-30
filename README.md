@@ -154,7 +154,9 @@ control edits, so `"render": "slider"` on a string, or `"collapsed": "yes"`, is 
 
 `fieldspec/react` draws it with one renderer table keyed by element name: `FormView`,
 `useForm`, `useField`, and `defineRenderers(format, { GradientPicker })` to add or replace
-any element. A control with no renderer falls back to its kind's default control. List items
+any element. A control with no renderer falls back to its kind's default control. A text
+control of your own gets the built-in one's typing rules (what is typed stays until it parses)
+from `useParsedText(props, parserFor(form.format, kind))`. List items
 reorder by dragging their handle, or with the arrow keys while it has the focus, and a record's or map's keys are
 edited in place: a rename keeps the entry's value and position, and a taken or unreadable key is
 refused with the reason. An absent object (an optional one, say) shows an Add button rather
@@ -244,14 +246,14 @@ checks meaning (references, conditions, defaults).
   removes its items with the `removeItem` action: declare `JSON_RENDER_ACTIONS` in your catalog
   and pass `jsonRenderActions(store)` as handlers. A `scroll` box is a `Stack` with Tailwind
   classes (`overflow-y-auto max-h-[18rem]`), so Tailwind must see the class.
-- `fieldspec/dialkit`: `toDialKit(spec, { values })` gives a [DialKit](https://github.com/joshpuckett/dialkit)
-  panel config (bounded numbers become sliders, booleans toggles, enums selects, colours
-  pickers, other text-valued kinds text fields, objects and groups folders) with `dropped`,
-  what it left out and why (lists, unions, maps, JSON). `panel.read(dialValues, base?)` gives the
-  spec's values through `parse`, taking fields the panel does not show from `base`, and
-  `panel.updates(values)` is what `controller.setValues` takes. `useDialSpec(name, spec)` does
-  both in a component and returns `{ ok, value, issues, panel, dial }`. Conditions are not
-  applied to the panel; every field shows, and `read` still checks them.
+- `fieldspec/dialkit`: a form drawn with [DialKit](https://github.com/joshpuckett/dialkit)'s
+  controls. fieldspec keeps the form (values, conditions, validation, lists, layouts); DialKit
+  draws its text, sliders, toggles, selects, colours, and folders for objects, groups and
+  collapsibles. Lists, records, sets, variants, dates, files and passwords keep fieldspec's own
+  controls, inside a folder. `<DialKitView form={form} title="Card" />` is an inline DialKit
+  panel; `dialkitRenderers` (with `dialkitStyles`) go in your own `FormView` inside a
+  `dialkit-root`. Import `dialkit/styles.css` once. DialKit's controls have no disabled state, so
+  a disabled field's row is made `inert`.
 - `prompt(format)` and `metaSchema(format)`: a system prompt and a JSON Schema for structured
   outputs, both generated from the format's kinds, elements and presets. The prompt tells
   agents to start specs with `$schema`.

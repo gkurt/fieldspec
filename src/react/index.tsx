@@ -379,7 +379,8 @@ const layoutRenderers: Renderers = {
 const ok = (value: unknown) => ({ ok: true as const, value });
 const fail = (error: string) => ({ ok: false as const, error });
 
-type Parse = { show(value: unknown): string; read(text: string): { ok: true; value: unknown } | { ok: false; error: string } };
+/** How a text box shows a kind's values and reads them back. */
+export type Parse = { show(value: unknown): string; read(text: string): { ok: true; value: unknown } | { ok: false; error: string } };
 
 /** How a text box reads and shows each kind's values. */
 const PARSERS: Record<string, Parse> = {
@@ -418,15 +419,18 @@ const PARSERS: Record<string, Parse> = {
 };
 
 /** The parser for a field, following its kind's base chain. */
-function parserFor(format: Format, type: string): Parse {
+export function parserFor(format: Format, type: string): Parse {
   for (let name: string | undefined = type, i = 0; name !== undefined && i < 8; name = format.kinds.get(name)?.base, i++) {
     if (PARSERS[name]) return PARSERS[name]!;
   }
   return PARSERS.string!;
 }
 
-/** A text box that parses: what is typed stays as typed until it parses. */
-function ParsedText({ p, parse, multiline, type, extra, unit }: { p: ElementProps; parse: Parse; multiline?: boolean; type?: string; extra?: Record<string, unknown>; unit?: string }) {
+/**
+ * A control's text that parses: what is typed stays as typed until it parses, and a value set
+ * from elsewhere replaces it. For a text control of your own; `input` and `textarea` use it.
+ */
+export function useParsedText(p: ElementProps, parse: Parse): { draft: string; error?: string; placeholder?: string; change(text: string): void } {
   const field = p.field!;
   // A mixed field shows no value until it is edited.
   const shown = field.value === undefined || field.mixed ? "" : parse.show(field.value);
@@ -438,14 +442,12 @@ function ParsedText({ p, parse, multiline, type, extra, unit }: { p: ElementProp
       return parsed.ok && parse.show(parsed.value) === shown ? d : shown;
     });
   }, [shown]);
-  const common = {
-    id: p.id,
-    value: draft,
-    disabled: p.disabled,
-    placeholder: field.mixed ? MIXED : (text(p.props.placeholder) ?? field.placeholder),
-    "aria-invalid": error !== undefined || (field.showIssues && field.issues.length > 0),
-    onChange: (e: { target: { value: string } }) => {
-      const t = e.target.value;
+  const placeholder = field.mixed ? MIXED : (text(p.props.placeholder) ?? field.placeholder);
+  return {
+    draft,
+    ...(error !== undefined && { error }),
+    ...(placeholder !== undefined && { placeholder }),
+    change(t) {
       setDraft(t);
       if (t === "" && field.decl.optional) {
         setError(undefined);
@@ -457,6 +459,20 @@ function ParsedText({ p, parse, multiline, type, extra, unit }: { p: ElementProp
         p.set!(parsed.value);
       } else setError(parsed.error);
     },
+  };
+}
+
+/** A text box that parses: what is typed stays as typed until it parses. */
+function ParsedText({ p, parse, multiline, type, extra, unit }: { p: ElementProps; parse: Parse; multiline?: boolean; type?: string; extra?: Record<string, unknown>; unit?: string }) {
+  const field = p.field!;
+  const { draft, error, placeholder, change } = useParsedText(p, parse);
+  const common = {
+    id: p.id,
+    value: draft,
+    disabled: p.disabled,
+    placeholder,
+    "aria-invalid": error !== undefined || (field.showIssues && field.issues.length > 0),
+    onChange: (e: { target: { value: string } }) => change(e.target.value),
     onBlur: p.touch,
     ...extra,
   };
@@ -965,8 +981,8 @@ export const defaultStyles = `
 [data-fieldspec] .fs-key .fs-input { width: 100%; box-sizing: border-box; }
 [data-fieldspec] .fs-warning { color: #b7791f; }
 [data-fieldspec] .fs-muted { opacity: 0.7; }
-[data-fieldspec] button { font: inherit; padding: 4px 10px; border-radius: 6px; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); background: transparent; color: inherit; cursor: pointer; }
-[data-fieldspec] button:disabled { opacity: 0.4; cursor: default; }
+:where([data-fieldspec] button) { font: inherit; padding: 4px 10px; border-radius: 6px; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); background: transparent; color: inherit; cursor: pointer; }
+:where([data-fieldspec] button:disabled) { opacity: 0.4; cursor: default; }
 [data-fieldspec] [role="tab"][aria-selected="true"] { background: color-mix(in srgb, currentColor 12%, transparent); }
 [data-fieldspec] .fs-divider { border: 0; border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent); width: 100%; }
 `;
