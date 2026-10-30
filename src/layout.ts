@@ -47,8 +47,11 @@ export interface LayoutNode {
   readonly fields?: readonly string[];
   /** For `field`: its declaration, with `use` followed. */
   readonly decl?: Resolved;
-  /** For `field`: the control element that edits it, and that element's props. */
-  readonly control?: { readonly type: string; readonly props: { readonly [name: string]: Expr } };
+  /**
+   * For `field`: the control element that edits it, and that element's props. `explicit` when
+   * the declaration (or its preset) names the control; absent when it is the kind's default.
+   */
+  readonly control?: { readonly type: string; readonly props: { readonly [name: string]: Expr }; readonly explicit?: true };
   /** For an object `field`: how its fields draw, anchored at the object. */
   readonly inner?: LayoutNode;
   /** For a variant `field`: how each variant's fields draw, anchored at the variant value. */
@@ -269,7 +272,7 @@ function fieldNode(ctx: Ctx, raw: FieldDecl, ref: string, key: string, visible?:
     children: [],
     field: ref,
     decl,
-    control: chosen ? { type: chosen.type, props: chosen.props ?? {} } : { type: defaultControl(ctx.format, decl), props: {} },
+    control: chosen ? { type: chosen.type, props: chosen.props ?? {}, explicit: true } : { type: defaultControl(ctx.format, decl), props: {} },
     ...(visible !== undefined && { visible }),
     ...(useName(raw) !== undefined && { use: useName(raw) }),
   };

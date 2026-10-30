@@ -34,8 +34,8 @@ describe("presets", () => {
 
   test("a preset's render comes along: percent is a slider showing a percentage", () => {
     const tree = layout(spec);
-    expect(find(tree, "opacity").control).toEqual({ type: "slider", props: { format: "percent" } });
-    expect(find(tree, "secret").control).toEqual({ type: "input", props: { secret: true } });
+    expect(find(tree, "opacity").control).toEqual({ type: "slider", props: { format: "percent" }, explicit: true });
+    expect(find(tree, "secret").control).toEqual({ type: "input", props: { secret: true }, explicit: true });
     expect(find(tree, "port").control).toEqual({ type: "input", props: {} });
   });
 

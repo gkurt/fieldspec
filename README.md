@@ -154,7 +154,26 @@ control edits, so `"render": "slider"` on a string, or `"collapsed": "yes"`, is 
 
 `fieldspec/react` draws it with one renderer table keyed by element name: `FormView`,
 `useForm`, `useField`, and `defineRenderers(format, { GradientPicker })` to add or replace
-any element. A control with no renderer falls back to its kind's default control. A text
+any element. A control with no renderer falls back to its kind's default control.
+
+Renderers can also be a function, called for each element about to be drawn with what it is
+(`element`, `role`, its `node` and `field`, and `explicit`: whether the spec names the
+control or leaves it to the kind) and `next`, the renderer the table beneath would use. It
+picks by anything, not only the element's name, and decides itself whether the spec's choice
+stands:
+
+```tsx
+const renderers: ResolveRenderer = (want, next) => {
+  if (want.role === "control" && want.field?.decl.format === "email") return EmailInput; // every email
+  if (want.element === "select" && !want.explicit) return Chips; // where the spec left it to the kind
+  return next();
+};
+<FormView form={form} renderers={renderers} />
+<FormView form={form} renderers={extendRenderers(dialkitRenderers, renderers)} />
+```
+
+Return renderers made once, at module level: one made inside the function is a new component
+each time, and React remounts the control, losing its focus and what is being typed. A text
 control of your own gets the built-in one's typing rules (what is typed stays until it parses)
 from `useParsedText(props, parserFor(form.format, kind))`. List items
 reorder by dragging their handle, or with the arrow keys while it has the focus, and a record's or map's keys are

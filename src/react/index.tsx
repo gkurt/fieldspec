@@ -3,7 +3,8 @@
  * renderers, keyed by element name: layout (`stack`, `row`, …), parts (`label`, `errors`, …)
  * and controls (`input`, `slider`, …) alike. Every entry can be replaced, and your own
  * elements (capitalized) are added the same way. A control with no renderer falls back to its
- * kind's default control, then to `input`.
+ * kind's default control, then to `input`. Renderers can also be a function that picks one for
+ * each element from the field it draws, over a table beneath.
  */
 import {
   createContext,
@@ -11,6 +12,7 @@ import {
   useContext,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -19,6 +21,7 @@ import {
 } from "react";
 import { deref } from "../defs.ts";
 import type { Scope } from "../expr.ts";
+import type { ElementRole } from "../elements.ts";
 import { createForm, type FieldState, type Form, type FormOptions } from "../form.ts";
 import type { Format } from "../format.ts";
 import type { Infer } from "../infer.ts";
@@ -83,11 +86,59 @@ export function defineRenderers(_format: Format<any, any>, overrides: Partial<Re
   return { ...defaultRenderers, ...(overrides as Record<string, ElementRenderer>) };
 }
 
+/** An element about to be drawn, for a {@link ResolveRenderer} to pick its renderer by. */
+export interface RenderRequest {
+  /** The element: the layout's, or for a control the one the spec names, else the kind's default. */
+  readonly element: string;
+  readonly role: ElementRole;
+  /** For controls: the spec (or the field's preset) names this control, rather than its kind. */
+  readonly explicit: boolean;
+  readonly node: LayoutNode;
+  /** For `field`, parts and controls: the field. */
+  readonly field?: FieldState;
+  readonly form: Form<unknown>;
+}
+
+/**
+ * Renderers as a function: the renderer for an element about to be drawn, or `next()` (or
+ * nothing) for the one the renderers beneath would use. Return renderers made once, not inside
+ * the function: React takes a new one for a new component, and remounts the control, losing
+ * its focus and what is being typed.
+ */
+export type ResolveRenderer = (request: RenderRequest, next: () => ElementRenderer) => ElementRenderer | undefined;
+
+/** A function laid over other renderers, a table or another function: its `next()` is theirs. */
+export function extendRenderers(base: Renderers | ResolveRenderer, resolve: ResolveRenderer): ResolveRenderer {
+  return (request, next) => {
+    const below = () => (typeof base === "function" ? (base(request, next) ?? next()) : fromTable(base, request));
+    return resolve(request, below) ?? below();
+  };
+}
+
+/** The renderer a table holds for a request, with the fallbacks a table has. */
+function fromTable(table: Renderers, { element, role, field, form }: RenderRequest): ElementRenderer {
+  if (role === "control") {
+    const fallback = field ? defaultControl(form.format, field.decl) : "input";
+    return table[element] ?? table[fallback] ?? table.input ?? defaultRenderers.input!;
+  }
+  if (role === "part") return table[element] ?? defaultRenderers[element] ?? (() => null);
+  return table[element] ?? (element === "field" ? defaultRenderers.field! : (table.stack ?? defaultRenderers.stack!));
+}
+
+/** One way to pick a renderer, whatever form the renderers take. */
+function pickerOf(renderers: Renderers | ResolveRenderer): (request: RenderRequest) => ElementRenderer {
+  if (typeof renderers !== "function") return (request) => fromTable(renderers, request);
+  return (request) => {
+    const next = () => fromTable(defaultRenderers, request);
+    return renderers(request, next) ?? next();
+  };
+}
+
 // ── Drawing ──────────────────────────────────────────────────────────────────────────────
 
 interface DrawContext {
   readonly form: Form<unknown>;
-  readonly renderers: Renderers;
+  readonly pick: (request: RenderRequest) => ElementRenderer;
   readonly idPrefix: string;
 }
 
@@ -99,7 +150,8 @@ export interface FormViewProps {
   readonly form: Form<any>;
   /** A named layout from the spec. */
   readonly view?: string;
-  readonly renderers?: Renderers;
+  /** A table keyed by element name, or a function that picks per element. Default the built-in table. */
+  readonly renderers?: Renderers | ResolveRenderer;
   readonly className?: string;
 }
 
@@ -107,8 +159,9 @@ export interface FormViewProps {
 export function FormView({ form, view, renderers = defaultRenderers, className }: FormViewProps) {
   useFormVersion(form);
   const idPrefix = useId();
+  const pick = useMemo(() => pickerOf(renderers), [renderers]);
   return (
-    <Ctx.Provider value={{ form, renderers, idPrefix }}>
+    <Ctx.Provider value={{ form, pick, idPrefix }}>
       <div className={cx("fs-form", className)} data-fieldspec="">
         <Node node={form.layout(view)} scope={{ base: "" }} />
       </div>
@@ -122,11 +175,16 @@ function useDraw(): DrawContext {
   return ctx;
 }
 
+/** The renderer the form's renderers pick for a request: a field's frame can ask who draws its control. */
+export function useRenderer(request: RenderRequest): ElementRenderer {
+  return useDraw().pick(request);
+}
+
 const idFor = (prefix: string, path: string) => `${prefix}${path.replace(/[^A-Za-z0-9_-]/g, "_")}`;
 
 /** One layout node, at a scope whose `base` is the anchor its field pointers start from. */
 function Node({ node, scope }: { node: LayoutNode; scope: Scope }): ReactNode {
-  const { form, renderers, idPrefix } = useDraw();
+  const { form, pick, idPrefix } = useDraw();
   const own = useContext(OwnField);
   if (node.visible !== undefined && !form.test(node.visible, scope)) return null;
   const anchor = scope.base;
@@ -145,8 +203,9 @@ function Node({ node, scope }: { node: LayoutNode; scope: Scope }): ReactNode {
       );
     }
     const id = idFor(idPrefix, field.path);
-    const control = () => <Control element={node.control?.type} elementProps={node.control?.props} field={field} fieldNode={node} />;
-    return createElement(renderers.field ?? defaultRenderers.field!, { node, props, children: null, form, field, control, id });
+    const control = () => <Control element={node.control?.type} elementProps={node.control?.props} field={field} fieldNode={node} explicit={node.control?.explicit === true} />;
+    const renderer = pick({ element: "field", role: "layout", explicit: true, node, field, form });
+    return createElement(renderer, { node, props, children: null, form, field, control, id });
   }
 
   if (role === "part" || role === "control") {
@@ -158,26 +217,29 @@ function Node({ node, scope }: { node: LayoutNode; scope: Scope }): ReactNode {
       // `control` is the field's own control; a control element names the one to use.
       const element = node.type === "control" ? (fieldNode?.control?.type ?? undefined) : node.type;
       const elementProps = node.type === "control" ? { ...fieldNode?.control?.props, ...node.props } : node.props;
-      return <Control element={element} elementProps={elementProps} field={field} fieldNode={fieldNode} />;
+      // A control element in a field's own layout is named there; `control` is as the field has it.
+      const explicit = node.type === "control" ? fieldNode?.control?.explicit === true : true;
+      return <Control element={element} elementProps={elementProps} field={field} fieldNode={fieldNode} explicit={explicit} />;
     }
     const id = field ? idFor(idPrefix, field.path) : undefined;
-    const renderer = renderers[node.type] ?? defaultRenderers[node.type] ?? (() => null);
+    const renderer = pick({ element: node.type, role: "part", explicit: true, node, ...(field && { field }), form });
     return createElement(renderer, { node, props, children: null, form, ...(field && { field }), ...(many && { fields: many }), ...(id && { id }) });
   }
 
   const children = node.children.map((child) => <Node key={child.key} node={child} scope={scope} />);
-  return createElement(renderers[node.type] ?? renderers.stack ?? defaultRenderers.stack!, { node, props, children, form });
+  return createElement(pick({ element: node.type, role: "layout", explicit: true, node, form }), { node, props, children, form });
 }
 
 /** A field's control: the element named, else the kind's default, else `input`. */
-function Control({ element, elementProps, field, fieldNode }: { element: string | undefined; elementProps?: { readonly [k: string]: Expr }; field: FieldState; fieldNode: LayoutNode | undefined }) {
-  const { form, renderers, idPrefix } = useDraw();
-  const fallback = defaultControl(form.format, field.decl);
-  const name = element !== undefined && renderers[element] ? element : renderers[fallback] ? fallback : "input";
+function Control(p: { element: string | undefined; elementProps?: { readonly [k: string]: Expr }; field: FieldState; fieldNode: LayoutNode | undefined; explicit: boolean }) {
+  const { elementProps, field, fieldNode } = p;
+  const { form, pick, idPrefix } = useDraw();
+  const name = p.element ?? defaultControl(form.format, field.decl);
+  const node = fieldNode ?? { type: name, key: field.path, props: {}, children: [] };
   const props: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(elementProps ?? {})) props[k] = form.evaluate(v, field.scope);
-  return createElement(renderers[name]!, {
-    node: fieldNode ?? { type: name, key: field.path, props: {}, children: [] },
+  return createElement(pick({ element: name, role: "control", explicit: p.explicit && p.element !== undefined, node, field, form }), {
+    node,
     props,
     children: null,
     form,

@@ -79,6 +79,21 @@ describe("DialKitView", () => {
     await unmount();
   });
 
+  test("a control laid over DialKit's keeps fieldspec's frame, with its label", async () => {
+    const form = createForm(card);
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = client.createRoot(host);
+    const Mine = () => React.createElement("output", { className: "mine" }, "mine");
+    const renderers = (want: import("../src/react/index.tsx").RenderRequest) => (want.role === "control" && want.field?.path === "/title" ? Mine : undefined);
+    await React.act(async () => root.render(React.createElement(ui.DialKitView, { form, title: "Card", renderers })));
+    expect(host.querySelectorAll("output.mine")).toHaveLength(1);
+    expect([...host.querySelectorAll(".fs-label")].map((e) => e.textContent)).toEqual(["Title *", "Secret"]);
+    // The others are DialKit's still.
+    expect([...host.querySelectorAll(".dialkit-text-label")].map((e) => e.textContent)).toEqual(["Gap", "#1", "#2"]);
+    await React.act(async () => root.unmount());
+  });
+
   test("makes a disabled field inert, and enables it with its condition", async () => {
     const { form, q, act, unmount } = await mount();
     expect(q(".fs-dial-disabled")).toHaveLength(1);

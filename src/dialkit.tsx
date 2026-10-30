@@ -9,14 +9,24 @@
  * own `dialkit-root`. Import "dialkit/styles.css" once.
  */
 import { ColorControl, Folder, SelectControl, Slider, TextControl, Toggle } from "dialkit";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { defaultControl } from "./layout.ts";
-import { defaultRenderers, FormView, parserFor, useParsedText, type ElementProps, type FieldState, type Form, type Renderers } from "./react/index.tsx";
+import {
+  defaultRenderers,
+  extendRenderers,
+  FormView,
+  parserFor,
+  useParsedText,
+  useRenderer,
+  type ElementProps,
+  type ElementRenderer,
+  type FieldState,
+  type Form,
+  type Renderers,
+  type ResolveRenderer,
+} from "./react/index.tsx";
 
 const CONTAINER_KINDS = new Set(["object", "variant", "array", "set", "record", "map"]);
-
-/** The control elements drawn with DialKit's own controls. */
-const DIAL_CONTROLS = new Set(["input", "textarea", "slider", "checkbox", "switch", "select", "radio", "segmented", "color"]);
 
 const labelOf = (field: FieldState) => (field.required ? `${field.label} *` : field.label);
 
@@ -131,12 +141,22 @@ function DialColor({ field, disabled, set, touch }: ElementProps) {
   );
 }
 
+function DialInput(p: ElementProps) {
+  return p.props.secret ? defaultRenderers.input!(p) : <DialText {...p} />;
+}
+
+/** The renderers that draw with DialKit's controls, which carry their own label. */
+const DIAL_RENDERERS = new Set<ElementRenderer>([DialInput, DialText, DialSlider, DialToggle, DialSelect, DialColor]);
+
 /**
  * A field: DialKit's controls carry their own label, so the field adds only its help and
- * issues. A container is a folder; any other control keeps fieldspec's frame.
+ * issues. A container is a folder; any other control, fieldspec's or one laid over these
+ * renderers, keeps fieldspec's frame.
  */
 function DialField(p: ElementProps) {
   const field = p.field!;
+  const control = p.node.control?.type ?? defaultControl(p.form.format, field.decl);
+  const drawer = useRenderer({ element: control, role: "control", explicit: p.node.control?.explicit === true, node: p.node, field, form: p.form });
   if (CONTAINER_KINDS.has(field.decl.type)) {
     return (
       <Folder title={field.label}>
@@ -145,8 +165,7 @@ function DialField(p: ElementProps) {
       </Folder>
     );
   }
-  const control = p.node.control?.type ?? defaultControl(p.form.format, field.decl);
-  if (!DIAL_CONTROLS.has(control) || (control === "input" && p.node.control?.props?.secret)) return defaultRenderers.field!(p);
+  if (!DIAL_RENDERERS.has(drawer) || (control === "input" && p.node.control?.props?.secret)) return defaultRenderers.field!(p);
   return (
     <div className="fs-dial-field" data-invalid={field.showIssues && field.issues.length > 0 ? "" : undefined}>
       {p.control!()}
@@ -181,7 +200,7 @@ export const dialkitRenderers: Renderers = {
       <div className="fs-dial-column">{p.children}</div>
     </Folder>
   ),
-  input: (p) => (p.props.secret ? defaultRenderers.input!(p) : <DialText {...p} />),
+  input: DialInput,
   textarea: DialText,
   slider: DialSlider,
   checkbox: DialToggle,
@@ -218,20 +237,23 @@ export interface DialKitViewProps {
   readonly title: string;
   /** A layout from the spec's `layouts`. */
   readonly view?: string;
+  /** A function laid over the DialKit renderers; its `next()` is theirs. */
+  readonly renderers?: ResolveRenderer;
   /** "system" follows the device. Default "system". */
   readonly theme?: "light" | "dark" | "system";
   readonly className?: string;
 }
 
 /** A form drawn as an inline DialKit panel. */
-export function DialKitView({ form, title, view, theme = "system", className }: DialKitViewProps) {
+export function DialKitView({ form, title, view, renderers, theme = "system", className }: DialKitViewProps) {
   const resolved = useResolvedTheme(theme);
+  const drawn = useMemo(() => (renderers ? extendRenderers(dialkitRenderers, renderers) : dialkitRenderers), [renderers]);
   return (
     <div className={className ? `dialkit-root ${className}` : "dialkit-root"} data-mode="inline" data-theme={resolved}>
       <style>{dialkitStyles}</style>
       <div className="dialkit-panel" data-mode="inline">
         <Folder title={title} isRoot inline>
-          <FormView form={form} renderers={dialkitRenderers} {...(view !== undefined && { view })} />
+          <FormView form={form} renderers={drawn} {...(view !== undefined && { view })} />
         </Folder>
       </div>
     </div>
