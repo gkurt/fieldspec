@@ -25,6 +25,9 @@ type Account = Infer<typeof account>; // { firstName: string; …; plan: "free" 
 const result = parse(account, json);  // { ok, value, issues: [{ path: "/email", code, message }] }
 ```
 
+New to the format? [The tutorial](https://gkurt.com/fieldspec/tutorial.html) grows one spec a
+feature at a time, with a live form at every step.
+
 ## Names
 
 Everything a spec refers to by name (kinds, elements, presets, definitions) follows one rule:

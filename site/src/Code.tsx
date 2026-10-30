@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 const TOKENS =
   /(\/\/[^\n]*)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`)(\s*:)?|\b(import|from|export|const|type|return|new|await|function|typeof)\b|\b(true|false|null|undefined)\b|(-?\b\d[\d_]*(?:\.\d+)?\b)|\b([A-Z][A-Za-z0-9]*)\b/g;
 
-function highlight(code: string): ReactNode[] {
+export function highlight(code: string): ReactNode[] {
   const out: ReactNode[] = [];
   let last = 0;
   for (const m of code.matchAll(TOKENS)) {

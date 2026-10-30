@@ -13,6 +13,7 @@ import "./styles.css";
 
 const LINKS = [
   ["#conditions", "Features"],
+  ["tutorial.html", "Tutorial", true],
   ["#playground", "Playground", true],
   ["#interop", "Interop"],
   ["models.html", "With AI models", true],
@@ -111,6 +112,7 @@ function Hero({ form }: { form: Form<unknown> }) {
         </p>
         <div className="ctas">
           <a className="button primary" href="#playground">Try the playground</a>
+          <a className="button" href="tutorial.html">Take the tutorial</a>
           <a className="button" href={REPO}>Read the docs</a>
         </div>
       </div>

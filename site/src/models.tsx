@@ -102,6 +102,7 @@ const LINKS = [
   ["#generate", "Generate"],
   ["#fill", "Fill", true],
   ["#delegate", "Hand over"],
+  ["tutorial.html", "Tutorial"],
   ["./", "fieldspec", true],
 ] as const;
 

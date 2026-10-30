@@ -296,3 +296,36 @@ h3 { font-size: 1.02rem; font-weight: 650; }
   padding: 28px max(16px, calc((100% - 1160px) / 2)); border-top: 1px solid var(--line); color: var(--muted); font-size: 0.88rem;
 }
 .footer strong { color: var(--fg); }
+
+/* ── Tutorial ───────────────────────────────────────────────── */
+.tutorial-hero { align-items: start; }
+.toc { list-style: none; margin: 0; padding: 18px; columns: 2; column-gap: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+.toc li { break-inside: avoid; }
+.toc a { display: flex; gap: 10px; align-items: baseline; padding: 6px 8px; border-radius: 8px; color: var(--fg); }
+.toc a:hover { background: var(--accent-soft); text-decoration: none; }
+.toc span { font: 600 0.78rem var(--mono); color: var(--accent); min-width: 1.4em; text-align: right; }
+@media (max-width: 520px) { .toc { columns: 1; } }
+.lesson { scroll-margin-top: 56px; }
+.lesson-text { margin-top: 14px; color: var(--muted); }
+.lesson-text p { margin: 0 0 12px; }
+.lesson-text em { color: var(--fg); font-style: normal; font-weight: 600; }
+.lesson-demo { display: grid; gap: 14px; justify-items: stretch; }
+.lesson-demo > .seg { justify-self: start; }
+.lesson-demo > .form-card { max-height: 640px; overflow: auto; }
+.lesson-out-card { overflow: hidden; }
+.lesson-out-card > .code, .lesson-out-card > .faults { margin: 12px; }
+.lesson-out-card > .faults { margin-top: 0; }
+.lesson-out pre { max-height: 320px; }
+#code .lesson-out pre { max-height: 640px; }
+.diff figcaption { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-left: 0; padding-right: 0; }
+.diff pre { padding-left: 0; padding-right: 0; }
+.diff .line { display: block; padding: 0 14px 0 0; }
+.diff .gutter { display: inline-block; width: 26px; text-align: center; color: var(--muted); user-select: none; }
+.diff .added { background: color-mix(in srgb, var(--good) 13%, transparent); }
+.diff .added .gutter { color: var(--good); }
+.diff .removed { background: color-mix(in srgb, var(--bad) 11%, transparent); color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--bad) 55%, transparent); }
+.diff .removed .gutter { color: var(--bad); text-decoration: none; }
+.diff .fold { display: block; color: var(--t-comment); font-style: italic; padding-left: 26px; }
+.diff pre code { display: block; min-width: max-content; }
+.link-button { font: inherit; padding: 0; border: 0; background: none; color: var(--accent); cursor: pointer; }
+.link-button:hover { text-decoration: underline; }

@@ -9,5 +9,5 @@ export default defineConfig({
   // Relative asset paths, so the built page works from any folder (GitHub Pages, say).
   base: "./",
   server: { port: 4193, strictPort: true },
-  build: { rollupOptions: { input: { main: page("index.html"), models: page("models.html") } } },
+  build: { rollupOptions: { input: { main: page("index.html"), tutorial: page("tutorial.html"), models: page("models.html") } } },
 });
