@@ -815,7 +815,7 @@ function smallestSizes(spec: Spec): (name: string) => number {
 function checkText(c: Checker, text: unknown, at: string, scope: Scope) {
   if (typeof text === 'string') return;
   if (isObject(text) && EXPR_KEYS.some((k) => k in text)) return checkExpr(c, text, at, scope);
-  c.fault(at, 'must be a string or an expression ($template, $cond, $computed, $js, $state)');
+  c.fault(at, 'must be a string or an expression ($template, $cond, $computed, $cel, $js, $state)');
 }
 
 function checkExpr(c: Checker, expr: unknown, at: string, scope: Scope) {
@@ -835,6 +835,7 @@ function checkExpr(c: Checker, expr: unknown, at: string, scope: Scope) {
     $computed: ['$computed', 'args'],
     $cond: ['$cond', '$then', '$else'],
     $template: ['$template'],
+    $cel: ['$cel', 'args'],
     $js: ['$js', 'args'],
   };
   for (const k of Object.keys(expr))
@@ -852,6 +853,7 @@ function checkExpr(c: Checker, expr: unknown, at: string, scope: Scope) {
       if (!c.computed.has(expr.$computed)) c.computed.set(expr.$computed, `${at}/$computed`);
       checkArgs(c, expr.args, at, scope);
       return;
+    case '$cel':
     case '$js':
       return checkCode(c, key, expr, at, scope);
     case '$cond':
@@ -887,7 +889,8 @@ function checkCode(c: Checker, key: LanguageKey, expr: Record<string, unknown>, 
   const source = expr[key];
   if (typeof source !== 'string') return c.fault(`${at}/${key}`, 'must be the code, as a string');
   const language = c.registry.languages[key];
-  if (!language) return c.fault(`${at}/${key}`, `needs an engine for ${key}: give the registry one (fieldspec/js runs $js)`);
+  if (!language)
+    return c.fault(`${at}/${key}`, `needs an engine for ${key}: give the registry one (fieldspec/cel runs $cel, fieldspec/js runs $js)`);
   const why = language.check(
     source,
     names.filter((name) => IDENTIFIER.test(name)),
@@ -911,7 +914,7 @@ function checkCondition(c: Checker, cond: unknown, at: string, scope: Scope) {
     return c.fault(
       at,
       sources.length === 0
-        ? 'needs a value to test: $state, $item, $index, $computed or $js'
+        ? 'needs a value to test: $state, $item, $index, $computed, $cel or $js'
         : `tests ${sources.join(' and ')}; a condition tests one value`,
     );
   }

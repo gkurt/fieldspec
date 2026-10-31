@@ -35,8 +35,9 @@ npm install fieldspec
 ```
 
 ES modules only, with types; from CommonJS, use `import()`. `fieldspec/react` needs `react` 19
-or later, `fieldspec/zod` needs `zod` 4 and `fieldspec/js` needs `@gkurt/quickjs-wasi` 0.3. All
-are optional peer dependencies, so the core needs none of them.
+or later, `fieldspec/zod` needs `zod` 4, `fieldspec/cel` needs `@marcbachmann/cel-js` 8 and
+`fieldspec/js` needs `@gkurt/quickjs-wasi` 0.3. All are optional peer dependencies, so the core
+needs none of them.
 
 ## Names
 
@@ -74,10 +75,10 @@ differ from a built-in only by case.
 - **Pointers**: `/a/b` is absolute. Without the slash a pointer is relative to the enclosing
   object (`"plan"` is a sibling), and each leading `../` climbs one level (an array index
   counts as one). `$item`/`$index` read the current array item.
-- **Expressions** (`$state`, `$template`, `$cond`, `$computed`, `$js`) work in defaults, labels,
-  options and element props. `$computed` names a function from a table passed at runtime, so
-  the spec stays JSON; `define(spec, { fns })` checks every name is implemented. `$js` is
-  JavaScript the spec carries itself (see Code).
+- **Expressions** (`$state`, `$template`, `$cond`, `$computed`, `$cel`, `$js`) work in defaults,
+  labels, options and element props. `$computed` names a function from a table passed at
+  runtime, so the spec stays JSON; `define(spec, { fns })` checks every name is implemented.
+  `$cel` and `$js` are code the spec carries itself (see Code).
 - **Groups** gather fields for display without changing the value's shape.
 - **Naming items**: a list's, record's or map's items are called by their position (`#2`) or
   key, unless `namedBy` says otherwise: a pointer into the item (`"name"`, `"contact/name"`, or
@@ -245,27 +246,62 @@ What controls do comes with `fieldspec/react`, so a renderer set only draws:
 - `useParsedText(props, parserFor(form.registry, kind))`: a text control's typing rules: what is
   typed stays until it parses, and a value set from elsewhere replaces it.
 
-## Code: `$js`
+## Code: `$cel` and `$js`
 
-For what the expressions above cannot say, a spec can carry JavaScript. `$js` is an expression,
-and `args` are its variables:
+For what the expressions above cannot say, a spec can carry code: an expression in
+[CEL](https://cel.dev) (`$cel`) or in JavaScript (`$js`), whose `args` are its variables:
 
 ```json
 "checkOut": {
   "type": "date",
-  "default": { "$js": "new Date(checkIn.getTime() + nights * 864e5)", "args": { "checkIn": { "$state": "checkIn" }, "nights": { "$state": "nights" } } }
+  "default": { "$cel": "checkIn + duration(string(int(nights) * 24) + \"h\")", "args": { "checkIn": { "$state": "checkIn" }, "nights": { "$state": "nights" } } }
 },
-"lateNote": { "type": "string", "visible": { "$js": "checkOut.getUTCDay() === 0", "args": { "checkOut": { "$state": "checkOut" } } } }
+"lateNote": { "type": "string", "visible": { "$cel": "checkOut.getDayOfWeek(\"UTC\") == 0", "args": { "checkOut": { "$state": "checkOut" } } } }
 ```
 
-It goes wherever an expression does, and is the value a condition tests (compared with `eq`,
-`gt`, … or for truthiness). The code reads only its `args`, so the checker, `commonFields` and
-the rest still see what a spec depends on. Dates, bigints, maps, sets, bytes and regular
-expressions arrive as themselves; a URL as its text.
+Code goes wherever an expression does, and is the value a condition tests (compared with `eq`,
+`gt`, … or for truthiness). It reads only its `args`, so the checker, `commonFields` and the
+rest still see what a spec depends on.
 
-The core does not run it. `fieldspec/js` does, in [QuickJS](https://github.com/gkurt/quickjs)
-compiled to WebAssembly (`@gkurt/quickjs-wasi`, about 400 KB gzipped, loaded only by those who
-import it). Compile the engine once, then give the language to a registry:
+The core runs neither. A registry takes a language for each, from an entry point of its own, so
+an application carries only the engine it uses:
+
+```ts
+import { createRegistry } from "fieldspec";
+import { createCel } from "fieldspec/cel";
+
+const app = createRegistry({ languages: [createCel()] });
+const spec = app.define({ … });
+```
+
+A registry with no engine for `$cel` or `$js` rejects specs that use it, and its `prompt` and
+closed `metaSchema` do not mention it, so agents write only what runs. The published schema
+accepts both, as it accepts any registry's kinds.
+
+### CEL, the one to use: `fieldspec/cel`
+
+CEL is the Common Expression Language that Kubernetes, Envoy and Firebase write rules in. It
+cannot loop forever or reach outside its arguments, so it needs no sandbox: `fieldspec/cel`
+runs it in plain JavaScript with [`@marcbachmann/cel-js`](https://github.com/marcbachmann/cel-js),
+about 25 KB gzipped, synchronously and in microseconds.
+
+- Numbers are doubles, as in CEL over JSON, an `int` field's too, and CEL does no arithmetic
+  across double and int: write `price * 1.5` and `count + 1.0`, or make it an int first,
+  `int(count) * 24`. Comparisons mix them freely (`count > 2`). Whole results come back as
+  numbers, so they fill `number` and `int` fields.
+- Dates are timestamps (`end - start >= duration("24h")`, `start.getFullYear()`), maps are maps,
+  sets are lists, bigints are ints and bytes are bytes. A URL or a regular expression arrives as
+  its text, and an absent value as `null`.
+- `checkSpec` type-checks each expression against its args: a syntax error, a variable that is
+  not an arg, or `"n: " + 1` is reported at its spot.
+- `createCel({ environment })` starts from a cel-js `Environment` with functions of your own.
+
+### JavaScript: `fieldspec/js`
+
+For what CEL cannot say, `fieldspec/js` runs JavaScript in [QuickJS](https://github.com/gkurt/quickjs)
+compiled to WebAssembly (`@gkurt/quickjs-wasi`). It is heavier, about 400 KB gzipped, so load it
+where a spec needs it. Dates, bigints, maps, sets, bytes and regular expressions arrive as
+themselves; a URL as its text. Compile the engine once, then give the language to a registry:
 
 ```ts
 import { createRegistry } from "fieldspec";
@@ -288,10 +324,6 @@ synchronously from a compiled module. Code then runs synchronously, in one VM pe
   reports a syntax error at its spot.
 - Specs from sources that must not reach each other's code belong in registries with languages
   of their own.
-
-A registry with no engine for `$js` rejects specs that use it, and its `prompt` and closed
-`metaSchema` do not mention `$js`, so agents write it only where it runs. The published schema
-accepts it, as it accepts any registry's kinds.
 
 ## Extending
 
@@ -390,7 +422,7 @@ Experimental. Not yet:
 
 - In json-render output: enum labels in `select` and `radio` (shadcn's take plain strings;
   `segmented` keeps them), conditions that read an outer list's item from inside an inner
-  list's (json-render reads only the innermost item), and `$js`, which json-render cannot run.
+  list's (json-render reads only the innermost item), and code (`$cel`, `$js`), which json-render cannot run.
 - Fields whose value is always derived. Expression defaults fill absent values only.
 
 ```bash

@@ -1,6 +1,6 @@
 /**
  * A registry: the vocabulary specs are written in. Kinds, elements and presets, lint rules, and
- * the engines that run code (`$js`).
+ * the engines that run code (`$cel`, `$js`).
  * The core registry holds the built-ins (all lowercase); an application extends it with its own
  * (all capitalized), and every spec defined through it is checked, parsed, rendered and
  * described for agents with exactly that vocabulary.
@@ -42,7 +42,7 @@ export interface RegistryOptions<Ks extends readonly AnyKind[], Ps extends Prese
   /** Named declarations fields can `use`, e.g. `Money: { type: "bigint", min: "0", … }`. */
   readonly presets?: Ps;
   readonly rules?: readonly Rule[];
-  /** Engines that run code: `[await loadJs(wasm)]` from `fieldspec/js` runs `$js`. */
+  /** Engines that run code: `createCel()` from `fieldspec/cel` runs `$cel`, `await loadJs(wasm)` from `fieldspec/js` runs `$js`. */
   readonly languages?: readonly Language[];
 }
 

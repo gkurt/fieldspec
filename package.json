@@ -66,6 +66,14 @@
       },
       "source": "./src/zod.ts"
     },
+    "./cel": {
+      "fieldspec@dev": "./src/cel.ts",
+      "import": {
+        "types": "./dist/cel.d.ts",
+        "default": "./dist/cel.js"
+      },
+      "source": "./src/cel.ts"
+    },
     "./js": {
       "fieldspec@dev": "./src/js.ts",
       "import": {
@@ -105,6 +113,7 @@
     "@json-render/core": "0.21.3",
     "@json-render/react": "0.21.3",
     "@json-render/shadcn": "0.21.3",
+    "@marcbachmann/cel-js": "^8.0.0",
     "@types/bun": "^1.4.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -130,11 +139,15 @@
   },
   "peerDependencies": {
     "@gkurt/quickjs-wasi": "^0.3.0",
+    "@marcbachmann/cel-js": "^8.0.0",
     "react": ">=19",
     "zod": ">=4"
   },
   "peerDependenciesMeta": {
     "@gkurt/quickjs-wasi": {
+      "optional": true
+    },
+    "@marcbachmann/cel-js": {
       "optional": true
     },
     "react": {

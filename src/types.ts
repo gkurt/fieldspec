@@ -36,6 +36,15 @@ export interface ComputedRef {
 }
 
 /**
+ * A CEL (Common Expression Language) expression, run by the registry's engine (`fieldspec/cel`).
+ * It reads only its `args`, each a variable: `{ "$cel": "end >= start", "args": { "start": { "$state": "start" }, … } }`.
+ */
+export interface CelExpr {
+  readonly $cel: string;
+  readonly args?: { readonly [name: string]: Expr };
+}
+
+/**
  * A JavaScript expression, run sandboxed by the registry's engine (`fieldspec/js`). It reads only
  * its `args`, each a variable: `{ "$js": "end >= start", "args": { "start": { "$state": "start" }, … } }`.
  */
@@ -55,10 +64,10 @@ export interface TemplateExpr {
   readonly $template: string;
 }
 
-export type Expr = Json | StateRef | ItemRef | IndexRef | ComputedRef | JsExpr | CondExpr | TemplateExpr;
+export type Expr = Json | StateRef | ItemRef | IndexRef | ComputedRef | CelExpr | JsExpr | CondExpr | TemplateExpr;
 
 /** Text shown to people: a literal or an expression that yields one. */
-export type Text = string | TemplateExpr | CondExpr | ComputedRef | JsExpr | StateRef;
+export type Text = string | TemplateExpr | CondExpr | ComputedRef | CelExpr | JsExpr | StateRef;
 
 // ── Conditions (json-render's grammar, plus `in`) ─────────────────────────────────────────
 
@@ -77,7 +86,7 @@ export interface Comparison {
 }
 
 /** A value source, optionally compared. Without an operator, it is tested for truthiness. */
-export type ConditionLeaf = (StateRef | ItemRef | IndexRef | ComputedRef | JsExpr) & Comparison;
+export type ConditionLeaf = (StateRef | ItemRef | IndexRef | ComputedRef | CelExpr | JsExpr) & Comparison;
 
 /** `true`/`false`, a leaf, an array (all must hold), `$and`, or `$or`. */
 export type Condition =

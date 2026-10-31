@@ -46,13 +46,14 @@ export interface Scope {
 
 export const ROOT_SCOPE: Scope = { base: '' };
 
-/** The keys that hold code in a language: `{ "$js": "start <= end", "args": { … } }`. */
-export const LANGUAGE_KEYS = ['$js'] as const;
+/** The keys that hold code in a language: `{ "$cel": "end >= start", "args": { … } }`. */
+export const LANGUAGE_KEYS = ['$cel', '$js'] as const;
 export type LanguageKey = (typeof LANGUAGE_KEYS)[number];
 
 /**
- * Runs the code of one language for a registry: `fieldspec/js` runs `$js`. Code reads only the
- * `args` it is given, so what it depends on stays visible to the checker.
+ * Runs the code of one language for a registry: `fieldspec/cel` runs `$cel`, `fieldspec/js`
+ * runs `$js`. Code reads only the `args` it is given, so what it depends on stays visible to
+ * the checker.
  */
 export interface Language {
   readonly key: LanguageKey;

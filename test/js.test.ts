@@ -105,7 +105,7 @@ describe('checking $js', () => {
 
   test('a registry with no engine for $js faults where it is used', () => {
     expect(faults({ fields: { a: { type: 'string', visible: { $js: 'true' } } } }, createRegistry())).toEqual([
-      '/fields/a/visible/$js: needs an engine for $js: give the registry one (fieldspec/js runs $js)',
+      '/fields/a/visible/$js: needs an engine for $js: give the registry one (fieldspec/cel runs $cel, fieldspec/js runs $js)',
     ]);
     expect(() => createForm(define({ fields: { a: { type: 'string', default: { $js: '"x"' } } } })).values).not.toThrow();
   });

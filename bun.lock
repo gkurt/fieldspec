@@ -7,12 +7,13 @@
       "devDependencies": {
         "@anthropic-ai/sdk": "^1.3.0",
         "@arethetypeswrong/cli": "^0.18.5",
-        "@gkurt/quickjs-wasi": "0.3.0",
+        "@gkurt/quickjs-wasi": "^0.3.0",
         "@happy-dom/global-registrator": "21.0.4",
         "@internationalized/date": "^3.12.4",
         "@json-render/core": "0.21.3",
         "@json-render/react": "0.21.3",
         "@json-render/shadcn": "0.21.3",
+        "@marcbachmann/cel-js": "8.0.0",
         "@types/bun": "^1.4.4",
         "@types/react": "^19",
         "@types/react-dom": "^19",
@@ -37,10 +38,12 @@
         "zod": "^4.6.7",
       },
       "peerDependencies": {
+        "@gkurt/quickjs-wasi": "^0.3.0",
         "react": ">=19",
         "zod": ">=4",
       },
       "optionalPeers": [
+        "@gkurt/quickjs-wasi",
         "react",
         "zod",
       ],
@@ -90,6 +93,8 @@
     "@json-render/shadcn": ["@json-render/shadcn@0.21.3", "", { "dependencies": { "@json-render/core": "0.21.3", "@json-render/react": "0.21.3", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "embla-carousel-react": "^8.6.0", "lucide-react": "^0.564.0", "radix-ui": "^1.4.3", "tailwind-merge": "^3.4.1", "vaul": "^1.1.2" }, "peerDependencies": { "react": "^19.0.0", "react-dom": "^19.0.0", "tailwindcss": "^4.0.0", "zod": "^4.0.0" } }, "sha512-Ga7k4NZMox6jpi7J3jUqAbHDS43FFI1BlyqbDmp09LzVmeII2rPN+wkD4J0eJtlqsZPtYD8KGlsQuK9sqM4wYg=="],
 
     "@loaderkit/resolve": ["@loaderkit/resolve@1.0.6", "", { "dependencies": { "@braidai/lang": "^1.0.0" } }, "sha512-G8FdIoF5CypfwmD9rl8BXod5HDn8JqB0CCNBXDTaRZ+yRYhARrrSToX1zg1zy9jX3zLqigsELwhT4gNtkdQAUg=="],
+
+    "@marcbachmann/cel-js": ["@marcbachmann/cel-js@8.0.0", "", { "bin": { "cel-evaluate": "bin/cel-evaluate.js" } }, "sha512-oaTrAziGr3zDLFiMt/yLU3nZuRMawyWQB5X1a0I7s9eGy3JYzX9l8ZXXHyMd64nzbeVFZTewuUShwsZQdK6UCA=="],
 
     "@opentelemetry/api": ["@opentelemetry/api@1.10.0", "", {}, "sha512-lMkyes8iHrG+mk6WH7X70MdCLI2RS0FwNBY1PyQ8UemaijE2m5mv5A0Niy3HtbYTFrgkUEQjFMXmSAk2hQDuPQ=="],
 
