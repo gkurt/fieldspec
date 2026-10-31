@@ -125,15 +125,24 @@ describe('accordion and autocomplete, drawn', () => {
     return { form, q, run, unmount: () => run(() => root.unmount()) };
   }
 
-  test('an accordion heads each section with its name, and moves, removes and adds', async () => {
+  test('an accordion heads each section with its name, and reorders by its handle, removes and adds', async () => {
     const { form, q, run, unmount } = await mount(html.htmlRenderers);
     const people = () => q('.fs-accordion')[0]!;
     const headings = () => [...people().querySelectorAll(':scope > details > summary .fs-summary-label')].map((e) => e.textContent);
     expect(headings()).toEqual(['Ada', '#2']);
     expect([...people().querySelectorAll(':scope > details')].map((d) => (d as HTMLDetailsElement).open)).toEqual([true, false]);
-    await run(() => people().querySelector<HTMLButtonElement>('button[aria-label="Move Ada down"]')!.click());
+    // No move buttons: the handle in each heading drags, or moves with the arrow keys.
+    expect(people().querySelector('button[aria-label^="Move"]')).toBeNull();
+    const handle = people().querySelector<HTMLElement>(':scope > details > summary > .fs-handle')!;
+    expect(handle.getAttribute('aria-label')).toBe('Move Ada, item 1 of 2');
+    expect(handle.getAttribute('draggable')).toBe('true');
+    await run(() => handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true })));
     expect(form.values.people.map((p) => p.name)).toEqual(['', 'Ada']);
     expect(headings()).toEqual(['#1', 'Ada']);
+    // Pressing the handle does not open or close its section: its click is cancelled.
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+    await run(() => people().querySelector<HTMLElement>('.fs-handle')!.dispatchEvent(click));
+    expect(click.defaultPrevented).toBe(true);
     await run(() => people().querySelector<HTMLButtonElement>('button[aria-label="Remove #1"]')!.click());
     expect(headings()).toEqual(['Ada']);
     await run(() => [...people().querySelectorAll<HTMLButtonElement>(':scope > div > button')].at(-1)!.click());

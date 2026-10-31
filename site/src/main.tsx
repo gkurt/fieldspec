@@ -8,9 +8,7 @@ import { toZod } from '#src/zod.ts';
 import { Canvas } from './Canvas.tsx';
 import { Footer, Heading, Nav, REPO } from './chrome.tsx';
 import { Code, Json } from './Code.tsx';
-import { cardSource, DialKitDemo } from './DialKit.tsx';
 import { Playground } from './Playground.tsx';
-import { meetupSource, ReactAriaDemo } from './ReactAria.tsx';
 import {
   account,
   accountSource,
@@ -30,8 +28,7 @@ const LINKS = [
   ['tutorial.html', 'Tutorial', true],
   ['#playground', 'Playground', true],
   ['#interop', 'Interop'],
-  ['#dialkit', 'DialKit'],
-  ['#react-aria', 'React Aria'],
+  ['examples.html', 'Examples', true],
   ['models.html', 'With AI models', true],
   ['#start', 'Get started'],
 ] as const;
@@ -104,27 +101,6 @@ function App() {
           <Playground />
         </section>
         <Interop form={hero} />
-        <section className="section" id="dialkit">
-          <Heading kicker="With DialKit" title="The same form, in DialKit's controls">
-            The DialKit example renderers draw a form with <a href="https://github.com/joshpuckett/dialkit">DialKit</a>'s sliders, toggles,
-            selects, colour pickers and folders, while fieldspec keeps the values, conditions and checks. Lists and other shapes DialKit has
-            no control for keep the HTML set's, inside a folder. Both views below are one form; edit either.
-          </Heading>
-          <DialKitDemo />
-          <Code code={cardSource} label="card.tsx" className="dial-code" />
-        </section>
-        <section className="section" id="react-aria">
-          <Heading kicker="With React Aria" title="Accessible controls, from the same spec">
-            The React Aria example renderers draw a form with{' '}
-            <a href="https://react-spectrum.adobe.com/react-aria/">React Aria Components</a>: number fields with steppers, a date picker
-            with a calendar, radio and toggle-button groups, checkbox groups, colour fields with swatches, and a combobox for the city's
-            suggestions. The speakers are an accordion, each section headed by the speaker's name (namedBy). Each control carries its own
-            label, help and errors, wired the way React Aria wires them. fieldspec keeps the values, conditions and checks; pick "Online" to
-            see the city give way to a stream link.
-          </Heading>
-          <ReactAriaDemo />
-          <Code code={meetupSource} label="meetup.tsx" className="dial-code" />
-        </section>
         <Extend />
         <Sturdy />
         <Start />
@@ -471,7 +447,7 @@ function Start() {
         <Heading kicker="Get started" title="Define, parse, draw">
           <code>define</code> checks the spec and keeps its type. <code>parse</code> turns JSON into typed values. <code>FormView</code>{' '}
           draws it with renderers you bring: copy a set from the repository's <code>examples/renderers</code> (plain HTML, DialKit or React
-          Aria) and make it yours, or walk <code>layout(spec)</code> yourself.
+          Aria; see them in <a href="examples.html">the examples</a>) and make it yours, or walk <code>layout(spec)</code> yourself.
         </Heading>
         <div className="ctas">
           <a className="button primary" href={REPO}>

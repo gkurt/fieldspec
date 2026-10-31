@@ -261,6 +261,7 @@ const LINKS = [
   ['./', 'Home', true],
   ['#one', 'Steps'],
   ['#code', 'From code'],
+  ['examples.html', 'Examples'],
   ['models.html', 'With AI models'],
 ] as const;
 

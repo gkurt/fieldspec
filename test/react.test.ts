@@ -140,7 +140,7 @@ describe('React controls', () => {
     await press(handles()[2]!, 'ArrowDown'); // already last
     expect(form.values.steps).toEqual(['two', 'three', 'one']);
     expect(document.activeElement).toBe(handles()[2]!);
-    expect(handles()[2]!.getAttribute('aria-label')).toBe('Move item 3 of 3');
+    expect(handles()[2]!.getAttribute('aria-label')).toBe('Move #3, item 3 of 3');
     await act(() => root.unmount());
   });
 

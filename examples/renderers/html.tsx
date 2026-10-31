@@ -12,6 +12,7 @@ import {
   type ControlProps,
   type FieldProps,
   type LayoutProps,
+  type ListControl,
   type Parse,
   type Renderers,
 } from 'fieldspec/react';
@@ -23,7 +24,18 @@ import {
  *
  * `<FormView form={form} renderers={htmlRenderers} />`, with `<style>{htmlStyles}</style>` once.
  */
-import { createContext, use, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  createContext,
+  use,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type DragEvent,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
 
 /** A value as text: JSON for objects and lists, which have no text of their own. */
 const textOf = (v: unknown): string => (typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v));
@@ -365,79 +377,84 @@ function dateText(value: unknown, time: boolean): string {
   return local.toISOString().slice(0, 16);
 }
 
-function List(p: ControlProps) {
-  const { field } = p;
-  const list = listOf(p);
+/**
+ * Reordering a list by dragging an item's handle, or with the arrow keys while the handle has the
+ * focus. `row(i)` goes on each item's element, `handle(i, name)` on its handle. Items are keyed
+ * by position, so after a move from the keyboard the focus is sent after the item.
+ */
+function useReorder(list: ListControl, disabled: boolean) {
   const [drag, setDrag] = useState<{ from: number; over: number } | undefined>();
-  // Rows are keyed by position, so after a move from the keyboard the focus is sent after the item.
-  const box = useRef<HTMLDivElement>(null);
+  const id = useId();
   const refocus = useRef<number | undefined>(undefined);
   // Moves the focus in the DOM after a reorder has rendered.
   useEffect(() => {
     if (refocus.current === undefined) return;
-    box.current?.querySelectorAll<HTMLElement>(':scope > .fs-item > .fs-handle')[refocus.current]?.focus();
+    document.querySelectorAll<HTMLElement>(`[data-reorder="${id}"]`)[refocus.current]?.focus();
     refocus.current = undefined;
   });
-  if (field.decl.type === 'set') return <SetLines {...p} />;
-  // Items reorder by dragging their handle, or with the arrow keys while it has the focus.
+  const count = list.items.length;
+  return {
+    row: (i: number) => ({
+      'data-row': '',
+      'data-dragging': drag?.from === i ? '' : undefined,
+      'data-drop': drag !== undefined && drag.over === i && drag.from !== i ? (drag.from < i ? 'after' : 'before') : undefined,
+      onDragOver: (e: DragEvent) => {
+        if (!drag) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (drag.over !== i) setDrag({ ...drag, over: i });
+      },
+      onDrop: (e: DragEvent) => {
+        e.preventDefault();
+        if (drag) list.move(drag.from, i);
+        setDrag(undefined);
+      },
+    }),
+    // A span, not a button: Firefox does not drag buttons.
+    handle: (i: number, name: string) => ({
+      'data-reorder': id,
+      className: 'fs-handle',
+      role: 'button',
+      tabIndex: disabled ? -1 : 0,
+      'aria-disabled': disabled || undefined,
+      'aria-label': `Move ${name}, item ${i + 1} of ${count}`,
+      'aria-keyshortcuts': 'ArrowUp ArrowDown',
+      draggable: !disabled,
+      title: 'Drag, or use the arrow keys, to reorder',
+      onKeyDown: (e: KeyboardEvent) => {
+        const to = e.key === 'ArrowUp' ? i - 1 : e.key === 'ArrowDown' ? i + 1 : -1;
+        if (disabled || to < 0 || to >= count) return;
+        e.preventDefault();
+        refocus.current = to;
+        list.move(i, to);
+      },
+      onDragStart: (e: DragEvent<HTMLElement>) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(i));
+        const row = e.currentTarget.closest('[data-row]');
+        if (row) e.dataTransfer.setDragImage(row, 12, 12);
+        setDrag({ from: i, over: i });
+      },
+      onDragEnd: () => setDrag(undefined),
+    }),
+  };
+}
+
+function List(p: ControlProps) {
+  const list = listOf(p);
+  const reorder = useReorder(list, p.disabled);
+  if (p.field.decl.type === 'set') return <SetLines {...p} />;
   return (
-    <div ref={box} className="fs-list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {list.items.map(({ index: i, render }) => {
-        const dropping = drag !== undefined && drag.over === i && drag.from !== i ? (drag.from < i ? 'after' : 'before') : undefined;
-        return (
-          <div
-            key={i}
-            className="fs-item"
-            style={{ display: 'flex', gap: 8, alignItems: 'start' }}
-            data-dragging={drag?.from === i ? '' : undefined}
-            data-drop={dropping}
-            onDragOver={(e) => {
-              if (!drag) return;
-              e.preventDefault();
-              e.dataTransfer.dropEffect = 'move';
-              if (drag.over !== i) setDrag({ ...drag, over: i });
-            }}
-            onDrop={(e) => {
-              e.preventDefault();
-              if (drag) list.move(drag.from, i);
-              setDrag(undefined);
-            }}
-          >
-            {/* A span, not a button: Firefox does not drag buttons. */}
-            <span
-              className="fs-handle"
-              role="button"
-              tabIndex={p.disabled ? -1 : 0}
-              aria-disabled={p.disabled || undefined}
-              aria-label={`Move item ${i + 1} of ${list.items.length}`}
-              aria-keyshortcuts="ArrowUp ArrowDown"
-              draggable={!p.disabled}
-              title="Drag, or use the arrow keys, to reorder"
-              onKeyDown={(e) => {
-                const to = e.key === 'ArrowUp' ? i - 1 : e.key === 'ArrowDown' ? i + 1 : -1;
-                if (p.disabled || to < 0 || to >= list.items.length) return;
-                e.preventDefault();
-                refocus.current = to;
-                list.move(i, to);
-              }}
-              onDragStart={(e) => {
-                e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/plain', String(i));
-                const row = e.currentTarget.parentElement;
-                if (row) e.dataTransfer.setDragImage(row, 12, 12);
-                setDrag({ from: i, over: i });
-              }}
-              onDragEnd={() => setDrag(undefined)}
-            >
-              ⠿
-            </span>
-            <div style={{ flex: 1, minWidth: 0 }}>{render()}</div>
-            <button type="button" aria-label="Remove" disabled={p.disabled} onClick={() => list.remove(i)}>
-              ✕
-            </button>
-          </div>
-        );
-      })}
+    <div className="fs-list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {list.items.map(({ index: i, label, render }) => (
+        <div key={i} className="fs-item" style={{ display: 'flex', gap: 8, alignItems: 'start' }} {...reorder.row(i)}>
+          <span {...reorder.handle(i, label)}>⠿</span>
+          <div style={{ flex: 1, minWidth: 0 }}>{render()}</div>
+          <button type="button" aria-label="Remove" disabled={p.disabled} onClick={() => list.remove(i)}>
+            ✕
+          </button>
+        </div>
+      ))}
       <div>
         <button type="button" disabled={!list.canAdd} onClick={() => list.add()}>
           {text(p.props.addLabel) ?? 'Add'}
@@ -643,32 +660,28 @@ function HeadingButton({
 
 /**
  * Items as sections that open and close, each headed by its name (the list's `namedBy`, else its
- * position or key). A list's sections move up and down; a record's or map's key is renamed inside.
+ * position or key). A list's sections reorder by dragging; a record's or map's key is renamed inside.
  */
 function Accordion(p: ControlProps) {
   return p.field.decl.type === 'array' ? <ListAccordion {...p} /> : <EntriesAccordion {...p} />;
 }
 
+/** A list's sections reorder by dragging the handle in their heading, or with its arrow keys. */
 function ListAccordion(p: ControlProps) {
   const list = listOf(p);
+  const reorder = useReorder(list, p.disabled);
   return (
     <div className="fs-accordion">
       {list.items.map(({ index: i, label, render }) => (
         // By position, as a list's rows are: a section keeps its open state while its item changes.
-        <details key={i} className="fs-section-item" open={startsOpen(p, i)}>
+        <details key={i} className="fs-section-item" open={startsOpen(p, i)} {...reorder.row(i)}>
           <summary>
+            {/* Dragging or pressing the handle moves the section; it does not open or close it. */}
+            <span {...reorder.handle(i, label)} onClick={(e) => e.preventDefault()}>
+              ⠿
+            </span>
             <span className="fs-summary-label">{label}</span>
             <span className="fs-summary-actions">
-              <HeadingButton label={`Move ${label} up`} disabled={p.disabled || i === 0} onPress={() => list.move(i, i - 1)}>
-                ↑
-              </HeadingButton>
-              <HeadingButton
-                label={`Move ${label} down`}
-                disabled={p.disabled || i === list.items.length - 1}
-                onPress={() => list.move(i, i + 1)}
-              >
-                ↓
-              </HeadingButton>
               <HeadingButton label={`Remove ${label}`} disabled={p.disabled} onPress={() => list.remove(i)}>
                 ✕
               </HeadingButton>
@@ -905,9 +918,9 @@ export const htmlStyles = `
 [data-fieldspec] .fs-mixed { opacity: 0.6; font-style: italic; }
 [data-fieldspec] .fs-handle { cursor: grab; user-select: none; padding: 4px 2px; opacity: 0.5; line-height: 1.6; }
 [data-fieldspec] .fs-handle:hover, [data-fieldspec] .fs-handle:focus-visible { opacity: 1; }
-[data-fieldspec] .fs-item[data-dragging] { opacity: 0.4; }
-[data-fieldspec] .fs-item[data-drop="before"] { box-shadow: 0 -2px 0 #3b82f6; }
-[data-fieldspec] .fs-item[data-drop="after"] { box-shadow: 0 2px 0 #3b82f6; }
+[data-fieldspec] :is(.fs-item, .fs-section-item)[data-dragging] { opacity: 0.4; }
+[data-fieldspec] :is(.fs-item, .fs-section-item)[data-drop="before"] { box-shadow: 0 -2px 0 #3b82f6; }
+[data-fieldspec] :is(.fs-item, .fs-section-item)[data-drop="after"] { box-shadow: 0 2px 0 #3b82f6; }
 [data-fieldspec] .fs-key .fs-input { width: 100%; box-sizing: border-box; }
 [data-fieldspec] .fs-accordion { display: flex; flex-direction: column; gap: 8px; }
 [data-fieldspec] .fs-section-item { border: 1px solid color-mix(in srgb, currentColor 15%, transparent); border-radius: 8px; }
