@@ -1,14 +1,14 @@
+import type { Fn, Functions } from './expr.ts';
 /** Type-level reading of a spec: the values it describes, and the functions it calls. */
-import type { AnyKind } from "./kinds.ts";
-import type { Fn, Functions } from "./expr.ts";
-import type { BUILTIN_PRESETS } from "./presets.ts";
-import type { Json, OptionValue } from "./types.ts";
+import type { AnyKind } from './kinds.ts';
+import type { BUILTIN_PRESETS } from './presets.ts';
+import type { Json, OptionValue } from './types.ts';
 
 type Simplify<T> = { [K in keyof T]: T[K] } & {};
 
 /** Kind name → value type, for the extension kinds a format adds. */
 export type KindValues<Ks extends readonly AnyKind[]> = {
-  [K in Ks[number] as K["name"]]: NonNullable<K["__value"]>;
+  [K in Ks[number] as K['name']]: NonNullable<K['__value']>;
 };
 
 /**
@@ -23,11 +23,7 @@ export interface Vocabulary {
 
 export type CoreVocabulary = { readonly kinds: {}; readonly defs: {}; readonly presets: typeof BUILTIN_PRESETS };
 
-type EnumValue<F> = F extends { readonly options: readonly (infer O)[] }
-  ? O extends { readonly value: infer V }
-    ? V
-    : O
-  : OptionValue;
+type EnumValue<F> = F extends { readonly options: readonly (infer O)[] } ? (O extends { readonly value: infer V } ? V : O) : OptionValue;
 
 type VariantValue<F, X extends Vocabulary> = F extends { readonly key: infer Key extends string; readonly variants: infer VS }
   ? {
@@ -38,57 +34,57 @@ type VariantValue<F, X extends Vocabulary> = F extends { readonly key: infer Key
   : Record<string, unknown>;
 
 /** What a `use` name refers to: a definition, else a preset. */
-type Base<N, X extends Vocabulary> = N extends keyof X["defs"] ? X["defs"][N] : N extends keyof X["presets"] ? X["presets"][N] : never;
+type Base<N, X extends Vocabulary> = N extends keyof X['defs'] ? X['defs'][N] : N extends keyof X['presets'] ? X['presets'][N] : never;
 
 /** A base declaration with a field's own properties laid over it. */
-type Over<B, F> = Omit<B, Exclude<keyof F, "use">> & Omit<F, "use">;
+type Over<B, F> = Omit<B, Exclude<keyof F, 'use'>> & Omit<F, 'use'>;
 
 /** The value of one field declaration. */
 export type ValueOf<F, X extends Vocabulary = CoreVocabulary> = F extends { readonly type: infer T }
-  ? T extends "string"
+  ? T extends 'string'
     ? string
-    : T extends "number" | "int"
+    : T extends 'number' | 'int'
       ? number
-      : T extends "boolean"
+      : T extends 'boolean'
         ? boolean
-        : T extends "enum"
+        : T extends 'enum'
           ? EnumValue<F>
-          : T extends "date"
+          : T extends 'date'
             ? Date
-            : T extends "bigint"
+            : T extends 'bigint'
               ? bigint
-              : T extends "url"
+              : T extends 'url'
                 ? URL
-                : T extends "regexp"
+                : T extends 'regexp'
                   ? RegExp
-                  : T extends "bytes"
+                  : T extends 'bytes'
                     ? Uint8Array
-                    : T extends "json"
+                    : T extends 'json'
                       ? Json
-                      : T extends "array"
+                      : T extends 'array'
                         ? F extends { readonly items: infer I }
                           ? ValueOf<I, X>[]
                           : unknown[]
-                        : T extends "set"
+                        : T extends 'set'
                           ? F extends { readonly items: infer I }
                             ? Set<ValueOf<I, X>>
                             : Set<unknown>
-                          : T extends "record"
+                          : T extends 'record'
                             ? F extends { readonly values: infer V }
                               ? Record<string, ValueOf<V, X>>
                               : Record<string, unknown>
-                            : T extends "map"
+                            : T extends 'map'
                               ? F extends { readonly keys: infer K; readonly values: infer V }
                                 ? Map<ValueOf<K, X>, ValueOf<V, X>>
                                 : Map<unknown, unknown>
-                              : T extends "object"
+                              : T extends 'object'
                                 ? F extends { readonly fields: infer FS }
                                   ? ValuesOf<FS, X>
                                   : Record<string, unknown>
-                                : T extends "variant"
+                                : T extends 'variant'
                                   ? VariantValue<F, X>
-                                  : T extends keyof X["kinds"]
-                                    ? X["kinds"][T]
+                                  : T extends keyof X['kinds']
+                                    ? X['kinds'][T]
                                     : unknown
   : F extends { readonly use: infer N }
     ? ValueOf<Over<Base<N, X>, F>, X>
@@ -115,10 +111,10 @@ export type ValuesOf<FS, X extends Vocabulary = CoreVocabulary> = Simplify<
 type DefsOf<S> = S extends { readonly defs: infer D } ? D : {};
 
 /** Every `$computed` name a spec calls. */
-export type ComputedNames<T, Depth extends unknown[] = []> = Depth["length"] extends 16
+export type ComputedNames<T, Depth extends unknown[] = []> = Depth['length'] extends 16
   ? never
   : T extends { readonly $computed: infer N extends string }
-    ? (string extends N ? never : N) | ComputedNames<Omit<T, "$computed">, [...Depth, 1]>
+    ? (string extends N ? never : N) | ComputedNames<Omit<T, '$computed'>, [...Depth, 1]>
     : T extends readonly (infer E)[]
       ? ComputedNames<E, [...Depth, 1]>
       : T extends object
@@ -129,16 +125,16 @@ export type ComputedNames<T, Depth extends unknown[] = []> = Depth["length"] ext
         : never;
 
 /** A function table that implements every name the spec calls. */
-export type FunctionsFor<S> = [ComputedNames<S>] extends [never]
-  ? Functions
-  : { readonly [N in ComputedNames<S>]: Fn } & Functions;
+export type FunctionsFor<S> = [ComputedNames<S>] extends [never] ? Functions : { readonly [N in ComputedNames<S>]: Fn } & Functions;
 
 declare const TYPES: unique symbol;
 
 /** A spec that knows its value type. The marker is type-only; at runtime it is the spec. */
 export type Defined<S, KV = {}, P = typeof BUILTIN_PRESETS> = S & {
   readonly [TYPES]?: {
-    readonly values: S extends { readonly fields: infer FS } ? ValuesOf<FS, { kinds: KV & {}; defs: DefsOf<S> & {}; presets: P & {} }> : never;
+    readonly values: S extends { readonly fields: infer FS }
+      ? ValuesOf<FS, { kinds: KV & {}; defs: DefsOf<S> & {}; presets: P & {} }>
+      : never;
   };
 };
 

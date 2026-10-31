@@ -1,5 +1,5 @@
 /** A collapsible JSON viewer: objects and arrays fold, each remembering whether it is open. */
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, use, useState, type ReactNode } from 'react';
 
 interface TreeOptions {
   /** Levels open at first. */
@@ -16,20 +16,22 @@ export function JsonTree({ value, depth = 2 }: { value: unknown; depth?: number 
     setOpenTo(to);
     setGeneration((g) => g + 1);
   };
+  const copy = async () => {
+    await navigator.clipboard?.writeText(JSON.stringify(value, null, 2));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1200);
+  };
   return (
     <div className="json-tree">
       <div className="json-toolbar">
-        <button type="button" onClick={() => reset(Number.POSITIVE_INFINITY)}>Expand all</button>
-        <button type="button" onClick={() => reset(1)}>Collapse all</button>
-        <button
-          type="button"
-          onClick={async () => {
-            await navigator.clipboard?.writeText(JSON.stringify(value, null, 2));
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1200);
-          }}
-        >
-          {copied ? "Copied" : "Copy"}
+        <button type="button" onClick={() => reset(Number.POSITIVE_INFINITY)}>
+          Expand all
+        </button>
+        <button type="button" onClick={() => reset(1)}>
+          Collapse all
+        </button>
+        <button type="button" onClick={() => void copy()}>
+          {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
       <Options.Provider value={{ depth: openTo }}>
@@ -42,12 +44,12 @@ export function JsonTree({ value, depth = 2 }: { value: unknown; depth?: number 
 }
 
 function Entry({ name, value, level, last }: { name: string | number | undefined; value: unknown; level: number; last: boolean }) {
-  const { depth } = useContext(Options);
+  const { depth } = use(Options);
   const [open, setOpen] = useState(level < depth);
-  const comma = last ? "" : ",";
-  const key = name === undefined ? null : typeof name === "number" ? null : <span className="json-key">{JSON.stringify(name)}: </span>;
+  const comma = last ? '' : ',';
+  const key = name === undefined ? null : typeof name === 'number' ? null : <span className="json-key">{JSON.stringify(name)}: </span>;
 
-  if (value === null || typeof value !== "object") {
+  if (value === null || typeof value !== 'object') {
     return (
       <div className="json-line" role="treeitem" style={{ paddingLeft: indent(level) }}>
         {key}
@@ -58,21 +60,28 @@ function Entry({ name, value, level, last }: { name: string | number | undefined
   }
 
   const entries: [string | number, unknown][] = Array.isArray(value) ? value.map((v, i) => [i, v]) : Object.entries(value);
-  const [openMark, closeMark] = Array.isArray(value) ? ["[", "]"] : ["{", "}"];
+  const [openMark, closeMark] = Array.isArray(value) ? ['[', ']'] : ['{', '}'];
   if (entries.length === 0) {
     return (
       <div className="json-line" role="treeitem" style={{ paddingLeft: indent(level) }}>
         {key}
-        <span className="json-punct">{openMark}{closeMark}</span>
+        <span className="json-punct">
+          {openMark}
+          {closeMark}
+        </span>
         {comma}
       </div>
     );
   }
-  const summary = Array.isArray(value) ? `${entries.length} item${entries.length === 1 ? "" : "s"}` : `${entries.length} key${entries.length === 1 ? "" : "s"}`;
+  const summary = Array.isArray(value)
+    ? `${entries.length} item${entries.length === 1 ? '' : 's'}`
+    : `${entries.length} key${entries.length === 1 ? '' : 's'}`;
   return (
     <div role="treeitem" aria-expanded={open}>
       <button type="button" className="json-line json-toggle" style={{ paddingLeft: indent(level) }} onClick={() => setOpen(!open)}>
-        <span className="json-caret" aria-hidden="true">{open ? "▾" : "▸"}</span>
+        <span className="json-caret" aria-hidden="true">
+          {open ? '▾' : '▸'}
+        </span>
         {key}
         <span className="json-punct">{openMark}</span>
         {!open && (
@@ -100,10 +109,13 @@ function Entry({ name, value, level, last }: { name: string | number | undefined
 
 function Scalar({ value }: { value: unknown }): ReactNode {
   if (value === null) return <span className="json-null">null</span>;
-  if (typeof value === "string") return <span className="json-string">{JSON.stringify(value)}</span>;
-  if (typeof value === "number") return <span className="json-number">{value}</span>;
-  if (typeof value === "boolean") return <span className="json-boolean">{String(value)}</span>;
-  return <span className="json-null">{String(value)}</span>;
+  if (typeof value === 'string') return <span className="json-string">{JSON.stringify(value)}</span>;
+  if (typeof value === 'number') return <span className="json-number">{value}</span>;
+  if (typeof value === 'boolean') return <span className="json-boolean">{String(value)}</span>;
+  // What is left has no JSON form: undefined, a bigint, a symbol or a function.
+  if (typeof value === 'undefined' || typeof value === 'bigint' || typeof value === 'symbol')
+    return <span className="json-null">{String(value)}</span>;
+  return <span className="json-null">{typeof value === 'function' ? value.toString() : JSON.stringify(value)}</span>;
 }
 
 const indent = (level: number) => `calc(${level} * 1.25em + 1.1em)`;

@@ -1,2 +1,2 @@
 /** Stylesheets are bundled by Vite. */
-declare module "*.css";
+declare module '*.css';

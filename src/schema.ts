@@ -7,12 +7,12 @@
  *
  * The schema checks shape; `checkSpec` checks meaning (references, conditions, defaults).
  */
-import { BASE_PROPS, coreFormat, type Format } from "./format.ts";
-import type { JsonSchema, PropInfo } from "./kinds.ts";
-import { USER_NAME } from "./names.ts";
-import { SCHEMA_URL, VERSION } from "./version.ts";
+import { BASE_PROPS, coreFormat, type Format } from './format.ts';
+import type { JsonSchema, PropInfo } from './kinds.ts';
+import { USER_NAME } from './names.ts';
+import { SCHEMA_URL, VERSION } from './version.ts';
 
-const DIALECT = "https://json-schema.org/draft/2020-12/schema";
+const DIALECT = 'https://json-schema.org/draft/2020-12/schema';
 
 export interface MetaSchemaOptions {
   /** The schema's `$id`. The core format's defaults to {@link SCHEMA_URL}. */
@@ -29,7 +29,7 @@ function propsSchema(props: { readonly [prop: string]: PropInfo }): Record<strin
 export function metaSchema(format: Format = coreFormat, options: MetaSchemaOptions = {}): JsonSchema {
   const open = options.open ?? format === coreFormat;
   const id = options.id ?? (format === coreFormat ? SCHEMA_URL : undefined);
-  const userName = { type: "string", pattern: USER_NAME.source };
+  const userName = { type: 'string', pattern: USER_NAME.source };
   const { type: _type, use: useProp, ...base } = BASE_PROPS;
 
   const kinds: unknown[] = [...format.kinds.values()].map((kind) => {
@@ -40,83 +40,93 @@ export function metaSchema(format: Format = coreFormat, options: MetaSchemaOptio
       Object.assign(own, k.props ?? {});
     }
     return {
-      type: "object",
+      type: 'object',
       title: kind.name,
       description: kind.description,
       properties: { type: { const: kind.name }, ...propsSchema(base), ...propsSchema(own) },
-      required: ["type", ...Object.entries(own).filter(([, i]) => i.required).map(([n]) => n)],
+      required: [
+        'type',
+        ...Object.entries(own)
+          .filter(([, i]) => i.required)
+          .map(([n]) => n),
+      ],
       additionalProperties: false,
     };
   });
   // A field built on a preset or definition may override anything its base's kind takes.
   kinds.push({
-    type: "object",
-    title: "use",
+    type: 'object',
+    title: 'use',
     description: "Builds on a preset or definition; its own properties override the base's.",
-    properties: { use: { type: "string", description: useProp!.description }, ...propsSchema(base) },
-    required: ["use"],
-    not: { required: ["type"] },
+    properties: { use: { type: 'string', description: useProp!.description }, ...propsSchema(base) },
+    required: ['use'],
+    not: { required: ['type'] },
   });
   if (open) {
     kinds.push({
-      type: "object",
-      title: "extension kind",
-      description: "A kind an extended format adds. Its name is capitalized.",
-      properties: { type: { ...userName, description: "The kind." }, ...propsSchema(base) },
-      required: ["type"],
+      type: 'object',
+      title: 'extension kind',
+      description: 'A kind an extended format adds. Its name is capitalized.',
+      properties: { type: { ...userName, description: 'The kind.' }, ...propsSchema(base) },
+      required: ['type'],
     });
   }
 
   const elements: unknown[] = [...format.elements.values()].map((el) => ({
-    type: "object",
+    type: 'object',
     title: el.name,
-    description: `${el.description}${el.kinds ? ` Edits ${el.kinds.join(", ")} fields.` : ""}`,
+    description: `${el.description}${el.kinds ? ` Edits ${el.kinds.join(', ')} fields.` : ''}`,
     properties: {
       type: { const: el.name },
-      props: { type: "object", properties: propsSchema(el.props ?? {}), additionalProperties: false },
-      ...(el.children && { children: { type: "array", items: { $ref: "#/$defs/render" } } }),
-      visible: { $ref: "#/$defs/condition" },
+      props: { type: 'object', properties: propsSchema(el.props ?? {}), additionalProperties: false },
+      ...(el.children && { children: { type: 'array', items: { $ref: '#/$defs/render' } } }),
+      visible: { $ref: '#/$defs/condition' },
     },
-    required: ["type"],
+    required: ['type'],
     additionalProperties: false,
   }));
   if (open) {
     elements.push({
-      type: "object",
-      title: "extension element",
-      description: "An element an extended format adds. Its name is capitalized.",
+      type: 'object',
+      title: 'extension element',
+      description: 'An element an extended format adds. Its name is capitalized.',
       properties: {
         type: userName,
-        props: { type: "object", additionalProperties: { $ref: "#/$defs/expr" } },
-        children: { type: "array", items: { $ref: "#/$defs/render" } },
-        visible: { $ref: "#/$defs/condition" },
+        props: { type: 'object', additionalProperties: { $ref: '#/$defs/expr' } },
+        children: { type: 'array', items: { $ref: '#/$defs/render' } },
+        visible: { $ref: '#/$defs/condition' },
       },
-      required: ["type"],
+      required: ['type'],
       additionalProperties: false,
     });
   }
 
   const leaf = {
-    type: "object",
+    type: 'object',
     properties: {
-      $state: { type: "string" },
-      $item: { type: "string" },
+      $state: { type: 'string' },
+      $item: { type: 'string' },
       $index: { const: true },
-      $computed: { type: "string" },
-      args: { type: "object", additionalProperties: { $ref: "#/$defs/expr" } },
-      eq: { $ref: "#/$defs/expr" },
-      neq: { $ref: "#/$defs/expr" },
-      gt: { $ref: "#/$defs/expr" },
-      gte: { $ref: "#/$defs/expr" },
-      lt: { $ref: "#/$defs/expr" },
-      lte: { $ref: "#/$defs/expr" },
-      in: { $ref: "#/$defs/expr" },
+      $computed: { type: 'string' },
+      args: { type: 'object', additionalProperties: { $ref: '#/$defs/expr' } },
+      eq: { $ref: '#/$defs/expr' },
+      neq: { $ref: '#/$defs/expr' },
+      gt: { $ref: '#/$defs/expr' },
+      gte: { $ref: '#/$defs/expr' },
+      lt: { $ref: '#/$defs/expr' },
+      lte: { $ref: '#/$defs/expr' },
+      in: { $ref: '#/$defs/expr' },
       not: { const: true },
     },
-    oneOf: [{ required: ["$state"] }, { required: ["$item"] }, { required: ["$index"] }, { required: ["$computed"] }],
+    oneOf: [{ required: ['$state'] }, { required: ['$item'] }, { required: ['$index'] }, { required: ['$computed'] }],
     additionalProperties: false,
   };
-  const only = (key: string, schema: unknown) => ({ type: "object", properties: { [key]: schema }, required: [key], additionalProperties: false });
+  const only = (key: string, schema: unknown) => ({
+    type: 'object',
+    properties: { [key]: schema },
+    required: [key],
+    additionalProperties: false,
+  });
   const elementNames = [{ enum: [...format.elements.keys()] }, ...(open ? [userName] : [])];
 
   return {
@@ -124,83 +134,87 @@ export function metaSchema(format: Format = coreFormat, options: MetaSchemaOptio
     ...(id && { $id: id }),
     title: `fieldspec spec ${VERSION}`,
     description:
-      "A fieldspec spec: the fields of a config or form, their kinds, constraints, defaults and conditions, and how a form for them is drawn. " +
-      "Built-in names are lowercase; names an application or a spec defines are capitalized.",
-    type: "object",
+      'A fieldspec spec: the fields of a config or form, their kinds, constraints, defaults and conditions, and how a form for them is drawn. ' +
+      'Built-in names are lowercase; names an application or a spec defines are capitalized.',
+    type: 'object',
     properties: {
-      $schema: { type: "string", description: "This schema's URL, which names the version the spec is written for." },
-      title: { $ref: "#/$defs/text" },
-      description: { $ref: "#/$defs/text" },
-      fields: { type: "object", description: "The fields, in display order.", additionalProperties: { $ref: "#/$defs/field" } },
-      groups: { type: "object", description: "Groups fields may join, for display.", additionalProperties: { $ref: "#/$defs/group" } },
+      $schema: { type: 'string', description: "This schema's URL, which names the version the spec is written for." },
+      title: { $ref: '#/$defs/text' },
+      description: { $ref: '#/$defs/text' },
+      fields: { type: 'object', description: 'The fields, in display order.', additionalProperties: { $ref: '#/$defs/field' } },
+      groups: { type: 'object', description: 'Groups fields may join, for display.', additionalProperties: { $ref: '#/$defs/group' } },
       defs: {
-        type: "object",
-        description: "Named declarations fields build on with `use`. Names are capitalized.",
+        type: 'object',
+        description: 'Named declarations fields build on with `use`. Names are capitalized.',
         propertyNames: { pattern: USER_NAME.source },
-        additionalProperties: { $ref: "#/$defs/field" },
+        additionalProperties: { $ref: '#/$defs/field' },
       },
-      layouts: { type: "object", description: "Named arrangements of the whole form.", additionalProperties: { $ref: "#/$defs/render" } },
+      layouts: { type: 'object', description: 'Named arrangements of the whole form.', additionalProperties: { $ref: '#/$defs/render' } },
       functions: {
-        type: "object",
-        description: "Functions `$computed` may call, implemented by the application.",
+        type: 'object',
+        description: 'Functions `$computed` may call, implemented by the application.',
         additionalProperties: {
-          type: "object",
-          properties: { description: { type: "string" }, args: { type: "object", additionalProperties: { type: "string" } }, returns: { type: "string" } },
+          type: 'object',
+          properties: {
+            description: { type: 'string' },
+            args: { type: 'object', additionalProperties: { type: 'string' } },
+            returns: { type: 'string' },
+          },
           additionalProperties: false,
         },
       },
     },
-    required: ["fields"],
+    required: ['fields'],
     additionalProperties: false,
     $defs: {
       field: { anyOf: kinds },
       group: {
-        type: "object",
+        type: 'object',
         properties: {
-          label: { $ref: "#/$defs/text" },
-          description: { $ref: "#/$defs/text" },
-          render: { $ref: "#/$defs/render" },
-          visible: { $ref: "#/$defs/condition" },
-          group: { type: "string" },
+          label: { $ref: '#/$defs/text' },
+          description: { $ref: '#/$defs/text' },
+          render: { $ref: '#/$defs/render' },
+          visible: { $ref: '#/$defs/condition' },
+          group: { type: 'string' },
         },
         additionalProperties: false,
       },
       render: {
-        anyOf: [...elementNames, only("field", { type: "string" }), only("group", { type: "string" }), { anyOf: elements }],
+        anyOf: [...elementNames, only('field', { type: 'string' }), only('group', { type: 'string' }), { anyOf: elements }],
       },
       condition: {
         anyOf: [
-          { type: "boolean" },
-          { type: "array", items: { $ref: "#/$defs/condition" } },
-          only("$and", { type: "array", items: { $ref: "#/$defs/condition" } }),
-          only("$or", { type: "array", items: { $ref: "#/$defs/condition" } }),
+          { type: 'boolean' },
+          { type: 'array', items: { $ref: '#/$defs/condition' } },
+          only('$and', { type: 'array', items: { $ref: '#/$defs/condition' } }),
+          only('$or', { type: 'array', items: { $ref: '#/$defs/condition' } }),
           leaf,
         ],
       },
       expr: {
         anyOf: [
-          { type: ["string", "number", "boolean", "null"] },
-          { type: "array", items: { $ref: "#/$defs/expr" } },
-          only("$state", { type: "string" }),
-          only("$item", { type: "string" }),
-          only("$index", { const: true }),
+          { type: ['string', 'number', 'boolean', 'null'] },
+          { type: 'array', items: { $ref: '#/$defs/expr' } },
+          only('$state', { type: 'string' }),
+          only('$item', { type: 'string' }),
+          only('$index', { const: true }),
           {
-            type: "object",
-            properties: { $computed: { type: "string" }, args: { type: "object", additionalProperties: { $ref: "#/$defs/expr" } } },
-            required: ["$computed"],
+            type: 'object',
+            properties: { $computed: { type: 'string' }, args: { type: 'object', additionalProperties: { $ref: '#/$defs/expr' } } },
+            required: ['$computed'],
             additionalProperties: false,
           },
           {
-            type: "object",
-            properties: { $cond: { $ref: "#/$defs/condition" }, $then: { $ref: "#/$defs/expr" }, $else: { $ref: "#/$defs/expr" } },
-            required: ["$cond", "$then", "$else"],
+            type: 'object',
+            properties: { $cond: { $ref: '#/$defs/condition' }, $then: { $ref: '#/$defs/expr' }, $else: { $ref: '#/$defs/expr' } },
+            required: ['$cond', '$then', '$else'],
             additionalProperties: false,
           },
-          only("$template", { type: "string" }),
-          { type: "object", additionalProperties: { $ref: "#/$defs/expr" } },
+          only('$template', { type: 'string' }),
+          { type: 'object', additionalProperties: { $ref: '#/$defs/expr' } },
         ],
       },
-      text: { anyOf: [{ type: "string" }, { $ref: "#/$defs/expr" }] },
+      text: { anyOf: [{ type: 'string' }, { $ref: '#/$defs/expr' }] },
     },
   };
 }

@@ -1,13 +1,13 @@
 /** JSON Pointers (RFC 6901), over values that may hold Maps and Sets as well as JSON. */
 
 export function parsePointer(pointer: string): string[] {
-  if (pointer === "") return [];
-  if (!pointer.startsWith("/")) throw new Error(`not a JSON Pointer: "${pointer}"`);
-  return pointer.slice(1).split("/").map(unescapeSegment);
+  if (pointer === '') return [];
+  if (!pointer.startsWith('/')) throw new Error(`not a JSON Pointer: "${pointer}"`);
+  return pointer.slice(1).split('/').map(unescapeSegment);
 }
 
 export function formatPointer(segments: readonly (string | number)[]): string {
-  return segments.map((s) => `/${escapeSegment(String(s))}`).join("");
+  return segments.map((s) => `/${escapeSegment(String(s))}`).join('');
 }
 
 export function joinPointer(base: string, ...segments: (string | number)[]): string {
@@ -15,11 +15,11 @@ export function joinPointer(base: string, ...segments: (string | number)[]): str
 }
 
 export function escapeSegment(segment: string): string {
-  return segment.replace(/~/g, "~0").replace(/\//g, "~1");
+  return segment.replace(/~/g, '~0').replace(/\//g, '~1');
 }
 
 export function unescapeSegment(segment: string): string {
-  return segment.replace(/~1/g, "/").replace(/~0/g, "~");
+  return segment.replace(/~1/g, '/').replace(/~0/g, '~');
 }
 
 /**
@@ -27,34 +27,38 @@ export function unescapeSegment(segment: string): string {
  * `base`, `""` is `base` itself.
  */
 export function resolvePointer(ref: string, base: string): string {
-  if (ref.startsWith("/")) return ref;
+  if (ref.startsWith('/')) return ref;
   let at = base;
   let rest = ref;
   for (;;) {
-    if (rest === ".." || rest.startsWith("../")) {
-      at = at.slice(0, Math.max(0, at.lastIndexOf("/")));
+    if (rest === '..' || rest.startsWith('../')) {
+      at = at.slice(0, Math.max(0, at.lastIndexOf('/')));
       rest = rest.slice(3);
-    } else if (rest === "." || rest.startsWith("./")) {
+    } else if (rest === '.' || rest.startsWith('./')) {
       rest = rest.slice(2);
-    } else break;
+    } else {
+      break;
+    }
   }
-  return rest === "" ? at : `${at}/${rest}`;
+  return rest === '' ? at : `${at}/${rest}`;
 }
 
 /** The same climb over static segments, for checking pointers against declarations. */
 export function resolveSegments(ref: string, base: readonly string[]): string[] {
-  if (ref.startsWith("/")) return ref.slice(1).split("/").map(unescapeSegment);
+  if (ref.startsWith('/')) return ref.slice(1).split('/').map(unescapeSegment);
   const at = [...base];
   let rest = ref;
   for (;;) {
-    if (rest === ".." || rest.startsWith("../")) {
+    if (rest === '..' || rest.startsWith('../')) {
       at.pop();
       rest = rest.slice(3);
-    } else if (rest === "." || rest.startsWith("./")) {
+    } else if (rest === '.' || rest.startsWith('./')) {
       rest = rest.slice(2);
-    } else break;
+    } else {
+      break;
+    }
   }
-  return rest === "" ? at : [...at, ...rest.split("/").map(unescapeSegment)];
+  return rest === '' ? at : [...at, ...rest.split('/').map(unescapeSegment)];
 }
 
 export function getAt(root: unknown, pointer: string): unknown {
@@ -74,7 +78,7 @@ export function child(node: unknown, segment: string): unknown {
     return undefined;
   }
   if (Array.isArray(node)) return node[Number(segment)];
-  if (node && typeof node === "object") return (node as Record<string, unknown>)[segment];
+  if (node && typeof node === 'object') return (node as Record<string, unknown>)[segment];
   return undefined;
 }
 
@@ -91,7 +95,7 @@ function setSegments(node: unknown, segments: readonly string[], value: unknown)
   const [head, ...rest] = segments as [string, ...string[]];
   if (Array.isArray(node)) {
     const copy = node.slice();
-    const index = head === "-" ? copy.length : Number(head);
+    const index = head === '-' ? copy.length : Number(head);
     const next = setSegments(copy[index], rest, value);
     if (next === undefined && rest.length === 0) copy.splice(index, 1);
     else copy[index] = next;
@@ -106,7 +110,7 @@ function setSegments(node: unknown, segments: readonly string[], value: unknown)
     else copy.set(key, next);
     return copy;
   }
-  const copy: Record<string, unknown> = node && typeof node === "object" ? { ...(node as object) } : {};
+  const copy: Record<string, unknown> = node && typeof node === 'object' ? { ...node } : {};
   const next = setSegments(copy[head], rest, value);
   if (next === undefined) delete copy[head];
   else copy[head] = next;
@@ -115,6 +119,6 @@ function setSegments(node: unknown, segments: readonly string[], value: unknown)
 
 /** The pointer one level up, and the last segment. */
 export function splitPointer(pointer: string): [parent: string, last: string] {
-  const at = pointer.lastIndexOf("/");
+  const at = pointer.lastIndexOf('/');
   return [pointer.slice(0, at), unescapeSegment(pointer.slice(at + 1))];
 }

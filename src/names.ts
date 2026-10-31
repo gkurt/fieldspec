@@ -15,9 +15,12 @@ export const isUserName = (name: string) => USER_NAME.test(name);
 /** The nearest valid user name: `entry` → `Entry`, `my-thing` → `MyThing`. */
 export function toUserName(name: string): string {
   const words = name.split(/[^A-Za-z0-9.]+/).filter(Boolean);
-  const joined = words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join("");
-  const segments = joined.split(".").filter(Boolean).map((s) => s.charAt(0).toUpperCase() + s.slice(1));
-  const out = segments.join(".");
+  const joined = words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('');
+  const segments = joined
+    .split('.')
+    .filter(Boolean)
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1));
+  const out = segments.join('.');
   return /^[A-Z]/.test(out) ? out : `X${out}`;
 }
 

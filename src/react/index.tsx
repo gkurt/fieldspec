@@ -9,8 +9,8 @@
 import {
   createContext,
   createElement,
-  useContext,
   useEffect,
+  use,
   useId,
   useMemo,
   useRef,
@@ -18,34 +18,38 @@ import {
   useSyncExternalStore,
   type CSSProperties,
   type ReactNode,
-} from "react";
-import { deref } from "../defs.ts";
-import type { Scope } from "../expr.ts";
-import type { ElementRole } from "../elements.ts";
-import { createForm, type FieldState, type Form, type FormOptions } from "../form.ts";
-import type { Format } from "../format.ts";
-import type { Infer } from "../infer.ts";
-import { optionsOf } from "../kinds.ts";
-import { defaultControl, type LayoutNode } from "../layout.ts";
-import { joinPointer, resolvePointer } from "../pointer.ts";
-import type { EnumField, Expr, FieldDecl, VariantField } from "../types.ts";
-import { initialValue } from "../values.ts";
+} from 'react';
+import { deref } from '#src/defs.ts';
+import type { ElementRole } from '#src/elements.ts';
+import { textOf, type Scope } from '#src/expr.ts';
+import { createForm, type FieldState, type Form, type FormOptions } from '#src/form.ts';
+import type { Format } from '#src/format.ts';
+import type { Infer } from '#src/infer.ts';
+import { optionsOf } from '#src/kinds.ts';
+import { defaultControl, type LayoutNode } from '#src/layout.ts';
+import { joinPointer, resolvePointer } from '#src/pointer.ts';
+import type { EnumField, Expr, FieldDecl, VariantField } from '#src/types.ts';
+import { initialValue } from '#src/values.ts';
 
 // ── Hooks ────────────────────────────────────────────────────────────────────────────────
 
 /** A form for this spec, created once. */
 export function useForm<S extends Parameters<typeof createForm>[0]>(spec: S, options?: FormOptions): Form<Infer<S>> {
   const [form] = useState(() => createForm(spec, options));
-  return form as Form<Infer<S>>;
+  return form;
 }
 
 /** Re-render when the form changes. Returns its version. */
-export function useFormVersion(form: Form<unknown>): number {
-  return useSyncExternalStore(form.subscribe, () => form.version, () => form.version);
+export function useFormVersion(form: Form): number {
+  return useSyncExternalStore(
+    form.subscribe,
+    () => form.version,
+    () => form.version,
+  );
 }
 
 /** A field's live state, or undefined if the path is not a field. */
-export function useField(form: Form<unknown>, path: string): FieldState | undefined {
+export function useField(form: Form, path: string): FieldState | undefined {
   useFormVersion(form);
   return form.field(path);
 }
@@ -56,7 +60,7 @@ interface BaseProps {
   readonly node: LayoutNode;
   /** The element's props, evaluated. */
   readonly props: Readonly<Record<string, unknown>>;
-  readonly form: Form<unknown>;
+  readonly form: Form;
 }
 
 /** A layout element (`stack`, `row`, `tabs`, …): its children, drawn. */
@@ -79,7 +83,7 @@ export interface FieldProps extends BaseProps {
   /** The id the field's control carries, for a label to point at. */
   readonly id: string;
   /** Draw the field's control. */
-  control(): ReactNode;
+  readonly control: () => ReactNode;
 }
 
 /** A control (`input`, `slider`, `list`, …): edits one field. */
@@ -90,13 +94,13 @@ export interface ControlProps extends BaseProps {
   /** Editing is off: the field is disabled or read-only. */
   readonly disabled: boolean;
   /** Write the field's value. */
-  set(value: unknown): void;
+  readonly set: (value: unknown) => void;
   /** Mark the field touched. */
-  touch(): void;
+  readonly touch: () => void;
   /** For container controls (`list`, `entries`, `variant`, `fields`): the field's layout node, with its insides. */
   readonly fieldNode?: LayoutNode;
   /** For container controls: draw a node anchored at a pointer. */
-  render(node: LayoutNode, anchor: string, scope?: Partial<Scope>): ReactNode;
+  readonly render: (node: LayoutNode, anchor: string, scope?: Partial<Scope>) => ReactNode;
 }
 
 export type ElementProps = LayoutProps | PartProps | FieldProps | ControlProps;
@@ -105,15 +109,31 @@ export type ElementProps = LayoutProps | PartProps | FieldProps | ControlProps;
  * A renderer for elements of one role. Bivariant in its props, as React's own event handlers
  * are, so a renderer written for `ControlProps` goes in the same table as one for `LayoutProps`.
  */
-export type ElementRenderer<P extends ElementProps = ElementProps> = { bivarianceHack(props: P): ReactNode }["bivarianceHack"];
+export type ElementRenderer<P extends ElementProps = ElementProps> = { bivarianceHack(props: P): ReactNode }['bivarianceHack'];
 export type Renderers = { readonly [element: string]: ElementRenderer };
 
-type LayoutElement = "stack" | "row" | "columns" | "collapsible" | "scroll" | "tabs" | "text" | "divider";
-type PartElement = "label" | "help" | "errors";
-type ControlElement = "input" | "textarea" | "select" | "radio" | "segmented" | "checkbox" | "switch" | "slider" | "date" | "color" | "file" | "checks" | "list" | "entries" | "variant" | "fields";
+type LayoutElement = 'stack' | 'row' | 'columns' | 'collapsible' | 'scroll' | 'tabs' | 'text' | 'divider';
+type PartElement = 'label' | 'help' | 'errors';
+type ControlElement =
+  | 'input'
+  | 'textarea'
+  | 'select'
+  | 'radio'
+  | 'segmented'
+  | 'checkbox'
+  | 'switch'
+  | 'slider'
+  | 'date'
+  | 'color'
+  | 'file'
+  | 'checks'
+  | 'list'
+  | 'entries'
+  | 'variant'
+  | 'fields';
 
 /** The props a built-in element's renderer gets. Your own elements get any of them: say which. */
-export type PropsOf<E extends string> = E extends "field"
+export type PropsOf<E extends string> = E extends 'field'
   ? FieldProps
   : E extends LayoutElement
     ? LayoutProps
@@ -141,7 +161,7 @@ export interface RenderRequest {
   readonly node: LayoutNode;
   /** For `field`, parts and controls: the field. */
   readonly field?: FieldState;
-  readonly form: Form<unknown>;
+  readonly form: Form;
 }
 
 /**
@@ -155,24 +175,24 @@ export type ResolveRenderer = (request: RenderRequest, next: () => ElementRender
 /** A function laid over other renderers, a table or another function: its `next()` is theirs. */
 export function extendRenderers(base: Renderers | ResolveRenderer, resolve: ResolveRenderer): ResolveRenderer {
   return (request, next) => {
-    const below = () => (typeof base === "function" ? (base(request, next) ?? next()) : fromTable(base, request));
+    const below = () => (typeof base === 'function' ? (base(request, next) ?? next()) : fromTable(base, request));
     return resolve(request, below) ?? below();
   };
 }
 
 /** The renderer a table holds for a request, with the fallbacks a table has. */
 function fromTable(table: Renderers, { element, role, field, form }: RenderRequest): ElementRenderer {
-  if (role === "control") {
-    const fallback = field ? defaultControl(form.format, field.decl) : "input";
+  if (role === 'control') {
+    const fallback = field ? defaultControl(form.format, field.decl) : 'input';
     return table[element] ?? table[fallback] ?? table.input ?? defaultRenderers.input!;
   }
-  if (role === "part") return table[element] ?? defaultRenderers[element] ?? (() => null);
-  return table[element] ?? (element === "field" ? defaultRenderers.field! : (table.stack ?? defaultRenderers.stack!));
+  if (role === 'part') return table[element] ?? defaultRenderers[element] ?? (() => null);
+  return table[element] ?? (element === 'field' ? defaultRenderers.field! : (table.stack ?? defaultRenderers.stack!));
 }
 
 /** One way to pick a renderer, whatever form the renderers take. */
 function pickerOf(renderers: Renderers | ResolveRenderer): (request: RenderRequest) => ElementRenderer {
-  if (typeof renderers !== "function") return (request) => fromTable(renderers, request);
+  if (typeof renderers !== 'function') return (request) => fromTable(renderers, request);
   return (request) => {
     const next = () => fromTable(defaultRenderers, request);
     return renderers(request, next) ?? next();
@@ -182,7 +202,7 @@ function pickerOf(renderers: Renderers | ResolveRenderer): (request: RenderReque
 // ── Drawing ──────────────────────────────────────────────────────────────────────────────
 
 interface DrawContext {
-  readonly form: Form<unknown>;
+  readonly form: Form;
   readonly pick: (request: RenderRequest) => ElementRenderer;
   readonly idPrefix: string;
 }
@@ -192,7 +212,7 @@ const Ctx = createContext<DrawContext | null>(null);
 const OwnField = createContext<LayoutNode | undefined>(undefined);
 
 export interface FormViewProps {
-  readonly form: Form<any>;
+  readonly form: Form;
   /** A named layout from the spec. */
   readonly view?: string;
   /** A table keyed by element name, or a function that picks per element. Default the built-in table. */
@@ -207,16 +227,16 @@ export function FormView({ form, view, renderers = defaultRenderers, className }
   const pick = useMemo(() => pickerOf(renderers), [renderers]);
   return (
     <Ctx.Provider value={{ form, pick, idPrefix }}>
-      <div className={cx("fs-form", className)} data-fieldspec="">
-        <Node node={form.layout(view)} scope={{ base: "" }} />
+      <div className={cx('fs-form', className)} data-fieldspec="">
+        <Node node={form.layout(view)} scope={{ base: '' }} />
       </div>
     </Ctx.Provider>
   );
 }
 
 function useDraw(): DrawContext {
-  const ctx = useContext(Ctx);
-  if (!ctx) throw new Error("fieldspec: draw inside <FormView>");
+  const ctx = use(Ctx);
+  if (!ctx) throw new Error('fieldspec: draw inside <FormView>');
   return ctx;
 }
 
@@ -225,20 +245,20 @@ export function useRenderer(request: RenderRequest): ElementRenderer {
   return useDraw().pick(request);
 }
 
-const idFor = (prefix: string, path: string) => `${prefix}${path.replace(/[^A-Za-z0-9_-]/g, "_")}`;
+const idFor = (prefix: string, path: string) => `${prefix}${path.replace(/[^A-Za-z0-9_-]/g, '_')}`;
 
 /** One layout node, at a scope whose `base` is the anchor its field pointers start from. */
 function Node({ node, scope }: { node: LayoutNode; scope: Scope }): ReactNode {
   const { form, pick, idPrefix } = useDraw();
-  const own = useContext(OwnField);
+  const own = use(OwnField);
   if (node.visible !== undefined && !form.test(node.visible, scope)) return null;
   const anchor = scope.base;
   const props: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(node.props)) props[k] = form.evaluate(v, scope);
   const role = form.format.elements.get(node.type)?.role;
 
-  if (node.type === "field") {
-    const field = form.field(resolvePointer(node.field ?? "", anchor));
+  if (node.type === 'field') {
+    const field = form.field(resolvePointer(node.field ?? '', anchor));
     if (!field || !field.visible) return null;
     if (node.fragment) {
       return (
@@ -248,42 +268,56 @@ function Node({ node, scope }: { node: LayoutNode; scope: Scope }): ReactNode {
       );
     }
     const id = idFor(idPrefix, field.path);
-    const control = () => <Control element={node.control?.type} elementProps={node.control?.props} field={field} fieldNode={node} explicit={node.control?.explicit === true} />;
-    const renderer = pick({ element: "field", role: "layout", explicit: true, node, field, form });
+    const control = () => (
+      <Control
+        element={node.control?.type}
+        elementProps={node.control?.props}
+        field={field}
+        fieldNode={node}
+        explicit={node.control?.explicit === true}
+      />
+    );
+    const renderer = pick({ element: 'field', role: 'layout', explicit: true, node, field, form });
     return createElement(renderer, { node, props, form, field, control, id });
   }
 
-  if (role === "part" || role === "control") {
+  if (role === 'part' || role === 'control') {
     const many = node.fields?.map((f) => form.field(resolvePointer(f, anchor))).filter((f): f is FieldState => !!f && f.visible);
     const field = node.field !== undefined ? form.field(resolvePointer(node.field, anchor)) : undefined;
     if (node.field !== undefined && (!field || !field.visible)) return null;
-    const fieldNode = field && own && resolvePointer(own.field ?? "", anchor) === field.path ? own : undefined;
-    if (field && (role === "control" || node.type === "control")) {
+    const fieldNode = field && own && resolvePointer(own.field ?? '', anchor) === field.path ? own : undefined;
+    if (field && (role === 'control' || node.type === 'control')) {
       // `control` is the field's own control; a control element names the one to use.
-      const element = node.type === "control" ? (fieldNode?.control?.type ?? undefined) : node.type;
-      const elementProps = node.type === "control" ? { ...fieldNode?.control?.props, ...node.props } : node.props;
+      const element = node.type === 'control' ? (fieldNode?.control?.type ?? undefined) : node.type;
+      const elementProps = node.type === 'control' ? { ...fieldNode?.control?.props, ...node.props } : node.props;
       // A control element in a field's own layout is named there; `control` is as the field has it.
-      const explicit = node.type === "control" ? fieldNode?.control?.explicit === true : true;
+      const explicit = node.type === 'control' ? fieldNode?.control?.explicit === true : true;
       return <Control element={element} elementProps={elementProps} field={field} fieldNode={fieldNode} explicit={explicit} />;
     }
     const id = field ? idFor(idPrefix, field.path) : undefined;
-    const renderer = pick({ element: node.type, role: "part", explicit: true, node, ...(field && { field }), form });
+    const renderer = pick({ element: node.type, role: 'part', explicit: true, node, ...(field && { field }), form });
     return createElement(renderer, { node, props, form, ...(field && { field }), ...(many && { fields: many }), ...(id && { id }) });
   }
 
   const children = node.children.map((child) => <Node key={child.key} node={child} scope={scope} />);
-  return createElement(pick({ element: node.type, role: "layout", explicit: true, node, form }), { node, props, children, form });
+  return createElement(pick({ element: node.type, role: 'layout', explicit: true, node, form }), { node, props, children, form });
 }
 
 /** A field's control: the element named, else the kind's default, else `input`. */
-function Control(p: { element: string | undefined; elementProps?: { readonly [k: string]: Expr }; field: FieldState; fieldNode: LayoutNode | undefined; explicit: boolean }) {
+function Control(p: {
+  element: string | undefined;
+  elementProps?: { readonly [k: string]: Expr };
+  field: FieldState;
+  fieldNode: LayoutNode | undefined;
+  explicit: boolean;
+}) {
   const { elementProps, field, fieldNode } = p;
   const { form, pick, idPrefix } = useDraw();
   const name = p.element ?? defaultControl(form.format, field.decl);
   const node = fieldNode ?? { type: name, key: field.path, props: {}, children: [] };
   const props: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(elementProps ?? {})) props[k] = form.evaluate(v, field.scope);
-  return createElement(pick({ element: name, role: "control", explicit: p.explicit && p.element !== undefined, node, field, form }), {
+  return createElement(pick({ element: name, role: 'control', explicit: p.explicit && p.element !== undefined, node, field, form }), {
     node,
     props,
     form,
@@ -300,16 +334,16 @@ function Control(p: { element: string | undefined; elementProps?: { readonly [k:
 // ── Layout and parts ─────────────────────────────────────────────────────────────────────
 
 const gaps = { none: 0, sm: 8, md: 12, lg: 20 } as const;
-const text = (v: unknown) => (v === undefined || v === null ? undefined : String(v));
+const text = (v: unknown) => (v === undefined || v === null ? undefined : textOf(v));
 /** A length for CSS: a number is pixels. */
-const cssLength = (v: unknown) => (typeof v === "number" ? `${v}px` : String(v));
+const cssLength = (v: unknown) => (typeof v === 'number' ? `${v}px` : String(v));
 /** What a control shows for a field whose values differ. */
-const MIXED = "Mixed";
+const MIXED = 'Mixed';
 const indeterminate = (field: FieldState) => (el: HTMLInputElement | null) => {
   if (el) el.indeterminate = field.mixed;
 };
-const cx = (...names: (string | false | undefined)[]) => names.filter(Boolean).join(" ");
-const column: CSSProperties = { display: "flex", flexDirection: "column", gap: 12 };
+const cx = (...names: (string | false | undefined)[]) => names.filter(Boolean).join(' ');
+const column: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 12 };
 
 /** Set by `tabs` for its panes, whose titles are already on their tabs. */
 const InTab = createContext(false);
@@ -319,7 +353,7 @@ const InTab = createContext(false);
  * container field's label does.
  */
 function Frame({ props, className, children }: { props: Readonly<Record<string, unknown>>; className: string; children: ReactNode }) {
-  const inTab = useContext(InTab);
+  const inTab = use(InTab);
   if (props.title === undefined || inTab) {
     return (
       <div className={className}>
@@ -328,7 +362,7 @@ function Frame({ props, className, children }: { props: Readonly<Record<string, 
     );
   }
   return (
-    <fieldset className={cx("fs-section", className)}>
+    <fieldset className={cx('fs-section', className)}>
       <legend className="fs-title">{text(props.title)}</legend>
       {props.description !== undefined && <p className="fs-help">{text(props.description)}</p>}
       {children}
@@ -341,10 +375,10 @@ function Collapsible({ children, props }: LayoutProps) {
   const [open, setOpen] = useState(!props.collapsed);
   const id = useId();
   return (
-    <fieldset className="fs-collapsible" data-open={open ? "" : undefined}>
+    <fieldset className="fs-collapsible" data-open={open ? '' : undefined}>
       <legend className="fs-title">
         <button type="button" className="fs-toggle" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
-          {text(props.title) ?? "Details"}
+          {text(props.title) ?? 'Details'}
         </button>
       </legend>
       {/* An inline display would show it through `hidden`. */}
@@ -356,17 +390,17 @@ function Collapsible({ children, props }: LayoutProps) {
   );
 }
 
-const CONTAINER_KINDS = new Set(["object", "variant", "array", "set", "record", "map"]);
+const CONTAINER_KINDS = new Set(['object', 'variant', 'array', 'set', 'record', 'map']);
 
 function FieldFrame({ field, control, id, node }: FieldProps) {
   const f = field;
-  const inline = node.control?.type === "checkbox" || node.control?.type === "switch";
+  const inline = node.control?.type === 'checkbox' || node.control?.type === 'switch';
   // An item of a list or record is named by its key or position beside it; its own label is
   // kept for screen readers only, so its control lines up with the key's.
-  const item = node.field === "";
+  const item = node.field === '';
   if (CONTAINER_KINDS.has(f.decl.type)) {
     return (
-      <fieldset className="fs-field fs-group" data-kind={f.decl.type} data-mixed={f.mixed ? "" : undefined}>
+      <fieldset className="fs-field fs-group" data-kind={f.decl.type} data-mixed={f.mixed ? '' : undefined}>
         <legend className="fs-label">{f.label}</legend>
         <Help field={f} />
         {control()}
@@ -376,18 +410,18 @@ function FieldFrame({ field, control, id, node }: FieldProps) {
   }
   return (
     <div
-      className={cx("fs-field", inline && "fs-inline")}
+      className={cx('fs-field', inline && 'fs-inline')}
       data-kind={f.decl.type}
-      data-invalid={f.showIssues && f.issues.length > 0 ? "" : undefined}
-      data-mixed={f.mixed ? "" : undefined}
+      data-invalid={f.showIssues && f.issues.length > 0 ? '' : undefined}
+      data-mixed={f.mixed ? '' : undefined}
     >
       {inline ? (
         <label className="fs-label" htmlFor={id}>
-          {control()} <span className={cx(item && "fs-sr-only")}>{f.label}</span>
+          {control()} <span className={cx(item && 'fs-sr-only')}>{f.label}</span>
         </label>
       ) : (
         <>
-          <label className={cx("fs-label", item && "fs-sr-only")} htmlFor={id}>
+          <label className={cx('fs-label', item && 'fs-sr-only')} htmlFor={id}>
             {f.label}
             {f.required && <span aria-hidden="true"> *</span>}
           </label>
@@ -403,7 +437,7 @@ function FieldFrame({ field, control, id, node }: FieldProps) {
 function Help({ field }: { field: FieldState }) {
   const lines = [field.description, field.hint].filter(Boolean);
   if (lines.length === 0) return null;
-  return <div className="fs-help">{lines.join(" ")}</div>;
+  return <div className="fs-help">{lines.join(' ')}</div>;
 }
 
 function Errors({ fields }: { fields: readonly FieldState[] }) {
@@ -424,7 +458,7 @@ function Tabs({ node, children, props }: LayoutProps) {
   const titles = node.children.map((c, i) => text(c.props.title) ?? `Tab ${i + 1}`);
   return (
     <Frame props={props} className="fs-tabs">
-      <div role="tablist" style={{ display: "flex", gap: 4, marginBottom: 12 }}>
+      <div role="tablist" style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
         {titles.map((t, i) => (
           <button key={t + i} type="button" role="tab" aria-selected={i === active} onClick={() => setActive(i)}>
             {t}
@@ -438,7 +472,7 @@ function Tabs({ node, children, props }: LayoutProps) {
   );
 }
 
-const layoutRenderers: { readonly [E in LayoutElement | PartElement | "field"]: ElementRenderer<PropsOf<E>> } = {
+const layoutRenderers: { readonly [E in LayoutElement | PartElement | 'field']: ElementRenderer<PropsOf<E>> } = {
   stack: ({ children, props }) => (
     <Frame props={props} className="fs-stack">
       <div style={column}>{children}</div>
@@ -446,29 +480,39 @@ const layoutRenderers: { readonly [E in LayoutElement | PartElement | "field"]: 
   ),
   row: ({ children, props }) => (
     <Frame props={props} className="fs-row">
-      <div style={{ display: "flex", flexWrap: "wrap", gap: gaps[(props.gap as keyof typeof gaps) ?? "md"] ?? 12 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: gaps[(props.gap as keyof typeof gaps) ?? 'md'] ?? 12 }}>
         {Array.isArray(children)
-          ? children.map((c, i) => (c ? <div key={i} style={{ flex: "1 1 10rem", minWidth: 0 }}>{c}</div> : null))
+          ? children.map((c, i) =>
+              c ? (
+                <div key={i} style={{ flex: '1 1 10rem', minWidth: 0 }}>
+                  {c}
+                </div>
+              ) : null,
+            )
           : children}
       </div>
     </Frame>
   ),
   columns: ({ children, props }) => (
     <Frame props={props} className="fs-columns">
-      <div style={{ display: "grid", gap: 12, gridTemplateColumns: `repeat(${Number(props.count ?? 2)}, minmax(0, 1fr))` }}>{children}</div>
+      <div style={{ display: 'grid', gap: 12, gridTemplateColumns: `repeat(${Number(props.count ?? 2)}, minmax(0, 1fr))` }}>{children}</div>
     </Frame>
   ),
   collapsible: Collapsible,
   scroll: ({ children, props }) => (
     <Frame props={props} className="fs-scroll">
       {/* Focusable, so the keyboard can scroll it too. */}
-      <div className="fs-scroll-body" tabIndex={0} style={{ ...column, maxHeight: cssLength(props.maxHeight ?? "20rem"), overflowY: "auto" }}>
+      <div
+        className="fs-scroll-body"
+        tabIndex={0}
+        style={{ ...column, maxHeight: cssLength(props.maxHeight ?? '20rem'), overflowY: 'auto' }}
+      >
         {children}
       </div>
     </Frame>
   ),
   tabs: Tabs,
-  text: ({ props }) => <p className={cx("fs-text", props.tone ? `fs-${String(props.tone)}` : undefined)}>{text(props.text)}</p>,
+  text: ({ props }) => <p className={cx('fs-text', typeof props.tone === 'string' ? `fs-${props.tone}` : undefined)}>{text(props.text)}</p>,
   divider: () => <hr className="fs-divider" />,
   field: FieldFrame,
   label: ({ field, props, id }) => (
@@ -490,17 +534,20 @@ export type Parse = { show(value: unknown): string; read(text: string): { ok: tr
 
 /** How a text box reads and shows each kind's values. */
 const PARSERS: Record<string, Parse> = {
-  string: { show: (v) => (typeof v === "string" ? v : ""), read: ok },
+  string: { show: (v) => (typeof v === 'string' ? v : ''), read: ok },
   number: {
     show: String,
-    read: (t) => (t.trim() !== "" && Number.isFinite(Number(t)) ? ok(Number(t)) : fail("Enter a number")),
+    read: (t) => (t.trim() !== '' && Number.isFinite(Number(t)) ? ok(Number(t)) : fail('Enter a number')),
   },
   int: {
     show: String,
-    read: (t) => (t.trim() !== "" && Number.isInteger(Number(t)) ? ok(Number(t)) : fail("Enter a whole number")),
+    read: (t) => (t.trim() !== '' && Number.isInteger(Number(t)) ? ok(Number(t)) : fail('Enter a whole number')),
   },
-  bigint: { show: String, read: (t) => (/^-?\d+$/.test(t.trim()) ? ok(BigInt(t.trim())) : fail("Enter a whole number")) },
-  url: { show: (v) => (v instanceof URL ? v.href : ""), read: (t) => (URL.canParse(t) ? ok(new URL(t)) : fail("Enter a full URL, like https://example.com")) },
+  bigint: { show: String, read: (t) => (/^-?\d+$/.test(t.trim()) ? ok(BigInt(t.trim())) : fail('Enter a whole number')) },
+  url: {
+    show: (v) => (v instanceof URL ? v.href : ''),
+    read: (t) => (URL.canParse(t) ? ok(new URL(t)) : fail('Enter a full URL, like https://example.com')),
+  },
   regexp: {
     show: String,
     read: (t) => {
@@ -518,7 +565,7 @@ const PARSERS: Record<string, Parse> = {
       try {
         return ok(JSON.parse(t));
       } catch {
-        return fail("Enter valid JSON");
+        return fail('Enter valid JSON');
       }
     },
   },
@@ -526,9 +573,9 @@ const PARSERS: Record<string, Parse> = {
 
 /** The parser for a field, following its kind's base chain. */
 export function parserFor(format: Format, type: string): Parse {
-  for (let name: string | undefined = type, i = 0; name !== undefined && i < 8; name = format.kinds.get(name)?.base, i++) {
+  for (let name: string | undefined = type, i = 0; name !== undefined && i < 8; name = format.kinds.get(name)?.base, i++)
     if (PARSERS[name]) return PARSERS[name]!;
-  }
+
   return PARSERS.string!;
 }
 
@@ -536,18 +583,22 @@ export function parserFor(format: Format, type: string): Parse {
  * A control's text that parses: what is typed stays as typed until it parses, and a value set
  * from elsewhere replaces it. For a text control of your own; `input` and `textarea` use it.
  */
-export function useParsedText(p: ControlProps, parse: Parse): { draft: string; error?: string; placeholder?: string; change(text: string): void } {
+export function useParsedText(
+  p: ControlProps,
+  parse: Parse,
+): { draft: string; error?: string; placeholder?: string; change: (text: string) => void } {
   const field = p.field;
   // A mixed field shows no value until it is edited.
-  const shown = field.value === undefined || field.mixed ? "" : parse.show(field.value);
+  const shown = field.value === undefined || field.mixed ? '' : parse.show(field.value);
   const [draft, setDraft] = useState(shown);
   const [error, setError] = useState<string | undefined>();
-  useEffect(() => {
-    setDraft((d) => {
-      const parsed = parse.read(d);
-      return parsed.ok && parse.show(parsed.value) === shown ? d : shown;
-    });
-  }, [shown]);
+  // When the value changes from outside, the draft follows, unless it already reads as that value.
+  const [seen, setSeen] = useState(shown);
+  if (seen !== shown) {
+    setSeen(shown);
+    const parsed = parse.read(draft);
+    if (!(parsed.ok && parse.show(parsed.value) === shown)) setDraft(shown);
+  }
   const placeholder = field.mixed ? MIXED : (text(p.props.placeholder) ?? field.placeholder);
   return {
     draft,
@@ -555,7 +606,7 @@ export function useParsedText(p: ControlProps, parse: Parse): { draft: string; e
     ...(placeholder !== undefined && { placeholder }),
     change(t) {
       setDraft(t);
-      if (t === "" && field.decl.optional) {
+      if (t === '' && field.decl.optional) {
         setError(undefined);
         return p.set(undefined);
       }
@@ -563,13 +614,29 @@ export function useParsedText(p: ControlProps, parse: Parse): { draft: string; e
       if (parsed.ok) {
         setError(undefined);
         p.set(parsed.value);
-      } else setError(parsed.error);
+      } else {
+        setError(parsed.error);
+      }
     },
   };
 }
 
 /** A text box that parses: what is typed stays as typed until it parses. */
-function ParsedText({ p, parse, multiline, type, extra, unit }: { p: ControlProps; parse: Parse; multiline?: boolean; type?: string; extra?: Record<string, unknown>; unit?: string }) {
+function ParsedText({
+  p,
+  parse,
+  multiline,
+  type,
+  extra,
+  unit,
+}: {
+  p: ControlProps;
+  parse: Parse;
+  multiline?: boolean;
+  type?: string;
+  extra?: Record<string, unknown>;
+  unit?: string;
+}) {
   const field = p.field;
   const { draft, error, placeholder, change } = useParsedText(p, parse);
   const common = {
@@ -577,12 +644,16 @@ function ParsedText({ p, parse, multiline, type, extra, unit }: { p: ControlProp
     value: draft,
     disabled: p.disabled,
     placeholder,
-    "aria-invalid": error !== undefined || (field.showIssues && field.issues.length > 0),
+    'aria-invalid': error !== undefined || (field.showIssues && field.issues.length > 0),
     onChange: (e: { target: { value: string } }) => change(e.target.value),
     onBlur: p.touch,
     ...extra,
   };
-  const input = multiline ? <textarea {...common} className="fs-textarea" rows={Number(p.props.rows ?? 4)} /> : <input {...common} className="fs-input" type={type ?? "text"} />;
+  const input = multiline ? (
+    <textarea {...common} className="fs-textarea" rows={Number(p.props.rows ?? 4)} />
+  ) : (
+    <input {...common} className="fs-input" type={type ?? 'text'} />
+  );
   return (
     <>
       {unit ? (
@@ -602,32 +673,48 @@ function Input(p: ControlProps) {
   const decl = p.field.decl;
   const parse = parserFor(p.form.format, decl.type);
   const format = (decl as { format?: string }).format;
-  const numeric = decl.type === "number" || decl.type === "int";
-  const type = p.props.secret ? "password" : numeric ? "number" : format === "email" ? "email" : format === "uri" || decl.type === "url" ? "url" : "text";
+  const numeric = decl.type === 'number' || decl.type === 'int';
+  const type = p.props.secret
+    ? 'password'
+    : numeric
+      ? 'number'
+      : format === 'email'
+        ? 'email'
+        : format === 'uri' || decl.type === 'url'
+          ? 'url'
+          : 'text';
   const d = decl as { min?: number; max?: number; step?: number; unit?: string };
-  return <ParsedText p={p} parse={parse} type={type} unit={numeric ? d.unit : undefined} extra={numeric ? { min: d.min, max: d.max, step: d.step ?? (decl.type === "int" ? 1 : "any") } : undefined} />;
+  return (
+    <ParsedText
+      p={p}
+      parse={parse}
+      type={type}
+      unit={numeric ? d.unit : undefined}
+      extra={numeric ? { min: d.min, max: d.max, step: d.step ?? (decl.type === 'int' ? 1 : 'any') } : undefined}
+    />
+  );
 }
 
 function Slider({ field, id, disabled, set, touch, props }: ControlProps) {
   const d = field.decl as { min?: number; max?: number; step?: number; unit?: string };
-  const value = typeof field.value === "number" ? field.value : (d.min ?? 0);
-  const shown = props.format === "percent" ? `${Math.round(value * 100)}%` : `${value}${d.unit ?? ""}`;
+  const value = typeof field.value === 'number' ? field.value : (d.min ?? 0);
+  const shown = props.format === 'percent' ? `${Math.round(value * 100)}%` : `${value}${d.unit ?? ''}`;
   return (
-    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
       <input
         id={id}
         className="fs-slider"
         type="range"
         min={d.min ?? 0}
         max={d.max ?? 100}
-        step={d.step ?? (field.decl.type === "int" ? 1 : "any")}
+        step={d.step ?? (field.decl.type === 'int' ? 1 : 'any')}
         value={value}
         disabled={disabled}
         onChange={(e) => set(Number(e.target.value))}
         onPointerUp={touch}
         style={{ flex: 1 }}
       />
-      <output htmlFor={id} className={field.mixed ? "fs-mixed" : undefined} style={{ minWidth: "4ch", textAlign: "right" }}>
+      <output htmlFor={id} className={field.mixed ? 'fs-mixed' : undefined} style={{ minWidth: '4ch', textAlign: 'right' }}>
         {field.mixed ? MIXED : shown}
       </output>
     </div>
@@ -638,9 +725,14 @@ function Choices({ field, id, disabled, set, touch, segmented }: ControlProps & 
   const options = field.options ?? [];
   const index = field.mixed ? -1 : options.findIndex((o) => Object.is(o.value, field.value));
   return (
-    <div role="radiogroup" id={id} className={segmented ? "fs-segmented" : "fs-radio"} style={{ display: "flex", gap: segmented ? 0 : 12, flexWrap: "wrap" }}>
+    <div
+      role="radiogroup"
+      id={id}
+      className={segmented ? 'fs-segmented' : 'fs-radio'}
+      style={{ display: 'flex', gap: segmented ? 0 : 12, flexWrap: 'wrap' }}
+    >
       {options.map((o, i) => (
-        <label key={i} title={o.description} data-checked={i === index ? "" : undefined}>
+        <label key={i} title={o.description} data-checked={i === index ? '' : undefined}>
           <input type="radio" name={id} checked={i === index} disabled={disabled} onChange={() => set(o.value)} onBlur={touch} /> {o.label}
         </label>
       ))}
@@ -652,8 +744,15 @@ function Select({ field, id, disabled, set, touch }: ControlProps) {
   const options = field.options ?? [];
   const index = field.mixed ? -1 : options.findIndex((o) => Object.is(o.value, field.value));
   return (
-    <select id={id} className="fs-select" value={index} disabled={disabled} onChange={(e) => set(options[Number(e.target.value)]?.value)} onBlur={touch}>
-      {index === -1 && <option value={-1}>{field.mixed ? MIXED : field.decl.optional ? "—" : "Choose…"}</option>}
+    <select
+      id={id}
+      className="fs-select"
+      value={index}
+      disabled={disabled}
+      onChange={(e) => set(options[Number(e.target.value)]?.value)}
+      onBlur={touch}
+    >
+      {index === -1 && <option value={-1}>{field.mixed ? MIXED : field.decl.optional ? '—' : 'Choose…'}</option>}
       {options.map((o, i) => (
         <option key={i} value={i} title={o.description}>
           {o.label}
@@ -664,7 +763,7 @@ function Select({ field, id, disabled, set, touch }: ControlProps) {
 }
 
 function dateText(value: unknown, time: boolean): string {
-  if (!(value instanceof Date) || Number.isNaN(value.getTime())) return "";
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) return '';
   if (!time) return value.toISOString().slice(0, 10);
   const local = new Date(value.getTime() - value.getTimezoneOffset() * 60000);
   return local.toISOString().slice(0, 16);
@@ -672,7 +771,7 @@ function dateText(value: unknown, time: boolean): string {
 
 function List(p: ControlProps) {
   const field = p.field;
-  const isSet = field.decl.type === "set";
+  const isSet = field.decl.type === 'set';
   const list = Array.isArray(field.value) ? field.value : field.value instanceof Set ? [...field.value] : [];
   const d = field.decl as { maxItems?: number };
   const item = p.fieldNode?.item;
@@ -680,24 +779,28 @@ function List(p: ControlProps) {
   // Rows are keyed by position, so after a move from the keyboard the focus is sent after the item.
   const box = useRef<HTMLDivElement>(null);
   const refocus = useRef<number | undefined>(undefined);
+  // Moves the focus in the DOM after a reorder has rendered.
   useEffect(() => {
     if (refocus.current === undefined) return;
-    box.current?.querySelectorAll<HTMLElement>(":scope > .fs-item > .fs-handle")[refocus.current]?.focus();
+    box.current?.querySelectorAll<HTMLElement>(':scope > .fs-item > .fs-handle')[refocus.current]?.focus();
     refocus.current = undefined;
   });
   if (isSet) {
     // A set's items have no stable position to point at, so they are edited as lines.
     const items = deref({ defs: p.form.spec.defs, presets: p.form.format.presets }, (field.decl as { items: FieldDecl }).items);
-    const numeric = items.type === "int" || items.type === "number";
+    const numeric = items.type === 'int' || items.type === 'number';
     return (
       <textarea
         id={p.id}
         className="fs-textarea"
         disabled={p.disabled}
-        defaultValue={list.join("\n")}
+        defaultValue={list.join('\n')}
         placeholder="One per line"
         onBlur={(e) => {
-          const lines = e.target.value.split("\n").map((l) => l.trim()).filter(Boolean);
+          const lines = e.target.value
+            .split('\n')
+            .map((l) => l.trim())
+            .filter(Boolean);
           p.set(new Set<unknown>(numeric ? lines.map(Number) : lines));
           p.touch();
         }}
@@ -707,21 +810,21 @@ function List(p: ControlProps) {
   // Items reorder by dragging their handle, or with the arrow keys while it has the focus.
   const move = (from: number, to: number) => from !== to && p.form.moveItem(field.path, from, to);
   return (
-    <div ref={box} className="fs-list" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <div ref={box} className="fs-list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {list.map((_, i) => {
         const at = joinPointer(field.path, i);
-        const dropping = drag !== undefined && drag.over === i && drag.from !== i ? (drag.from < i ? "after" : "before") : undefined;
+        const dropping = drag !== undefined && drag.over === i && drag.from !== i ? (drag.from < i ? 'after' : 'before') : undefined;
         return (
           <div
             key={i}
             className="fs-item"
-            style={{ display: "flex", gap: 8, alignItems: "start" }}
-            data-dragging={drag?.from === i ? "" : undefined}
+            style={{ display: 'flex', gap: 8, alignItems: 'start' }}
+            data-dragging={drag?.from === i ? '' : undefined}
             data-drop={dropping}
             onDragOver={(e) => {
               if (!drag) return;
               e.preventDefault();
-              e.dataTransfer.dropEffect = "move";
+              e.dataTransfer.dropEffect = 'move';
               if (drag.over !== i) setDrag({ ...drag, over: i });
             }}
             onDrop={(e) => {
@@ -741,15 +844,15 @@ function List(p: ControlProps) {
               draggable={!p.disabled}
               title="Drag, or use the arrow keys, to reorder"
               onKeyDown={(e) => {
-                const to = e.key === "ArrowUp" ? i - 1 : e.key === "ArrowDown" ? i + 1 : -1;
+                const to = e.key === 'ArrowUp' ? i - 1 : e.key === 'ArrowDown' ? i + 1 : -1;
                 if (p.disabled || to < 0 || to >= list.length) return;
                 e.preventDefault();
                 refocus.current = to;
                 move(i, to);
               }}
               onDragStart={(e) => {
-                e.dataTransfer.effectAllowed = "move";
-                e.dataTransfer.setData("text/plain", String(i));
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', String(i));
                 const row = e.currentTarget.parentElement;
                 if (row) e.dataTransfer.setDragImage(row, 12, 12);
                 setDrag({ from: i, over: i });
@@ -766,8 +869,12 @@ function List(p: ControlProps) {
         );
       })}
       <div>
-        <button type="button" disabled={p.disabled || (d.maxItems !== undefined && list.length >= d.maxItems)} onClick={() => p.form.addItem(field.path)}>
-          {text(p.props.addLabel) ?? "Add"}
+        <button
+          type="button"
+          disabled={p.disabled || (d.maxItems !== undefined && list.length >= d.maxItems)}
+          onClick={() => p.form.addItem(field.path)}
+        >
+          {text(p.props.addLabel) ?? 'Add'}
         </button>
       </div>
     </div>
@@ -778,10 +885,10 @@ function Checks(p: ControlProps) {
   const field = p.field;
   const items = deref({ defs: p.form.spec.defs, presets: p.form.format.presets }, (field.decl as { items: FieldDecl }).items);
   const set = field.value instanceof Set ? field.value : new Set();
-  if (items.type !== "enum") return <List {...p} />;
+  if (items.type !== 'enum') return <List {...p} />;
   const options = optionsOf(items as EnumField, { values: p.form.values }, field.scope);
   return (
-    <div className="fs-checks" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+    <div className="fs-checks" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
       {/* By position: options may repeat a value, or differ only in type (1 and "1"). */}
       {options.map((o, i) => (
         <label key={i}>
@@ -795,7 +902,7 @@ function Checks(p: ControlProps) {
               else next.delete(o.value);
               p.set(next);
             }}
-          />{" "}
+          />{' '}
           {p.form.text(o.label, field.scope) ?? String(o.value)}
         </label>
       ))}
@@ -805,24 +912,31 @@ function Checks(p: ControlProps) {
 
 function Entries(p: ControlProps) {
   const field = p.field;
-  const isMap = field.decl.type === "map";
+  const isMap = field.decl.type === 'map';
   const entries: [unknown, unknown][] = isMap
-    ? field.value instanceof Map ? [...field.value] : []
-    : field.value && typeof field.value === "object" ? Object.entries(field.value) : [];
-  const [key, setKey] = useState("");
-  const keyDecl = isMap ? deref({ defs: p.form.spec.defs, presets: p.form.format.presets }, (field.decl as { keys: FieldDecl }).keys) : undefined;
-  const numeric = keyDecl?.type === "int" || keyDecl?.type === "number";
+    ? field.value instanceof Map
+      ? [...field.value]
+      : []
+    : field.value && typeof field.value === 'object'
+      ? Object.entries(field.value)
+      : [];
+  const [key, setKey] = useState('');
+  const keyDecl = isMap
+    ? deref({ defs: p.form.spec.defs, presets: p.form.format.presets }, (field.decl as { keys: FieldDecl }).keys)
+    : undefined;
+  const numeric = keyDecl?.type === 'int' || keyDecl?.type === 'number';
   /** A typed key as the key it stands for, or what is wrong with it. */
   const readKey = (typed: string): { key: unknown } | { error: string } => {
-    if (typed === "") return { error: "Enter a key" };
+    if (typed === '') return { error: 'Enter a key' };
     const k = numeric ? Number(typed) : typed;
-    if (numeric && (Number.isNaN(k) || (keyDecl?.type === "int" && !Number.isInteger(k)))) return { error: keyDecl?.type === "int" ? "Enter a whole number" : "Enter a number" };
+    if (numeric && (Number.isNaN(k) || (keyDecl?.type === 'int' && !Number.isInteger(k))))
+      return { error: keyDecl?.type === 'int' ? 'Enter a whole number' : 'Enter a number' };
     if (entries.some(([existing]) => String(existing) === String(k))) return { error: `"${typed}" is already a key` };
     return { key: k };
   };
   const add = () => {
     const read = readKey(key);
-    if ("error" in read) return;
+    if ('error' in read) return;
     const values = (field.decl as { values: FieldDecl }).values;
     const at = joinPointer(field.path, String(read.key));
     const initial = initialValue(p.form.spec, values, p.form.values, at, { format: p.form.format });
@@ -830,26 +944,28 @@ function Entries(p: ControlProps) {
       const next = new Map(field.value instanceof Map ? field.value : []);
       next.set(read.key, initial);
       p.set(next);
-    } else p.form.set(at, initial ?? "");
-    setKey("");
+    } else {
+      p.form.set(at, initial ?? '');
+    }
+    setKey('');
   };
   /** Renames an entry in place, keeping its value and its position. */
   const rename = (from: unknown, typed: string): string | undefined => {
     if (typed === String(from)) return undefined;
     const read = readKey(typed);
-    if ("error" in read) return read.error;
+    if ('error' in read) return read.error;
     const renamed = entries.map(([k, v]): [unknown, unknown] => [Object.is(k, from) ? read.key : k, v]);
     p.set(isMap ? new Map(renamed) : Object.fromEntries(renamed));
     return undefined;
   };
   const item = p.fieldNode?.item;
   return (
-    <div className="fs-entries" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <div className="fs-entries" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {entries.map(([k], i) => {
         const at = joinPointer(field.path, String(k));
         return (
           // By position, so a row keeps its focus and drafts while its key changes.
-          <div key={i} style={{ display: "flex", gap: 8, alignItems: "start" }}>
+          <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'start' }}>
             <KeyInput value={String(k)} disabled={!!p.disabled} rename={(typed) => rename(k, typed)} />
             <div style={{ flex: 1, minWidth: 0 }}>{item && p.render(item, at, { item: at })}</div>
             <button type="button" aria-label="Remove" disabled={p.disabled} onClick={() => p.form.removeItem(at)}>
@@ -858,9 +974,16 @@ function Entries(p: ControlProps) {
           </div>
         );
       })}
-      <div style={{ display: "flex", gap: 8 }}>
-        <input className="fs-input" placeholder="New key" value={key} disabled={p.disabled} onChange={(e) => setKey(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), add())} />
-        <button type="button" disabled={p.disabled || key === ""} onClick={add}>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input
+          className="fs-input"
+          placeholder="New key"
+          value={key}
+          disabled={p.disabled}
+          onChange={(e) => setKey(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), add())}
+        />
+        <button type="button" disabled={p.disabled || key === ''} onClick={add}>
           Add
         </button>
       </div>
@@ -876,8 +999,9 @@ function Entries(p: ControlProps) {
 function Fields(p: ControlProps) {
   const field = p.field;
   const value = field.value;
-  if (value === null || typeof value !== "object" || Array.isArray(value)) {
-    const add = () => p.set(initialValue(p.form.spec, { ...field.decl, optional: false }, p.form.values, field.path, { format: p.form.format }) ?? {});
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    const add = () =>
+      p.set(initialValue(p.form.spec, { ...field.decl, optional: false }, p.form.values, field.path, { format: p.form.format }) ?? {});
     return (
       <div>
         <button type="button" disabled={p.disabled} onClick={add}>
@@ -901,13 +1025,18 @@ function Fields(p: ControlProps) {
 }
 
 /** An entry's key, edited in place: it takes effect on Enter or leaving the box, and Escape puts it back. */
-function KeyInput({ value, disabled, rename }: { value: string; disabled: boolean; rename(typed: string): string | undefined }) {
+function KeyInput({ value, disabled, rename }: { value: string; disabled: boolean; rename: (typed: string) => string | undefined }) {
   const [draft, setDraft] = useState(value);
   const [error, setError] = useState<string | undefined>();
-  useEffect(() => setDraft(value), [value]);
+  // A rename from outside replaces what is being typed.
+  const [seen, setSeen] = useState(value);
+  if (seen !== value) {
+    setSeen(value);
+    setDraft(value);
+  }
   const commit = () => setError(rename(draft));
   return (
-    <div className="fs-key" style={{ width: "10rem", flex: "none" }}>
+    <div className="fs-key" style={{ width: '10rem', flex: 'none' }}>
       <input
         className="fs-input"
         aria-label="Key"
@@ -917,10 +1046,10 @@ function KeyInput({ value, disabled, rename }: { value: string; disabled: boolea
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => {
-          if (e.key === "Enter") {
+          if (e.key === 'Enter') {
             e.preventDefault();
             commit();
-          } else if (e.key === "Escape") {
+          } else if (e.key === 'Escape') {
             setDraft(value);
             setError(undefined);
           }
@@ -936,11 +1065,17 @@ function Variant(p: ControlProps) {
   const v = field.decl as VariantField;
   // Mixed, the values are of different variants: choosing one sets it, fresh, everywhere.
   const current = field.mixed ? undefined : (field.value as Record<string, unknown> | undefined)?.[v.key];
-  const inner = typeof current === "string" ? p.fieldNode?.variants?.[current] : undefined;
+  const inner = typeof current === 'string' ? p.fieldNode?.variants?.[current] : undefined;
   return (
     <div style={column}>
-      <select id={p.id} className="fs-select" value={typeof current === "string" ? current : ""} disabled={p.disabled} onChange={(e) => p.set({ [v.key]: e.target.value })}>
-        {current === undefined && <option value="">{field.mixed ? MIXED : "Choose…"}</option>}
+      <select
+        id={p.id}
+        className="fs-select"
+        value={typeof current === 'string' ? current : ''}
+        disabled={p.disabled}
+        onChange={(e) => p.set({ [v.key]: e.target.value })}
+      >
+        {current === undefined && <option value="">{field.mixed ? MIXED : 'Choose…'}</option>}
         {Object.keys(v.variants).map((name) => (
           <option key={name} value={name}>
             {p.form.text(v.variants[name]!.label, field.scope) ?? name}
@@ -959,7 +1094,15 @@ const controlRenderers: { readonly [E in ControlElement]: ElementRenderer<Contro
   radio: (p) => <Choices {...p} segmented={false} />,
   segmented: (p) => <Choices {...p} segmented />,
   checkbox: ({ field, id, disabled, set, touch }) => (
-    <input id={id} type="checkbox" ref={indeterminate(field)} checked={!field.mixed && field.value === true} disabled={disabled} onChange={(e) => set(e.target.checked)} onBlur={touch} />
+    <input
+      id={id}
+      type="checkbox"
+      ref={indeterminate(field)}
+      checked={!field.mixed && field.value === true}
+      disabled={disabled}
+      onChange={(e) => set(e.target.checked)}
+      onBlur={touch}
+    />
   ),
   switch: ({ field, id, disabled, set, touch }) => (
     <input
@@ -980,21 +1123,28 @@ const controlRenderers: { readonly [E in ControlElement]: ElementRenderer<Contro
     return (
       <ParsedText
         p={p}
-        type={time ? "datetime-local" : "date"}
+        type={time ? 'datetime-local' : 'date'}
         parse={{
           show: (v) => dateText(v, time),
           read: (t) => {
             const d = time ? new Date(t) : new Date(`${t}T00:00:00Z`);
-            return Number.isNaN(d.getTime()) ? fail("Enter a date") : ok(d);
+            return Number.isNaN(d.getTime()) ? fail('Enter a date') : ok(d);
           },
         }}
       />
     );
   },
   color: ({ field, id, disabled, set, touch, props }) => (
-    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-      <input id={id} type="color" value={typeof field.value === "string" && field.value ? field.value : "#000000"} disabled={disabled} onChange={(e) => set(e.target.value)} onBlur={touch} />
-      <code className={field.mixed ? "fs-mixed" : undefined}>{field.mixed ? MIXED : String(field.value ?? "")}</code>
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+      <input
+        id={id}
+        type="color"
+        value={typeof field.value === 'string' && field.value ? field.value : '#000000'}
+        disabled={disabled}
+        onChange={(e) => set(e.target.value)}
+        onBlur={touch}
+      />
+      <code className={field.mixed ? 'fs-mixed' : undefined}>{field.mixed ? MIXED : textOf(field.value)}</code>
       {Array.isArray(props.swatches) &&
         props.swatches.map((c) => (
           <button
@@ -1014,19 +1164,22 @@ const controlRenderers: { readonly [E in ControlElement]: ElementRenderer<Contro
     const size = field.value instanceof Uint8Array ? field.value.length : 0;
     const accept = (field.decl as { accept?: readonly string[] }).accept;
     return (
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <input
           id={id}
           type="file"
           disabled={disabled}
-          {...(accept && { accept: accept.join(",") })}
-          onChange={async (e) => {
+          {...(accept && { accept: accept.join(',') })}
+          onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) set(new Uint8Array(await file.arrayBuffer()));
-            touch();
+            if (!file) return touch();
+            void file.arrayBuffer().then((bytes) => {
+              set(new Uint8Array(bytes));
+              touch();
+            });
           }}
         />
-        <span className="fs-help">{size > 0 ? `${size.toLocaleString()} bytes` : "Empty"}</span>
+        <span className="fs-help">{size > 0 ? `${size.toLocaleString()} bytes` : 'Empty'}</span>
       </div>
     );
   },

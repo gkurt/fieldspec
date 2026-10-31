@@ -8,9 +8,10 @@
  * Use `DialKitView` in place of `FormView`, or `dialkitRenderers` with `FormView` inside your
  * own `dialkit-root`. Import "dialkit/styles.css" once.
  */
-import { ColorControl, Folder, SelectControl, Slider, TextControl, Toggle } from "dialkit";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { defaultControl } from "./layout.ts";
+import { ColorControl, Folder, SelectControl, Slider, TextControl, Toggle } from 'dialkit';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { textOf } from './expr.ts';
+import { defaultControl } from './layout.ts';
 import {
   defaultRenderers,
   defineRenderers,
@@ -27,9 +28,9 @@ import {
   type LayoutProps,
   type Renderers,
   type ResolveRenderer,
-} from "./react/index.tsx";
+} from './react/index.tsx';
 
-const CONTAINER_KINDS = new Set(["object", "variant", "array", "set", "record", "map"]);
+const CONTAINER_KINDS = new Set(['object', 'variant', 'array', 'set', 'record', 'map']);
 
 const labelOf = (field: FieldState) => (field.required ? `${field.label} *` : field.label);
 
@@ -45,7 +46,7 @@ function Row({ disabled, children }: { disabled?: boolean | undefined; children:
 }
 
 function Notes({ field }: { field: FieldState }) {
-  const help = [field.description, field.hint].filter(Boolean).join(" ");
+  const help = [field.description, field.hint].filter(Boolean).join(' ');
   const issues = field.showIssues ? field.issues : [];
   if (!help && issues.length === 0) return null;
   return (
@@ -53,7 +54,7 @@ function Notes({ field }: { field: FieldState }) {
       {help && <div className="fs-dial-help">{help}</div>}
       {issues.length > 0 && (
         <div className="fs-dial-errors" role="alert">
-          {issues.map((i) => i.message).join(" ")}
+          {issues.map((i) => i.message).join(' ')}
         </div>
       )}
     </>
@@ -75,10 +76,10 @@ function DialText(p: ControlProps) {
 
 function DialSlider({ field, disabled, set, touch, props }: ControlProps) {
   const d = field.decl as { min?: number; max?: number; step?: number; unit?: string };
-  const value = typeof field.value === "number" ? field.value : (d.min ?? 0);
+  const value = typeof field.value === 'number' ? field.value : (d.min ?? 0);
   // A percent is edited from 0 to 100, as it is shown.
-  const k = props.format === "percent" ? 100 : 1;
-  const step = d.step ?? (field.decl.type === "int" ? 1 : undefined);
+  const k = props.format === 'percent' ? 100 : 1;
+  const step = d.step ?? (field.decl.type === 'int' ? 1 : undefined);
   return (
     <Row disabled={disabled}>
       <div onPointerUp={touch}>
@@ -88,8 +89,8 @@ function DialSlider({ field, disabled, set, touch, props }: ControlProps) {
           min={(d.min ?? 0) * k}
           max={(d.max ?? 100) * k}
           {...(step !== undefined && { step: step * k })}
-          {...((k === 100 || d.unit) && { unit: k === 100 ? "%" : d.unit })}
-          onChange={(v) => set(field.decl.type === "int" ? Math.round(v) : v / k)}
+          {...((k === 100 || d.unit) && { unit: k === 100 ? '%' : d.unit })}
+          onChange={(v) => set(field.decl.type === 'int' ? Math.round(v) : v / k)}
         />
       </div>
     </Row>
@@ -134,7 +135,7 @@ function DialColor({ field, disabled, set, touch }: ControlProps) {
     <Row disabled={disabled}>
       <ColorControl
         label={labelOf(field)}
-        value={typeof field.value === "string" && field.value ? field.value : "#000000"}
+        value={typeof field.value === 'string' && field.value ? field.value : '#000000'}
         onChange={(v) => {
           set(v);
           touch();
@@ -159,7 +160,14 @@ const DIAL_RENDERERS = new Set<ElementRenderer>([DialInput, DialText, DialSlider
 function DialField(p: FieldProps) {
   const field = p.field;
   const control = p.node.control?.type ?? defaultControl(p.form.format, field.decl);
-  const drawer = useRenderer({ element: control, role: "control", explicit: p.node.control?.explicit === true, node: p.node, field, form: p.form });
+  const drawer = useRenderer({
+    element: control,
+    role: 'control',
+    explicit: p.node.control?.explicit === true,
+    node: p.node,
+    field,
+    form: p.form,
+  });
   if (CONTAINER_KINDS.has(field.decl.type)) {
     return (
       <Folder title={field.label}>
@@ -168,9 +176,9 @@ function DialField(p: FieldProps) {
       </Folder>
     );
   }
-  if (!DIAL_RENDERERS.has(drawer) || (control === "input" && p.node.control?.props?.secret)) return defaultRenderers.field!(p);
+  if (!DIAL_RENDERERS.has(drawer) || (control === 'input' && p.node.control?.props.secret === true)) return defaultRenderers.field!(p);
   return (
-    <div className="fs-dial-field" data-invalid={field.showIssues && field.issues.length > 0 ? "" : undefined}>
+    <div className="fs-dial-field" data-invalid={field.showIssues && field.issues.length > 0 ? '' : undefined}>
       {p.control()}
       <Notes field={field} />
     </div>
@@ -183,9 +191,9 @@ function titled(element: string) {
     const plain = defaultRenderers[element]!;
     if (p.props.title === undefined) return plain(p);
     return (
-      <Folder title={String(p.props.title)}>
+      <Folder title={textOf(p.props.title)}>
         <div className="fs-dial-column">{plain({ ...p, props: { ...p.props, title: undefined, description: undefined } })}</div>
-        {p.props.description !== undefined && <div className="fs-dial-help">{String(p.props.description)}</div>}
+        {p.props.description !== undefined && <div className="fs-dial-help">{textOf(p.props.description)}</div>}
       </Folder>
     );
   };
@@ -194,11 +202,11 @@ function titled(element: string) {
 /** The default renderers, with DialKit's controls and folders laid over. */
 export const dialkitRenderers: Renderers = defineRenderers({
   field: DialField,
-  stack: titled("stack"),
-  row: titled("row"),
-  columns: titled("columns"),
+  stack: titled('stack'),
+  row: titled('row'),
+  columns: titled('columns'),
   collapsible: (p) => (
-    <Folder title={String(p.props.title ?? "Details")} defaultOpen={!p.props.collapsed}>
+    <Folder title={p.props.title === undefined ? 'Details' : textOf(p.props.title)} defaultOpen={!p.props.collapsed}>
       <div className="fs-dial-column">{p.children}</div>
     </Folder>
   ),
@@ -234,7 +242,7 @@ export const dialkitStyles = `
 `;
 
 export interface DialKitViewProps {
-  readonly form: Form<unknown>;
+  readonly form: Form;
   /** The panel's title. */
   readonly title: string;
   /** A layout from the spec's `layouts`. */
@@ -242,16 +250,16 @@ export interface DialKitViewProps {
   /** A function laid over the DialKit renderers; its `next()` is theirs. */
   readonly renderers?: ResolveRenderer;
   /** "system" follows the device. Default "system". */
-  readonly theme?: "light" | "dark" | "system";
+  readonly theme?: 'light' | 'dark' | 'system';
   readonly className?: string;
 }
 
 /** A form drawn as an inline DialKit panel. */
-export function DialKitView({ form, title, view, renderers, theme = "system", className }: DialKitViewProps) {
+export function DialKitView({ form, title, view, renderers, theme = 'system', className }: DialKitViewProps) {
   const resolved = useResolvedTheme(theme);
   const drawn = useMemo(() => (renderers ? extendRenderers(dialkitRenderers, renderers) : dialkitRenderers), [renderers]);
   return (
-    <div className={className ? `dialkit-root ${className}` : "dialkit-root"} data-mode="inline" data-theme={resolved}>
+    <div className={className ? `dialkit-root ${className}` : 'dialkit-root'} data-mode="inline" data-theme={resolved}>
       <style>{dialkitStyles}</style>
       <div className="dialkit-panel" data-mode="inline">
         <Folder title={title} isRoot inline>
@@ -262,14 +270,15 @@ export function DialKitView({ form, title, view, renderers, theme = "system", cl
   );
 }
 
-function useResolvedTheme(theme: "light" | "dark" | "system"): "light" | "dark" {
-  const query = typeof matchMedia === "undefined" ? undefined : matchMedia("(prefers-color-scheme: dark)");
+function useResolvedTheme(theme: 'light' | 'dark' | 'system'): 'light' | 'dark' {
+  const query = typeof matchMedia === 'undefined' ? undefined : matchMedia('(prefers-color-scheme: dark)');
   const [dark, setDark] = useState(query?.matches ?? true);
+  // Follows the device's colour scheme as it changes: a subscription to the outside world.
   useEffect(() => {
     if (!query) return;
     const update = () => setDark(query.matches);
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
   }, [query]);
-  return theme === "system" ? (dark ? "dark" : "light") : theme;
+  return theme === 'system' ? (dark ? 'dark' : 'light') : theme;
 }

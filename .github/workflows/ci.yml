@@ -1,31 +1,23 @@
-# Checks every push and pull request: types, tests, the package as published, and the site.
 name: CI
 
 on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: read
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  check:
+  checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: bun install --frozen-lockfile
-      - run: bun run typecheck
-      - run: bun test
+      - run: bun i
+      - run: bun check
+      - run: bun run test
+      - run: bun typecheck
+      - run: bun run schema --check
       - run: bun run build
       # The built entry points load in Node, by the names consumers import them by.
       - run: node --input-type=module -e "for (const e of ['fieldspec', 'fieldspec/react', 'fieldspec/zod', 'fieldspec/dialkit', 'fieldspec/react-aria']) await import(e)"

@@ -8,21 +8,21 @@ can write it from a generated prompt and meta-schema, and it converts to and fro
 Zod, Standard Schema and json-render.
 
 ```ts
-import { define, parse, type Infer } from "fieldspec";
+import { define, parse, type Infer } from 'fieldspec';
 
 const account = define({
   fields: {
-    firstName: { type: "string", group: "name" },
-    lastName: { type: "string", group: "name" },
-    email: { use: "email", required: true },
-    plan: { type: "enum", options: ["free", "pro"], default: "free", render: "segmented" },
-    discount: { use: "percent", visible: { $state: "plan", eq: "pro" } },
+    firstName: { type: 'string', group: 'name' },
+    lastName: { type: 'string', group: 'name' },
+    email: { use: 'email', required: true },
+    plan: { type: 'enum', options: ['free', 'pro'], default: 'free', render: 'segmented' },
+    discount: { use: 'percent', visible: { $state: 'plan', eq: 'pro' } },
   },
-  groups: { name: { label: "Name", render: "row" } },
+  groups: { name: { label: 'Name', render: 'row' } },
 });
 
 type Account = Infer<typeof account>; // { firstName: string; …; plan: "free" | "pro"; discount: number }
-const result = parse(account, json);  // { ok, value, issues: [{ path: "/email", code, message }] }
+const result = parse(account, json); // { ok, value, issues: [{ path: "/email", code, message }] }
 ```
 
 New to the format? [The tutorial](https://gkurt.com/fieldspec/tutorial.html) grows one spec a
@@ -34,7 +34,7 @@ feature at a time, with a live form at every step.
 npm install fieldspec
 ```
 
-ES modules only, with types; from CommonJS, use `import()`. `fieldspec/react` needs `react` 18
+ES modules only, with types; from CommonJS, use `import()`. `fieldspec/react` needs `react` 19
 or later, `fieldspec/zod` needs `zod` 4, `fieldspec/dialkit` needs `dialkit` 2 (with `motion`),
 and `fieldspec/react-aria` needs `react-aria-components` 1.22 and `@internationalized/date` 3.12
 or later. All are optional peer dependencies, so the core needs none of them.
@@ -44,12 +44,12 @@ or later. All are optional peer dependencies, so the core needs none of them.
 Everything a spec refers to by name (kinds, elements, presets, definitions) follows one rule:
 **built-in names are lowercase, names you define are capitalized.**
 
-| | Built-in | Yours |
-|---|---|---|
-| Kinds | `string`, `enum`, `variant`, … | `Gradient` |
-| Elements | `row`, `collapsible`, `slider`, … | `GradientPicker` |
-| Presets | `percent`, `email`, `password`, … | `Swatch` |
-| Definitions | | `Address`, `Entry` |
+|             | Built-in                          | Yours              |
+| ----------- | --------------------------------- | ------------------ |
+| Kinds       | `string`, `enum`, `variant`, …    | `Gradient`         |
+| Elements    | `row`, `collapsible`, `slider`, … | `GradientPicker`   |
+| Presets     | `percent`, `email`, `password`, … | `Swatch`           |
+| Definitions |                                   | `Address`, `Entry` |
 
 So a built-in added later never collides with yours, and a spec's capitalized names are exactly
 what it needs beyond the library. A namespace prefix works too: `Acme.Money`. `createFormat`
@@ -129,12 +129,12 @@ whole, so two uses per step double it). `Infer` follows `use`, recursively.
 
 What it means depends on where it sits:
 
-| On | A control element (`slider`) | A layout element (`row`, `collapsible`, …) |
-|---|---|---|
-| a field | picks the field's control | arranges the field's parts: `label`, `control`, `help`, `errors`, or a control |
-| an object field | | arranges the object's fields |
-| a group | | is the group's container; the group's label fills `title` |
-| `layouts.<name>` | | arranges the whole form |
+| On               | A control element (`slider`) | A layout element (`row`, `collapsible`, …)                                     |
+| ---------------- | ---------------------------- | ------------------------------------------------------------------------------ |
+| a field          | picks the field's control    | arranges the field's parts: `label`, `control`, `help`, `errors`, or a control |
+| an object field  |                              | arranges the object's fields                                                   |
+| a group          |                              | is the group's container; the group's label fills `title`                      |
+| `layouts.<name>` |                              | arranges the whole form                                                        |
 
 A container without `children` is filled with what is in scope. With children,
 `{ "field": "x" }` and `{ "group": "id" }` place things, and what they leave follows them or

@@ -11,42 +11,62 @@
  *
  *   bun experiments/jev-specs/generate.ts            (the key is read from .env.local)
  */
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { checkSpec, createForm, SCHEMA_URL, type FieldDecl, type Spec } from "../../src/index.ts";
-import { CATALOG, SECTIONS } from "./catalog.ts";
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { checkSpec, createForm, SCHEMA_URL, type FieldDecl, type Spec } from '#src/index.ts';
+import { CATALOG, SECTIONS } from './catalog.ts';
 
 // ── TypeSafe ─────────────────────────────────────────────────────────────────────────────
 
-const MODEL = "jev-latest";
+const MODEL = 'jev-latest';
 /** How likely a vague form is to ask for a catalog field before it is taken. */
 const PICK = 0.7;
 /** How likely a condition must be before a field is hidden by it. */
 const SHOWN_WHEN = 0.5;
 
-export type Question = { type: "noul" | "choice"; instructions: unknown; criteria?: unknown };
-export interface NoulAnswer { type: "noul"; noul: number }
-export interface ChoiceAnswer { type: "choice"; choice: string; confidence: number; probabilities: Record<string, number> }
+export type Question = { type: 'noul' | 'choice'; instructions: unknown; criteria?: unknown };
+export interface NoulAnswer {
+  type: 'noul';
+  noul: number;
+}
+export interface ChoiceAnswer {
+  type: 'choice';
+  choice: string;
+  confidence: number;
+  probabilities: Record<string, number>;
+}
 export type Answer = NoulAnswer | ChoiceAnswer;
-export interface Call { answers: Record<string, Answer>; model: string; tokens: number; ms: number; questions: number }
+export interface Call {
+  answers: Record<string, Answer>;
+  model: string;
+  tokens: number;
+  ms: number;
+  questions: number;
+}
 
 export async function systemOne(state: unknown, questions: Record<string, Question>): Promise<Call> {
   const key = process.env.TYPESAFE_API_KEY;
-  if (!key) throw new Error("TYPESAFE_API_KEY is not set (put it in .env.local)");
+  if (!key) throw new Error('TYPESAFE_API_KEY is not set (put it in .env.local)');
   const start = performance.now();
   for (let attempt = 0; ; attempt++) {
-    const res = await fetch("https://api.typesafe.ai/v1/systemone", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    const res = await fetch('https://api.typesafe.ai/v1/systemone', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: MODEL, state, questions }),
     });
     if (res.status === 429 && attempt < 4) {
-      await Bun.sleep(Number(res.headers.get("retry-after") ?? 1) * 1000 * (attempt + 1));
+      await Bun.sleep(Number(res.headers.get('retry-after') ?? 1) * 1000 * (attempt + 1));
       continue;
     }
     if (!res.ok) throw new Error(`TypeSafe ${res.status}: ${(await res.text()).slice(0, 400)}`);
     const body = (await res.json()) as { answers: Record<string, Answer>; model: string; usage: { input_tokens: number } };
-    return { answers: body.answers, model: body.model, tokens: body.usage.input_tokens, ms: performance.now() - start, questions: Object.keys(questions).length };
+    return {
+      answers: body.answers,
+      model: body.model,
+      tokens: body.usage.input_tokens,
+      ms: performance.now() - start,
+      questions: Object.keys(questions).length,
+    };
   }
 }
 
@@ -57,39 +77,45 @@ const choice = (call: Call, id: string) => call.answers[id] as ChoiceAnswer;
 
 /** Field kinds, described for Jev, and the declaration each one starts from. */
 const KINDS: Record<string, { describe: string; decl: Record<string, unknown> }> = {
-  text: { describe: "Short text on one line, such as a name, a title or a code", decl: { type: "string" } },
-  long_text: { describe: "Text over several lines, such as a description, a message, notes or a request", decl: { use: "multiline" } },
-  email: { describe: "An email address", decl: { use: "email" } },
-  password: { describe: "A secret typed hidden, such as a password", decl: { use: "password" } },
-  web_address: { describe: "A web address (URL)", decl: { type: "url", protocols: ["https:", "http:"] } },
-  phone: { describe: "A phone number", decl: { type: "string", placeholder: "+31 6 1234 5678" } },
-  whole_number: { describe: "A count or other whole number, such as a quantity, a number of days or of people", decl: { type: "int", min: 0 } },
-  measurement: { describe: "A measured amount that can have a fraction, such as a temperature, a length, a weight, a speed or a price", decl: { type: "number" } },
-  percentage: { describe: "A percentage, or a share between none and all", decl: { use: "percent" } },
-  yes_no: { describe: "A yes-or-no answer, an on/off setting, or a single checkbox", decl: { type: "boolean", render: "switch" } },
-  one_choice: { describe: "Exactly one choice out of a fixed list of options", decl: { type: "enum" } },
-  many_choices: { describe: "Any number of choices out of a fixed list of options", decl: { type: "set", render: "checks" } },
-  date: { describe: "A calendar date", decl: { type: "date" } },
-  date_time: { describe: "A date together with a time of day", decl: { type: "date", time: true } },
-  color: { describe: "A colour", decl: { use: "color" } },
-  file: { describe: "A file or picture to upload", decl: { type: "bytes" } },
+  text: { describe: 'Short text on one line, such as a name, a title or a code', decl: { type: 'string' } },
+  long_text: { describe: 'Text over several lines, such as a description, a message, notes or a request', decl: { use: 'multiline' } },
+  email: { describe: 'An email address', decl: { use: 'email' } },
+  password: { describe: 'A secret typed hidden, such as a password', decl: { use: 'password' } },
+  web_address: { describe: 'A web address (URL)', decl: { type: 'url', protocols: ['https:', 'http:'] } },
+  phone: { describe: 'A phone number', decl: { type: 'string', placeholder: '+31 6 1234 5678' } },
+  whole_number: {
+    describe: 'A count or other whole number, such as a quantity, a number of days or of people',
+    decl: { type: 'int', min: 0 },
+  },
+  measurement: {
+    describe: 'A measured amount that can have a fraction, such as a temperature, a length, a weight, a speed or a price',
+    decl: { type: 'number' },
+  },
+  percentage: { describe: 'A percentage, or a share between none and all', decl: { use: 'percent' } },
+  yes_no: { describe: 'A yes-or-no answer, an on/off setting, or a single checkbox', decl: { type: 'boolean', render: 'switch' } },
+  one_choice: { describe: 'Exactly one choice out of a fixed list of options', decl: { type: 'enum' } },
+  many_choices: { describe: 'Any number of choices out of a fixed list of options', decl: { type: 'set', render: 'checks' } },
+  date: { describe: 'A calendar date', decl: { type: 'date' } },
+  date_time: { describe: 'A date together with a time of day', decl: { type: 'date', time: true } },
+  color: { describe: 'A colour', decl: { use: 'color' } },
+  file: { describe: 'A file or picture to upload', decl: { type: 'bytes' } },
 };
 
 /** Option lists for a choice whose options the description does not give. */
 const OPTION_SETS: Record<string, readonly string[]> = {
-  frequency: ["Hourly", "Daily", "Weekly", "Monthly"],
-  priority: ["Low", "Medium", "High", "Urgent"],
-  size: ["Small", "Medium", "Large"],
-  skill: ["Beginner", "Intermediate", "Advanced"],
-  attendance: ["Yes", "No", "Maybe"],
-  meal: ["Meat", "Fish", "Vegetarian", "Vegan"],
-  contact: ["Email", "Phone", "Text message"],
-  appearance: ["Light", "Dark", "System"],
-  quality: ["Poor", "Fair", "Good", "Excellent"],
-  delivery: ["Ship", "Pick up"],
-  weekday: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+  frequency: ['Hourly', 'Daily', 'Weekly', 'Monthly'],
+  priority: ['Low', 'Medium', 'High', 'Urgent'],
+  size: ['Small', 'Medium', 'Large'],
+  skill: ['Beginner', 'Intermediate', 'Advanced'],
+  attendance: ['Yes', 'No', 'Maybe'],
+  meal: ['Meat', 'Fish', 'Vegetarian', 'Vegan'],
+  contact: ['Email', 'Phone', 'Text message'],
+  appearance: ['Light', 'Dark', 'System'],
+  quality: ['Poor', 'Fair', 'Good', 'Excellent'],
+  delivery: ['Ship', 'Pick up'],
+  weekday: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
 };
-const describeSet = (values: readonly string[]) => `The options ${values.join(", ")}`;
+const describeSet = (values: readonly string[]) => `The options ${values.join(', ')}`;
 
 // ── Phrases ──────────────────────────────────────────────────────────────────────────────
 
@@ -107,16 +133,17 @@ function phrasesOf(criteria: string): Phrase[] {
   // Split at commas, semicolons, colons, line breaks and " and ", but not inside parentheses.
   const parts: string[] = [];
   let depth = 0;
-  let current = "";
+  let current = '';
   for (let i = 0; i < criteria.length; i++) {
-    const c = criteria[i]!;
-    if (c === "(") depth++;
-    if (c === ")") depth = Math.max(0, depth - 1);
+    const c = criteria[i];
+    if (c === '(') depth++;
+    if (c === ')') depth = Math.max(0, depth - 1);
     // " and " between two numbers ("between 5 and 300") joins a range, not two phrases.
-    const and = depth === 0 && /^\sand\s/i.test(criteria.slice(i, i + 5)) && !(/\d\s*$/.test(current) && /^\s*\d/.test(criteria.slice(i + 5)));
+    const and =
+      depth === 0 && /^\sand\s/i.test(criteria.slice(i, i + 5)) && !(/\d\s*$/.test(current) && /^\s*\d/.test(criteria.slice(i + 5)));
     if (depth === 0 && (/[,;:\n•]/.test(c) || and)) {
       parts.push(current);
-      current = "";
+      current = '';
       if (and) i += 4;
       continue;
     }
@@ -124,81 +151,98 @@ function phrasesOf(criteria: string): Phrase[] {
   }
   parts.push(current);
   return parts
-    .map((p) => p.trim().replace(/\.$/, ""))
+    .map((p) => p.trim().replace(/\.$/, ''))
     .filter((p) => p.length > 0)
     .map((text) => {
       // "(debug, info or warn, default info)": the default is not an option.
-      const listed = /\(([^)]*)\)/.exec(text)?.[1]?.replace(/[;,]?\s*(?:\w+\s+)?(?:by\s+)?default\b.*$/i, "");
-      let name = text.replace(/\([^)]*\)/g, "").trim();
-      for (let prev = ""; prev !== name; ) [prev, name] = [name, name.replace(FILLER, "")];
-      const options = listed?.split(/,|\bor\b|\band\b/).map((o) => o.trim()).filter(Boolean);
+      const listed = /\(([^)]*)\)/.exec(text)?.[1]?.replace(/[;,]?\s*(?:\w+\s+)?(?:by\s+)?default\b.*$/i, '');
+      let name = text.replace(/\([^)]*\)/g, '').trim();
+      for (let prev = ''; prev !== name;) [prev, name] = [name, name.replace(FILLER, '')];
+      const options = listed
+        ?.split(/,|\bor\b|\band\b/)
+        .map((o) => o.trim())
+        .filter(Boolean);
       return { text, name: name.charAt(0).toUpperCase() + name.slice(1), ...(options && options.length > 1 && { options }) };
     });
 }
 
 const keyOf = (name: string) =>
   name
-    .normalize("NFKD")
-    .replace(/[^A-Za-z0-9 ]+/g, " ")
+    .normalize('NFKD')
+    .replace(/[^A-Za-z0-9 ]+/g, ' ')
     .trim()
     .split(/\s+/)
     .slice(0, 4)
     .map((w, i) => (i === 0 ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()))
-    .join("") || "field";
+    .join('') || 'field';
 
-const valueOf = (label: string) => label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const valueOf = (label: string) =>
+  label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 
 // ── Step 1: what the fields are ──────────────────────────────────────────────────────────
 
 function firstQuestions(phrases: readonly Phrase[]): Record<string, Question> {
   const q: Record<string, Question> = {
     explicit: {
-      type: "noul",
-      instructions: "Does `criteria` list the specific pieces of information the form asks for, rather than only saying what kind of form it is?",
+      type: 'noul',
+      instructions:
+        'Does `criteria` list the specific pieces of information the form asks for, rather than only saying what kind of form it is?',
     },
   };
-  const catalog = Object.fromEntries([...CATALOG.map((e) => [e.key, `A field for ${e.asks}`]), ["none", "None of these: it asks for something else"]]);
+  const catalog = Object.fromEntries([
+    ...CATALOG.map((e) => [e.key, `A field for ${e.asks}`]),
+    ['none', 'None of these: it asks for something else'],
+  ]);
   phrases.forEach((_, i) => {
     const at = `\`phrases[${i}]\``;
     q[`field_${i}`] = {
-      type: "noul",
+      type: 'noul',
       // Not "what the person fills in": read literally, a setting does not feel filled in.
       instructions: `Does ${at} name something that gets a value in the form or settings described by \`criteria\`, rather than naming the form itself or its purpose?`,
       criteria: {
-        yes: "It names something the person answers, types, chooses or sets, even when it also states limits, options or a default.",
-        no: "It names the form itself, its purpose or its audience.",
+        yes: 'It names something the person answers, types, chooses or sets, even when it also states limits, options or a default.',
+        no: 'It names the form itself, its purpose or its audience.',
       },
     };
     q[`kind_${i}`] = {
-      type: "choice",
+      type: 'choice',
       instructions: `What kind of answer does the person give for ${at}, in the form described by \`criteria\`?`,
       criteria: Object.fromEntries(Object.entries(KINDS).map(([k, v]) => [k, v.describe])),
     };
     q[`optional_${i}`] = {
-      type: "noul",
+      type: 'noul',
       instructions: `In the form described by \`criteria\`, may the person leave ${at} blank?`,
       criteria: {
-        yes: "`criteria` calls it optional, or it is a nice-to-have the form works without, such as notes or comments.",
-        no: "The form cannot do its job without it.",
+        yes: '`criteria` calls it optional, or it is a nice-to-have the form works without, such as notes or comments.',
+        no: 'The form cannot do its job without it.',
       },
     };
-    q[`match_${i}`] = { type: "choice", instructions: `Which of these fields asks for exactly what ${at} asks for?`, criteria: catalog };
+    q[`match_${i}`] = { type: 'choice', instructions: `Which of these fields asks for exactly what ${at} asks for?`, criteria: catalog };
     q[`options_${i}`] = {
-      type: "choice",
+      type: 'choice',
       instructions: `If ${at} is a choice from a list, which list of options fits it?`,
-      criteria: { ...Object.fromEntries(Object.entries(OPTION_SETS).map(([k, v]) => [k, describeSet(v)])), none: "None of these lists fits" },
+      criteria: {
+        ...Object.fromEntries(Object.entries(OPTION_SETS).map(([k, v]) => [k, describeSet(v)])),
+        none: 'None of these lists fits',
+      },
     };
   });
   for (const e of CATALOG) {
     q[`pick_${e.key}`] = {
-      type: "noul",
+      type: 'noul',
       instructions: `Would the form described by \`criteria\` ask for ${e.asks}?`,
-      criteria: { yes: "`criteria` names it, or a form of that kind almost always asks for it.", no: "It is unrelated to that form, or only sometimes asked." },
+      criteria: {
+        yes: '`criteria` names it, or a form of that kind almost always asks for it.',
+        no: 'It is unrelated to that form, or only sometimes asked.',
+      },
     };
     q[`blank_${e.key}`] = {
-      type: "noul",
+      type: 'noul',
       instructions: `In the form described by \`criteria\`, may the person leave ${e.asks} blank?`,
-      criteria: { yes: "It is optional or a nice-to-have.", no: "The form cannot do its job without it." },
+      criteria: { yes: 'It is optional or a nice-to-have.', no: 'The form cannot do its job without it.' },
     };
   }
   return q;
@@ -217,8 +261,16 @@ export interface Built {
   readonly phrase?: string;
 }
 
+/** A built field's label, or its key when it has none. */
+export const labelOf = (f: Built) => (typeof f.decl.label === 'string' ? f.decl.label : f.key);
+
 /** A request to another model, as the results record it. */
-export interface CallInfo { readonly questions: number; readonly tokens: number; readonly ms: number; readonly model: string }
+export interface CallInfo {
+  readonly questions: number;
+  readonly tokens: number;
+  readonly ms: number;
+  readonly model: string;
+}
 
 /** What another model adds, asked alongside Jev's requests so it costs no extra round trip. */
 export interface Helpers {
@@ -229,11 +281,12 @@ export interface Helpers {
 }
 
 /** Leaves the required flag to kinds where "empty" means something. */
-const fillable = (decl: Record<string, unknown>) => ["string", "url", "date", "bytes", "set"].includes(String(decl.type)) || ["email", "password", "multiline"].includes(String(decl.use));
+const fillable = (decl: Record<string, unknown>) =>
+  ['string', 'url', 'date', 'bytes', 'set'].includes(String(decl.type)) || ['email', 'password', 'multiline'].includes(String(decl.use));
 
 function assemble(phrases: readonly Phrase[], call: Call): { fields: Built[]; explicit: boolean; notes: string[] } {
   const notes: string[] = [];
-  const explicit = noul(call, "explicit") >= 0.5;
+  const explicit = noul(call, 'explicit') >= 0.5;
   const fields: Built[] = [];
   const taken = new Set<string>();
   const add = (b: Built) => {
@@ -247,7 +300,8 @@ function assemble(phrases: readonly Phrase[], call: Call): { fields: Built[]; ex
     if (noul(call, `field_${i}`) < 0.5) return;
     const blank = noul(call, `optional_${i}`) >= 0.5;
     const match = choice(call, `match_${i}`);
-    const entry = match.choice !== "none" && (match.probabilities[match.choice] ?? 0) >= 0.5 ? CATALOG.find((e) => e.key === match.choice) : undefined;
+    const entry =
+      match.choice !== 'none' && (match.probabilities[match.choice] ?? 0) >= 0.5 ? CATALOG.find((e) => e.key === match.choice) : undefined;
     if (entry && !taken.has(entry.key)) {
       // The catalog's declaration, under the description's own words.
       const decl: Record<string, unknown> = { ...(entry.decl as Record<string, unknown>), label: p.name };
@@ -256,20 +310,20 @@ function assemble(phrases: readonly Phrase[], call: Call): { fields: Built[]; ex
       return;
     }
     const kind = choice(call, `kind_${i}`).choice;
-    const decl: Record<string, unknown> = { ...KINDS[kind]!.decl, label: p.name };
+    const decl: Record<string, unknown> = { ...KINDS[kind].decl, label: p.name };
     let source = `"${p.text}" → ${kind}`;
-    if (kind === "one_choice" || kind === "many_choices") {
+    if (kind === 'one_choice' || kind === 'many_choices') {
       const set = choice(call, `options_${i}`);
-      const listed = p.options ?? (set.choice !== "none" ? OPTION_SETS[set.choice] : undefined);
+      const listed = p.options ?? (set.choice !== 'none' ? OPTION_SETS[set.choice] : undefined);
       if (!listed) {
         notes.push(`"${p.text}": a choice, but no options were listed and no known list fits; drawn as text instead.`);
-        Object.assign(decl, { type: "string" });
+        Object.assign(decl, { type: 'string' });
         delete decl.render;
       } else {
         const options = listed.map((o) => ({ value: valueOf(o), label: o.charAt(0).toUpperCase() + o.slice(1) }));
-        if (kind === "one_choice") Object.assign(decl, { options, ...(options.length <= 3 && { render: "segmented" }) });
-        else Object.assign(decl, { items: { type: "enum", options } });
-        source += p.options ? " (options from the text)" : ` (options: ${set.choice})`;
+        if (kind === 'one_choice') Object.assign(decl, { options, ...(options.length <= 3 && { render: 'segmented' }) });
+        else Object.assign(decl, { items: { type: 'enum', options } });
+        source += p.options ? ' (options from the text)' : ` (options: ${set.choice})`;
       }
     }
     if (!blank && fillable(decl)) decl.required = true;
@@ -283,29 +337,43 @@ function assemble(phrases: readonly Phrase[], call: Call): { fields: Built[]; ex
     for (const e of CATALOG) if (e.slot) best.set(e.slot, Math.max(best.get(e.slot) ?? 0, noul(call, `pick_${e.key}`)));
     for (const e of CATALOG) {
       const p = noul(call, `pick_${e.key}`);
-      if (taken.has(e.key) || p < PICK || (e.slot && (p < best.get(e.slot)! || fields.some((f) => CATALOG.find((c) => c.key === f.key)?.slot === e.slot)))) continue;
+      if (
+        taken.has(e.key) ||
+        p < PICK ||
+        (e.slot && (p < best.get(e.slot)! || fields.some((f) => CATALOG.find((c) => c.key === f.key)?.slot === e.slot)))
+      )
+        continue;
       const decl: Record<string, unknown> = { ...(e.decl as Record<string, unknown>) };
       if (noul(call, `blank_${e.key}`) < 0.5 && fillable(decl)) decl.required = true;
       add({ key: e.key, decl, source: `catalog ${e.key} (${p.toFixed(2)})`, section: e.section });
     }
-    if (fields.length === 0) notes.push("Nothing in the description or the catalog fits.");
+    if (fields.length === 0) notes.push('Nothing in the description or the catalog fits.');
   }
   return { fields, explicit, notes };
 }
 
 // ── Step 2: when each field is shown ─────────────────────────────────────────────────────
 
-interface Trigger { readonly id: string; readonly describe: string; readonly visible: unknown }
+interface Trigger {
+  readonly id: string;
+  readonly describe: string;
+  readonly visible: unknown;
+}
 
 function triggersFor(fields: readonly Built[], self: string): Trigger[] {
   const out: Trigger[] = [];
   for (const f of fields) {
     if (f.key === self) continue;
-    const label = String(f.decl.label ?? f.key);
-    if (f.decl.type === "boolean") out.push({ id: `${f.key}=yes`, describe: `Only asked when "${label}" is answered yes`, visible: { $state: f.key, eq: true } });
-    if (f.decl.type === "enum") {
+    const label = labelOf(f);
+    if (f.decl.type === 'boolean')
+      out.push({ id: `${f.key}=yes`, describe: `Only asked when "${label}" is answered yes`, visible: { $state: f.key, eq: true } });
+    if (f.decl.type === 'enum') {
       for (const o of f.decl.options as { value: string; label: string }[]) {
-        out.push({ id: `${f.key}=${o.value}`, describe: `Only asked when "${label}" is "${o.label}"`, visible: { $state: f.key, eq: o.value } });
+        out.push({
+          id: `${f.key}=${o.value}`,
+          describe: `Only asked when "${label}" is "${o.label}"`,
+          visible: { $state: f.key, eq: o.value },
+        });
       }
     }
   }
@@ -313,17 +381,17 @@ function triggersFor(fields: readonly Built[], self: string): Trigger[] {
 }
 
 async function conditions(criteria: string, fields: Built[]): Promise<{ call?: Call; chosen: Record<string, string> }> {
-  const state = { criteria, fields: fields.map((f) => ({ name: String(f.decl.label ?? f.key) })) };
+  const state = { criteria, fields: fields.map((f) => ({ name: labelOf(f) })) };
   const questions: Record<string, Question> = {};
   // Worked out once: a helper may change options while the request is out.
   const asked = fields.map((f) => triggersFor(fields, f.key));
   fields.forEach((f, j) => {
-    const triggers = asked[j]!;
+    const triggers = asked[j];
     if (triggers.length === 0) return;
     questions[`when_${j}`] = {
-      type: "choice",
+      type: 'choice',
       instructions: `In the form described by \`criteria\`, when is \`fields[${j}].name\` asked?`,
-      criteria: { always: "Asked of everyone filling in the form", ...Object.fromEntries(triggers.map((t) => [t.id, t.describe])) },
+      criteria: { always: 'Asked of everyone filling in the form', ...Object.fromEntries(triggers.map((t) => [t.id, t.describe])) },
     };
   });
   if (Object.keys(questions).length === 0) return { chosen: {} };
@@ -331,10 +399,10 @@ async function conditions(criteria: string, fields: Built[]): Promise<{ call?: C
   const chosen: Record<string, string> = {};
   fields.forEach((f, j) => {
     const a = call.answers[`when_${j}`] as ChoiceAnswer | undefined;
-    if (!a || a.choice === "always" || a.probabilities[a.choice]! < SHOWN_WHEN) return;
-    const trigger = asked[j]!.find((t) => t.id === a.choice)!;
+    if (!a || a.choice === 'always' || a.probabilities[a.choice] < SHOWN_WHEN) return;
+    const trigger = asked[j].find((t) => t.id === a.choice)!;
     f.decl.visible = trigger.visible;
-    chosen[f.key] = `${a.choice} (${a.probabilities[a.choice]!.toFixed(2)})`;
+    chosen[f.key] = `${a.choice} (${a.probabilities[a.choice].toFixed(2)})`;
   });
   return { call, chosen };
 }
@@ -364,7 +432,10 @@ export async function generate(criteria: string, helpers: Helpers = {}): Promise
   const raw = phrasesOf(criteria);
   const [first, named] = await Promise.all([
     systemOne({ criteria, phrases: raw.map((p) => p.text) }, firstQuestions(raw)),
-    helpers.names?.(criteria, raw.map((p) => p.text)),
+    helpers.names?.(
+      criteria,
+      raw.map((p) => p.text),
+    ),
   ]);
   const phrases = raw.map((p, i) => {
     const name = named?.names[i];
@@ -376,7 +447,7 @@ export async function generate(criteria: string, helpers: Helpers = {}): Promise
   for (const f of fields) {
     const when = f.decl.visible as { $state?: string; eq?: unknown } | undefined;
     const on = when?.$state === undefined ? undefined : fields.find((t) => t.key === when.$state);
-    if (on?.decl.type === "enum" && !(on.decl.options as { value: unknown }[]).some((o) => o.value === when!.eq)) {
+    if (on?.decl.type === 'enum' && !(on.decl.options as { value: unknown }[]).some((o) => o.value === when!.eq)) {
       delete f.decl.visible;
       delete chosen[f.key];
     }
@@ -385,16 +456,19 @@ export async function generate(criteria: string, helpers: Helpers = {}): Promise
   // A vague form drawn from several catalog sections is grouped by them.
   const sections = new Set(fields.map((f) => f.section).filter(Boolean));
   const grouped = !explicit && sections.size > 1 && fields.length >= 5;
-  const title = phrases.find((_, i) => noul(first, `field_${i}`) < 0.5)?.name ?? criteria.split(/[:.]/)[0]!;
+  const title = phrases.find((_, i) => noul(first, `field_${i}`) < 0.5)?.name ?? criteria.split(/[:.]/)[0];
   const spec = {
     $schema: SCHEMA_URL,
     title,
-    fields: Object.fromEntries(fields.map((f) => [f.key, { ...f.decl, ...(grouped && f.section && { group: f.section }) }])) as Record<string, FieldDecl>,
+    fields: Object.fromEntries(fields.map((f) => [f.key, { ...f.decl, ...(grouped && f.section && { group: f.section }) }])) as Record<
+      string,
+      FieldDecl
+    >,
     ...(grouped && { groups: Object.fromEntries([...sections].map((s) => [s!, { label: SECTIONS[s!] }])) }),
   } as Spec;
 
   const faults = checkSpec(spec).map((f) => `${f.severity} ${f.path}: ${f.message}`);
-  let valid = !faults.some((f) => f.startsWith("error"));
+  let valid = !faults.some((f) => f.startsWith('error'));
   try {
     createForm(spec);
   } catch (e) {
@@ -413,41 +487,48 @@ export async function generate(criteria: string, helpers: Helpers = {}): Promise
       blank: noul(first, `optional_${i}`),
       match: `${choice(first, `match_${i}`).choice} (${(choice(first, `match_${i}`).probabilities[choice(first, `match_${i}`).choice] ?? 0).toFixed(2)})`,
     })),
-    picks: CATALOG.map((e) => ({ key: e.key, p: noul(first, `pick_${e.key}`) })).sort((a, b) => b.p - a.p).slice(0, 12),
+    picks: CATALOG.map((e) => ({ key: e.key, p: noul(first, `pick_${e.key}`) }))
+      .sort((a, b) => b.p - a.p)
+      .slice(0, 12),
     sources: fields.map((f) => `${f.key}: ${f.source}`),
     shownWhen: chosen,
     notes,
     faults,
     valid,
-    calls: [first, ...(second ? [second] : []), ...(named ? [named.call] : []), ...(enriched ? [enriched.call] : [])].map(({ questions, tokens, ms, model }) => ({ questions, tokens, ms: Math.round(ms), model })),
+    calls: [first, ...(second ? [second] : []), ...(named ? [named.call] : []), ...(enriched ? [enriched.call] : [])].map(
+      ({ questions, tokens, ms, model }) => ({ questions, tokens, ms: Math.round(ms), model }),
+    ),
     applied: enriched?.applied ?? [],
     wallMs: Math.round(performance.now() - started),
   };
 }
 
 export const CRITERIA = [
-  "A sign-up form for a B2B SaaS: work email, password, company name, team size, and an optional newsletter opt-in.",
-  "Checkout delivery step for an online shop: delivery method (ship or pick up in store), shipping address, preferred delivery date, gift wrapping, and a note for the courier.",
-  "Settings for a scheduled backup job: how often it runs (hourly, daily or weekly), retention in days, compress archives, encrypt backups, and an email to notify when a backup fails.",
-  "Wedding RSVP: guest name, attending or not, number of guests, meal choice (beef, fish or vegetarian), dietary restrictions, and a song request.",
-  "3D printer profile: nozzle temperature, bed temperature, layer height, infill percentage, print speed, filament color.",
-  "A bug report form for a mobile app.",
+  'A sign-up form for a B2B SaaS: work email, password, company name, team size, and an optional newsletter opt-in.',
+  'Checkout delivery step for an online shop: delivery method (ship or pick up in store), shipping address, preferred delivery date, gift wrapping, and a note for the courier.',
+  'Settings for a scheduled backup job: how often it runs (hourly, daily or weekly), retention in days, compress archives, encrypt backups, and an email to notify when a backup fails.',
+  'Wedding RSVP: guest name, attending or not, number of guests, meal choice (beef, fish or vegetarian), dietary restrictions, and a song request.',
+  '3D printer profile: nozzle temperature, bed temperature, layer height, infill percentage, print speed, filament color.',
+  'A bug report form for a mobile app.',
   "Contact form for a dentist's website.",
-  "Newsletter preferences page.",
+  'Newsletter preferences page.',
 ];
 
 if (import.meta.main) {
-  const out = join(import.meta.dir, "out");
+  const out = join(import.meta.dir, 'out');
   mkdirSync(out, { recursive: true });
   const results: Result[] = [];
-  for (const criteria of process.argv.slice(2).length ? process.argv.slice(2) : CRITERIA) {
+  for (const criteria of process.argv.slice(2).length > 0 ? process.argv.slice(2) : CRITERIA) {
     const r = await generate(criteria);
     results.push(r);
     const fields = Object.keys(r.spec.fields);
-    console.log(`\n■ ${criteria}\n  ${r.explicit ? "explicit" : "vague"} · ${r.valid ? "valid" : "INVALID"} · ${fields.length} fields · ${r.calls.map((c) => `${c.questions}q/${c.tokens}tok/${c.ms}ms`).join(" + ")}`);
-    for (const s of r.sources) console.log(`  - ${s}${r.shownWhen[s.split(":")[0]!] ? `  [shown when ${r.shownWhen[s.split(":")[0]!]}]` : ""}`);
+    console.log(
+      `\n■ ${criteria}\n  ${r.explicit ? 'explicit' : 'vague'} · ${r.valid ? 'valid' : 'INVALID'} · ${fields.length} fields · ${r.calls.map((c) => `${c.questions}q/${c.tokens}tok/${c.ms}ms`).join(' + ')}`,
+    );
+    for (const s of r.sources)
+      console.log(`  - ${s}${r.shownWhen[s.split(':')[0]] ? `  [shown when ${r.shownWhen[s.split(':')[0]]}]` : ''}`);
     for (const n of r.notes) console.log(`  ! ${n}`);
     for (const f of r.faults) console.log(`  ✗ ${f}`);
   }
-  writeFileSync(join(out, "results.json"), JSON.stringify(results, null, 2));
+  writeFileSync(join(out, 'results.json'), JSON.stringify(results, null, 2));
 }

@@ -5,19 +5,19 @@
  * for all of them. Where the specs' values differ the field is mixed: the form shows the first
  * value, and an edit writes back only what changed, to every spec that has the field.
  */
-import { deref, lookUp, usedName, type Lookup } from "./defs.ts";
-import { equal } from "./expr.ts";
-import { formatOf, type Format } from "./format.ts";
-import { isBuiltinName } from "./names.ts";
-import { formatPointer, getAt, joinPointer, resolveSegments, setAt } from "./pointer.ts";
-import type { FieldDecl, FunctionDecl, GroupDecl, Resolved, Spec, Variant } from "./types.ts";
-import { resolve } from "./values.ts";
+import { deref, lookUp, usedName, type Lookup } from './defs.ts';
+import { equal } from './expr.ts';
+import { formatOf, type Format } from './format.ts';
+import { isBuiltinName } from './names.ts';
+import { formatPointer, getAt, joinPointer, resolveSegments, setAt } from './pointer.ts';
+import type { FieldDecl, FunctionDecl, GroupDecl, Resolved, Spec, Variant } from './types.ts';
+import { resolve } from './values.ts';
 
 export interface CommonOptions {
   /** Each spec's current values, decoded, in the order of the specs. Absent ones take the spec's defaults. */
   readonly values?: readonly unknown[];
   /** `"all"` (the default): the fields every spec has. `"some"`: the fields any spec has; an edit reaches only the specs that have the field. */
-  readonly match?: "all" | "some";
+  readonly match?: 'all' | 'some';
   readonly format?: Format;
 }
 
@@ -46,7 +46,10 @@ type Groups = { readonly [id: string]: GroupDecl };
 type Props = Record<string, unknown>;
 
 class Conflict {
-  constructor(readonly reason: string) {}
+  readonly reason: string;
+  constructor(reason: string) {
+    this.reason = reason;
+  }
 }
 
 interface Cx {
@@ -59,27 +62,42 @@ interface Cx {
   readonly expanding: string[];
 }
 
-const SHOWN_FROM_FIRST = new Set(["label", "description", "hint", "placeholder"]);
+const SHOWN_FROM_FIRST = new Set(['label', 'description', 'hint', 'placeholder']);
 /** Kept when every spec says the same, left out otherwise: none of them limits the value. */
-const KEPT_IF_EQUAL = new Set(["examples", "aliases", "deprecated", "meta", "render", "group", "order", "default", "visible", "enabled", "required", "step", "unknown"]);
-const LOWER = new Set(["min", "minLength", "minItems"]);
-const UPPER = new Set(["max", "maxLength", "maxItems", "maxBytes"]);
+const KEPT_IF_EQUAL = new Set([
+  'examples',
+  'aliases',
+  'deprecated',
+  'meta',
+  'render',
+  'group',
+  'order',
+  'default',
+  'visible',
+  'enabled',
+  'required',
+  'step',
+  'unknown',
+]);
+const LOWER = new Set(['min', 'minLength', 'minItems']);
+const UPPER = new Set(['max', 'maxLength', 'maxItems', 'maxBytes']);
 const BOUNDS = [
-  ["min", "max"],
-  ["minLength", "maxLength"],
-  ["minItems", "maxItems"],
+  ['min', 'max'],
+  ['minLength', 'maxLength'],
+  ['minItems', 'maxItems'],
 ] as const;
 
-const isObject = (v: unknown): v is Props => typeof v === "object" && v !== null && !Array.isArray(v) && Object.getPrototypeOf(v) === Object.prototype;
-const specs = (idx: readonly number[]) => (idx.length === 1 ? `spec ${idx[0]}` : `specs ${idx.slice(0, -1).join(", ")} and ${idx.at(-1)}`);
-const a = (kind: string) => `${/^(?:[aeio]|u(?!r|s))/i.test(kind) ? "an" : "a"} ${kind}`;
+const isObject = (v: unknown): v is Props =>
+  typeof v === 'object' && v !== null && !Array.isArray(v) && Object.getPrototypeOf(v) === Object.prototype;
+const specs = (idx: readonly number[]) => (idx.length === 1 ? `spec ${idx[0]}` : `specs ${idx.slice(0, -1).join(', ')} and ${idx.at(-1)}`);
+const a = (kind: string) => `${/^(?:[aeio]|u(?!r|s))/i.test(kind) ? 'an' : 'a'} ${kind}`;
 
 /** The fields `specs` have in common, as one spec, with their values summarized when given. */
 export function commonFields(list: readonly Spec[], options: CommonOptions = {}): Common {
   const format = options.format ?? (list[0] ? formatOf(list[0]) : undefined);
   const presets = format?.presets;
   const cx: Cx = { lookups: list.map((s) => ({ defs: s.defs, presets })), dropped: [], defs: new Map(), expanding: [] };
-  const some = options.match === "some";
+  const some = options.match === 'some';
 
   const fields: Record<string, FieldDecl> = {};
   const sources: Record<string, number[]> = {};
@@ -91,7 +109,13 @@ export function commonFields(list: readonly Spec[], options: CommonOptions = {})
       continue;
     }
     try {
-      fields[key] = merge(cx, have.map((i) => list[i]!.fields[key]!), have, path, false);
+      fields[key] = merge(
+        cx,
+        have.map((i) => list[i]!.fields[key]!),
+        have,
+        path,
+        false,
+      );
       sources[key] = have;
     } catch (e) {
       if (!(e instanceof Conflict)) throw e;
@@ -99,12 +123,15 @@ export function commonFields(list: readonly Spec[], options: CommonOptions = {})
     }
   }
 
-  const groups = mergeGroups(list.map((s) => s.groups), !some);
+  const groups = mergeGroups(
+    list.map((s) => s.groups),
+    !some,
+  );
   const functions: Record<string, FunctionDecl> = {};
   for (const s of list) for (const [name, fn] of Object.entries(s.functions ?? {})) functions[name] ??= fn;
   const defs = Object.fromEntries(cx.defs);
   const lookup: Lookup = { defs, presets };
-  const root = { type: "object", fields } as Resolved;
+  const root = { type: 'object', fields } as Resolved;
   const spec: Spec = {
     fields: pruneFields(lookup, root, fields, groups, []),
     ...(groups && { groups }),
@@ -118,7 +145,13 @@ export function commonFields(list: readonly Spec[], options: CommonOptions = {})
   const values: Record<string, unknown> = {};
   for (const [key, decl] of Object.entries(spec.fields)) {
     const idx = sources[key]!;
-    const value = summarize(lookup, decl, idx.map((i) => getAt(given[i], formatPointer([key]))), formatPointer([key]), mixed);
+    const value = summarize(
+      lookup,
+      decl,
+      idx.map((i) => getAt(given[i], formatPointer([key]))),
+      formatPointer([key]),
+      mixed,
+    );
     if (value !== undefined) values[key] = value;
   }
 
@@ -156,17 +189,23 @@ function merge(cx: Cx, decls: readonly FieldDecl[], idx: readonly number[], at: 
   const first = decls[0]!;
   if (decls.every((d) => equal(d, first))) {
     const uses = usesOf(cx, first, idx);
-    if (uses) return keep(cx, idx, uses), first;
+    if (uses) return (keep(cx, idx, uses), first);
   }
 
   const names = decls.map(usedName);
-  const expanding = names.every((n) => n !== undefined) ? names.join(" & ") : undefined;
-  if (expanding !== undefined && cx.expanding.includes(expanding)) {
+  const expanding = names.every((n) => n !== undefined) ? names.join(' & ') : undefined;
+  if (expanding !== undefined && cx.expanding.includes(expanding))
     throw new Conflict(`differs inside the recursive definition ${names[0]}`);
-  }
+
   if (expanding !== undefined) cx.expanding.push(expanding);
   try {
-    const merged = mergeResolved(cx, decls.map((d, i) => deref(cx.lookups[idx[i]!]!, d)), idx, at, strict);
+    const merged = mergeResolved(
+      cx,
+      decls.map((d, i) => deref(cx.lookups[idx[i]!]!, d)),
+      idx,
+      at,
+      strict,
+    );
     return names.every((n) => n !== undefined && n === names[0]) ? reuse(cx, names[0]!, idx, merged) : merged;
   } finally {
     if (expanding !== undefined) cx.expanding.pop();
@@ -180,7 +219,7 @@ function usesOf(cx: Cx, decl: FieldDecl, idx: readonly number[]): string[] | und
   const visit = (node: unknown): void => {
     if (Array.isArray(node)) return node.forEach(visit);
     if (!isObject(node)) return;
-    const name = node.type === undefined && typeof node.use === "string" ? node.use : undefined;
+    const name = node.type === undefined && typeof node.use === 'string' ? node.use : undefined;
     if (name !== undefined && !names.has(name)) {
       names.add(name);
       visit(lookUp(lookup, name));
@@ -215,7 +254,7 @@ function reuse(cx: Cx, name: string, idx: readonly number[], merged: Resolved): 
   for (const key of Object.keys(base)) if (!(key in merged)) return merged;
   for (const [key, value] of Object.entries(merged)) {
     if (equal(value, base[key])) continue;
-    if (key === "type") return merged;
+    if (key === 'type') return merged;
     out[key] = value;
   }
   keep(cx, idx, uses);
@@ -228,104 +267,134 @@ function mergeResolved(cx: Cx, decls: readonly Resolved[], idx: readonly number[
   const other = types.findIndex((t) => t !== type);
   if (other >= 0) {
     // Every int is a number.
-    if (!types.every((t) => t === "int" || t === "number")) {
+    if (!types.every((t) => t === 'int' || t === 'number'))
       throw new Conflict(`is ${a(type)} in spec ${idx[0]} but ${a(types[other]!)} in spec ${idx[other]}`);
-    }
-    type = "int";
+
+    type = 'int';
   }
   const out: Props = { type };
   for (const key of unionKeys(decls)) {
-    if (key === "type") continue;
-    const value = mergeProp(cx, type, key, decls.map((d) => (d as Props)[key]), idx, at, strict);
+    if (key === 'type') continue;
+    const value = mergeProp(
+      cx,
+      type,
+      key,
+      decls.map((d) => (d as Props)[key]),
+      idx,
+      at,
+      strict,
+    );
     if (value !== undefined) out[key] = value;
   }
   for (const [lo, hi] of BOUNDS) {
-    if (out[lo] !== undefined && out[hi] !== undefined && order(type, out[lo]) > order(type, out[hi])) {
+    if (out[lo] !== undefined && out[hi] !== undefined && order(type, out[lo]) > order(type, out[hi]))
       throw new Conflict(`has no value within every spec's ${lo} and ${hi}`);
-    }
   }
   return out as Resolved;
 }
 
 function order(type: string, bound: unknown): number | bigint {
-  if (type === "date") return Date.parse(String(bound));
-  if (type === "bigint") return BigInt(String(bound));
+  if (type === 'date') return Date.parse(String(bound));
+  if (type === 'bigint') return BigInt(String(bound));
   return Number(bound);
 }
 
-function mergeProp(cx: Cx, type: string, key: string, values: readonly unknown[], idx: readonly number[], at: string, strict: boolean): unknown {
+function mergeProp(
+  cx: Cx,
+  type: string,
+  key: string,
+  values: readonly unknown[],
+  idx: readonly number[],
+  at: string,
+  strict: boolean,
+): unknown {
   const given = values.filter((v) => v !== undefined);
   const same = values.every((v) => equal(v, values[0]));
   if (SHOWN_FROM_FIRST.has(key)) return given[0];
   if (KEPT_IF_EQUAL.has(key)) return same ? values[0] : undefined;
-  if (LOWER.has(key) || UPPER.has(key)) {
-    return given.reduce((tight, v) => ((order(type, v) > order(type, tight)) === LOWER.has(key) ? v : tight), given[0]);
-  }
+  if (LOWER.has(key) || UPPER.has(key))
+    return given.reduce((tight, v) => (order(type, v) > order(type, tight) === LOWER.has(key) ? v : tight), given[0]);
+
   switch (key) {
-    case "readOnly":
+    case 'readOnly':
       return values.some((v) => v === true) || undefined;
-    case "optional":
+    case 'optional':
       return values.every((v) => v === true) || undefined;
-    case "pattern":
-    case "keyPattern": {
+    case 'pattern':
+    case 'keyPattern': {
       // Every pattern matches the whole value: all but the last are lookaheads.
       const patterns = [...new Set(given as string[])];
-      return patterns.length <= 1 ? patterns[0] : patterns.slice(0, -1).map((p) => `(?=(?:${p})$)`).join("") + `(?:${patterns.at(-1)})`;
+      return patterns.length <= 1
+        ? patterns[0]
+        : patterns
+            .slice(0, -1)
+            .map((p) => `(?=(?:${p})$)`)
+            .join('') + `(?:${patterns.at(-1)})`;
     }
-    case "format": {
-      const formats = [...new Set(given)];
-      if (formats.length > 1) throw new Conflict(`is formatted as ${formats.join(" and ")} in different specs`);
+    case 'format': {
+      const formats = [...new Set(given as string[])];
+      if (formats.length > 1) throw new Conflict(`is formatted as ${formats.join(' and ')} in different specs`);
       return formats[0];
     }
-    case "protocols":
-    case "accept": {
+    case 'protocols':
+    case 'accept': {
       const lists = given as (readonly string[])[];
       const kept = lists[0]?.filter((v) => lists.every((list) => list.includes(v)));
-      if (kept?.length === 0) throw new Conflict(`has no ${key === "accept" ? "file type" : "protocol"} every spec allows`);
+      if (kept?.length === 0) throw new Conflict(`has no ${key === 'accept' ? 'file type' : 'protocol'} every spec allows`);
       return kept;
     }
-    case "options": {
+    case 'options': {
       if (!values.every(Array.isArray)) {
         if (same) return values[0];
-        throw new Conflict("takes its options from different places in different specs");
+        throw new Conflict('takes its options from different places in different specs');
       }
       const lists = values as readonly (readonly unknown[])[];
       const valueOf = (o: unknown) => (isObject(o) ? o.value : o);
       const kept = lists[0]!.filter((o) => lists.every((list) => list.some((p) => Object.is(valueOf(p), valueOf(o)))));
-      if (kept.length === 0) throw new Conflict("has no option every spec allows");
+      if (kept.length === 0) throw new Conflict('has no option every spec allows');
       return kept;
     }
-    case "items":
-    case "keys":
-    case "values":
+    case 'items':
+    case 'keys':
+    case 'values':
       try {
         return merge(cx, values as FieldDecl[], idx, at, true);
       } catch (e) {
-        if (e instanceof Conflict) throw new Conflict(`its ${key.replace(/s$/, "")} declaration ${e.reason}`);
+        if (e instanceof Conflict) throw new Conflict(`its ${key.replace(/s$/, '')} declaration ${e.reason}`);
         throw e;
       }
-    case "fields":
+    case 'fields':
       return mergeFields(cx, values as Fields[], idx, at, strict);
-    case "groups":
+    case 'groups':
       return mergeGroups(values as (Groups | undefined)[], true);
-    case "key":
-      if (!same) throw new Conflict("is switched by different keys in different specs");
+    case 'key':
+      if (!same) throw new Conflict('is switched by different keys in different specs');
       return values[0];
-    case "variants": {
+    case 'variants': {
       const maps = values as Record<string, Variant>[];
       const names = Object.keys(maps[0]!).filter((name) => maps.every((m) => m[name] !== undefined));
-      if (names.length === 0) throw new Conflict("has no variant every spec allows");
+      if (names.length === 0) throw new Conflict('has no variant every spec allows');
       return Object.fromEntries(
         names.map((name) => {
           const variants = maps.map((m) => m[name]!);
-          const groups = mergeGroups(variants.map((v) => v.groups), true);
+          const groups = mergeGroups(
+            variants.map((v) => v.groups),
+            true,
+          );
           const { label, description } = variants[0]!;
           return [
             name,
             {
               ...(label !== undefined && { label }),
               ...(description !== undefined && { description }),
-              fields: mergeFields(cx, variants.map((v) => v.fields), idx, at, strict, name),
+              fields: mergeFields(
+                cx,
+                variants.map((v) => v.fields),
+                idx,
+                at,
+                strict,
+                name,
+              ),
               ...(groups && { groups }),
             },
           ];
@@ -344,10 +413,16 @@ function mergeFields(cx: Cx, maps: readonly Fields[], idx: readonly number[], at
   const out: Record<string, FieldDecl> = {};
   for (const key of unionKeys(maps)) {
     const missing = idx.filter((_, i) => maps[i]![key] === undefined);
-    const where = variant === undefined ? "" : ` (variant ${variant})`;
+    const where = variant === undefined ? '' : ` (variant ${variant})`;
     try {
       if (missing.length > 0) throw new Conflict(`is not in ${specs(missing)}`);
-      out[key] = merge(cx, maps.map((m) => m[key]!), idx, joinPointer(at, key), strict);
+      out[key] = merge(
+        cx,
+        maps.map((m) => m[key]!),
+        idx,
+        joinPointer(at, key),
+        strict,
+      );
     } catch (e) {
       if (!(e instanceof Conflict)) throw e;
       if (strict) throw new Conflict(`has a field ${key}${where} that ${e.reason}`);
@@ -377,7 +452,7 @@ function mergeGroups(maps: readonly (Groups | undefined)[], all: boolean): Group
 
 // ── Pruning: what refers to fields that were left out ─────────────────────────────────────
 
-const CONDITIONS = ["visible", "enabled", "required", "default"] as const;
+const CONDITIONS = ['visible', 'enabled', 'required', 'default'] as const;
 
 /**
  * The fields, without conditions and defaults that read a field no longer there, and without
@@ -390,21 +465,24 @@ function pruneFields(lookup: Lookup, root: Resolved, fields: Fields, groups: Gro
 function prune(lookup: Lookup, root: Resolved, decl: FieldDecl, groups: Groups | undefined, at: readonly string[]): FieldDecl {
   const out: Props = { ...decl };
   const scope = at.slice(0, -1);
-  for (const key of CONDITIONS) {
+  for (const key of CONDITIONS)
     if (out[key] !== undefined && !refsOf(out[key]).every((ref) => declared(lookup, root, resolveSegments(ref, scope)))) delete out[key];
-  }
-  if (typeof out.group === "string" && !(out.group in (groups ?? {}))) delete out.group;
+
+  if (typeof out.group === 'string' && !(out.group in (groups ?? {}))) delete out.group;
   if (usedName(decl) !== undefined) return out as FieldDecl;
   const item = (key: string, segment: string) => {
     if (isObject(out[key])) out[key] = prune(lookup, root, out[key] as FieldDecl, undefined, [...at, segment]);
   };
-  item("items", "0");
-  item("values", "*");
-  item("keys", "*");
+  item('items', '0');
+  item('values', '*');
+  item('keys', '*');
   if (isObject(out.fields)) out.fields = pruneFields(lookup, root, out.fields as Fields, out.groups as Groups | undefined, at);
   if (isObject(out.variants)) {
     out.variants = Object.fromEntries(
-      Object.entries(out.variants as Record<string, Variant>).map(([name, v]) => [name, { ...v, fields: pruneFields(lookup, root, v.fields, v.groups, at) }]),
+      Object.entries(out.variants as Record<string, Variant>).map(([name, v]) => [
+        name,
+        { ...v, fields: pruneFields(lookup, root, v.fields, v.groups, at) },
+      ]),
     );
   }
   return out as FieldDecl;
@@ -412,10 +490,11 @@ function prune(lookup: Lookup, root: Resolved, decl: FieldDecl, groups: Groups |
 
 /** The pointers an expression or condition reads. */
 function refsOf(node: unknown, out: string[] = []): string[] {
-  if (Array.isArray(node)) node.forEach((n) => refsOf(n, out));
-  else if (isObject(node)) {
-    if (typeof node.$state === "string") out.push(node.$state);
-    if (typeof node.$template === "string") for (const [, ref] of node.$template.matchAll(/\$\{([^}]*)\}/g)) out.push(ref!);
+  if (Array.isArray(node)) {
+    node.forEach((n) => refsOf(n, out));
+  } else if (isObject(node)) {
+    if (typeof node.$state === 'string') out.push(node.$state);
+    if (typeof node.$template === 'string') for (const [, ref] of node.$template.matchAll(/\$\{([^}]*)\}/g)) out.push(ref!);
     for (const value of Object.values(node)) refsOf(value, out);
   }
   return out;
@@ -427,11 +506,19 @@ function declared(lookup: Lookup, root: Resolved, segments: readonly string[]): 
   for (const segment of segments) {
     const d = at as Props;
     let next: unknown;
-    if (d.type === "object") next = (d.fields as Fields)[segment];
-    else if (d.type === "array" || d.type === "set") next = d.items;
-    else if (d.type === "record" || d.type === "map") next = d.values;
-    else if (d.type === "variant") {
-      next = segment === d.key ? { type: "string" } : Object.values(d.variants as Record<string, Variant>).map((v) => v.fields[segment]).find(Boolean);
+    if (d.type === 'object') {
+      next = (d.fields as Fields)[segment];
+    } else if (d.type === 'array' || d.type === 'set') {
+      next = d.items;
+    } else if (d.type === 'record' || d.type === 'map') {
+      next = d.values;
+    } else if (d.type === 'variant') {
+      next =
+        segment === d.key
+          ? { type: 'string' }
+          : Object.values(d.variants as Record<string, Variant>)
+              .map((v) => v.fields[segment])
+              .find(Boolean);
     }
     if (next === undefined) return false;
     at = deref(lookup, next as FieldDecl);
@@ -450,17 +537,23 @@ function summarize(lookup: Lookup, decl: FieldDecl, values: readonly unknown[], 
   if (values.every((v) => v === undefined)) return undefined;
   const byField = (fields: Fields, out: Props) => {
     for (const [key, field] of Object.entries(fields)) {
-      const value = summarize(lookup, field, values.map((v) => (isObject(v) ? v[key] : undefined)), joinPointer(at, key), mixed);
+      const value = summarize(
+        lookup,
+        field,
+        values.map((v) => (isObject(v) ? v[key] : undefined)),
+        joinPointer(at, key),
+        mixed,
+      );
       if (value !== undefined) out[key] = value;
     }
     return out;
   };
-  if (d.type === "object" && values.every((v) => v === undefined || isObject(v))) return byField(d.fields as Fields, {});
-  if (d.type === "variant" && values.every(isObject)) {
+  if (d.type === 'object' && values.every((v) => v === undefined || isObject(v))) return byField(d.fields as Fields, {});
+  if (d.type === 'variant' && values.every(isObject)) {
     const key = d.key as string;
     const name = (values[0] as Props)[key];
     const variant = (d.variants as Record<string, Variant>)[String(name)];
-    if (variant && values.every((v) => (v as Props)[key] === name)) return byField(variant.fields, { [key]: name });
+    if (variant && values.every((v) => v[key] === name)) return byField(variant.fields, { [key]: name });
   }
   const first = values.find((v) => v !== undefined);
   if (!values.every((v) => same(v, first))) mixed.push(at);
@@ -481,17 +574,19 @@ function writeBack(
   const d = deref(lookup, decl) as Props;
   const byField = (fields: Fields, to: readonly number[]) => {
     const old = isObject(before) ? before : {};
-    for (const [key, field] of Object.entries(fields)) {
+    for (const [key, field] of Object.entries(fields))
       writeBack(lookup, field, joinPointer(at, key), old[key], (after as Props)[key], to, targets, out);
-    }
   };
-  if (d.type === "object" && isObject(after)) return byField(d.fields as Fields, idx);
-  if (d.type === "variant" && isObject(after) && isObject(before)) {
+  if (d.type === 'object' && isObject(after)) return byField(d.fields as Fields, idx);
+  if (d.type === 'variant' && isObject(after) && isObject(before)) {
     const key = d.key as string;
     const variant = (d.variants as Record<string, Variant>)[String(after[key])];
     if (variant && before[key] === after[key]) {
       // Only the specs whose value is this variant take edits to its fields.
-      return byField(variant.fields, idx.filter((i) => (getAt(targets[i], at) as Props | undefined)?.[key] === after[key]));
+      return byField(
+        variant.fields,
+        idx.filter((i) => (getAt(targets[i], at) as Props | undefined)?.[key] === after[key]),
+      );
     }
   }
   if (same(before, after)) return;

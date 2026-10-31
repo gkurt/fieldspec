@@ -53,7 +53,7 @@ export type Text = string | TemplateExpr | CondExpr | ComputedRef | StateRef;
 
 // ── Conditions (json-render's grammar, plus `in`) ─────────────────────────────────────────
 
-export type ComparisonOp = "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "in";
+export type ComparisonOp = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'in';
 
 export interface Comparison {
   readonly eq?: Expr;
@@ -150,15 +150,15 @@ export interface FieldBase {
 }
 
 export interface StringField extends FieldBase {
-  readonly type: "string";
+  readonly type: 'string';
   readonly minLength?: number;
   readonly maxLength?: number;
   readonly pattern?: string;
-  readonly format?: "email" | "uri" | "uuid" | "hostname" | "ipv4" | "color" | (string & {});
+  readonly format?: 'email' | 'uri' | 'uuid' | 'hostname' | 'ipv4' | 'color' | (string & {});
 }
 
 export interface NumberField extends FieldBase {
-  readonly type: "number" | "int";
+  readonly type: 'number' | 'int';
   readonly min?: number;
   readonly max?: number;
   readonly step?: number;
@@ -166,7 +166,7 @@ export interface NumberField extends FieldBase {
 }
 
 export interface BooleanField extends FieldBase {
-  readonly type: "boolean";
+  readonly type: 'boolean';
 }
 
 export type OptionValue = string | number | boolean;
@@ -179,13 +179,13 @@ export interface EnumOption {
 }
 
 export interface EnumField extends FieldBase {
-  readonly type: "enum";
+  readonly type: 'enum';
   /** Values, `{ value, label }` objects, or an expression that yields either. */
   readonly options: readonly (OptionValue | EnumOption)[] | ComputedRef | StateRef;
 }
 
 export interface DateField extends FieldBase {
-  readonly type: "date";
+  readonly type: 'date';
   /** ISO 8601. */
   readonly min?: string;
   readonly max?: string;
@@ -194,66 +194,66 @@ export interface DateField extends FieldBase {
 }
 
 export interface BigIntField extends FieldBase {
-  readonly type: "bigint";
+  readonly type: 'bigint';
   /** Decimal strings, since JSON numbers cannot hold every bigint. */
   readonly min?: string;
   readonly max?: string;
 }
 
 export interface UrlField extends FieldBase {
-  readonly type: "url";
+  readonly type: 'url';
   /** Allowed protocols with the colon, e.g. `["https:"]`. */
   readonly protocols?: readonly string[];
 }
 
 export interface RegExpField extends FieldBase {
-  readonly type: "regexp";
+  readonly type: 'regexp';
 }
 
 export interface BytesField extends FieldBase {
-  readonly type: "bytes";
+  readonly type: 'bytes';
   readonly maxBytes?: number;
   /** MIME types a renderer may filter a picker by. */
   readonly accept?: readonly string[];
 }
 
 export interface JsonField extends FieldBase {
-  readonly type: "json";
+  readonly type: 'json';
 }
 
 export interface ArrayField<F = FieldDecl> extends FieldBase {
-  readonly type: "array";
+  readonly type: 'array';
   readonly items: F;
   readonly minItems?: number;
   readonly maxItems?: number;
 }
 
 export interface SetField<F = FieldDecl> extends FieldBase {
-  readonly type: "set";
+  readonly type: 'set';
   readonly items: F;
   readonly minItems?: number;
   readonly maxItems?: number;
 }
 
 export interface RecordField<F = FieldDecl> extends FieldBase {
-  readonly type: "record";
+  readonly type: 'record';
   readonly values: F;
   /** A regular expression every key must match. */
   readonly keyPattern?: string;
 }
 
 export interface MapField<F = FieldDecl> extends FieldBase {
-  readonly type: "map";
+  readonly type: 'map';
   readonly keys: F;
   readonly values: F;
 }
 
 export interface ObjectField<F = FieldDecl> extends FieldBase {
-  readonly type: "object";
+  readonly type: 'object';
   readonly fields: { readonly [key: string]: F };
   readonly groups?: { readonly [id: string]: GroupDecl };
   /** What to do with keys no field claims: report them (default), drop them, or keep them. */
-  readonly unknown?: "error" | "strip" | "keep";
+  readonly unknown?: 'error' | 'strip' | 'keep';
 }
 
 export interface Variant<F = FieldDecl> {
@@ -265,7 +265,7 @@ export interface Variant<F = FieldDecl> {
 
 /** A discriminated union: the `key` field says which variant's fields apply. */
 export interface VariantField<F = FieldDecl> extends FieldBase {
-  readonly type: "variant";
+  readonly type: 'variant';
   readonly key: string;
   readonly variants: { readonly [name: string]: Variant<F> };
 }
@@ -276,7 +276,7 @@ export interface VariantField<F = FieldDecl> extends FieldBase {
  * base's; it takes its kind from the base, so it has no `type`. A definition may use itself,
  * through an array, set, record, map or optional field.
  */
-export interface UseField extends Omit<FieldBase, "type"> {
+export interface UseField extends Omit<FieldBase, 'type'> {
   readonly use: string;
   readonly type?: undefined;
   readonly [prop: string]: unknown;
@@ -349,7 +349,7 @@ export interface Issue {
 export interface Fault {
   readonly path: string;
   readonly message: string;
-  readonly severity: "error" | "warning";
+  readonly severity: 'error' | 'warning';
 }
 
 export type Result<T> =

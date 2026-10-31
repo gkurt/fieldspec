@@ -3,13 +3,13 @@
  * of the format. Lowercase names are built-in presets; capitalized ones are the spec's
  * definitions, then the format's own presets.
  */
-import type { Presets } from "./format.ts";
-import { isBuiltinName } from "./names.ts";
-import type { FieldDecl, ObjectField, Resolved, Spec, VariantField } from "./types.ts";
+import type { Presets } from './format.ts';
+import { isBuiltinName } from './names.ts';
+import type { FieldDecl, ObjectField, Resolved, Spec, VariantField } from './types.ts';
 
 /** Where `use` names are looked up. */
 export interface Lookup {
-  readonly defs?: Spec["defs"];
+  readonly defs?: Spec['defs'];
   readonly presets?: Presets;
 }
 
@@ -44,7 +44,7 @@ export function deref(lookup: Lookup, decl: FieldDecl): Resolved {
     overrides.unshift(own);
     const next = seen.has(use) ? undefined : lookUp(lookup, use);
     if (!next) {
-      target = { type: "json" };
+      target = { type: 'json' };
       break;
     }
     seen.add(use);
@@ -67,17 +67,17 @@ export function circular(lookup: Lookup, decl: FieldDecl): boolean {
 
 /** The name a field's `use` gives, if it has one. */
 export function usedName(decl: FieldDecl): string | undefined {
-  return decl.type === undefined && typeof decl.use === "string" ? decl.use : undefined;
+  return decl.type === undefined && typeof decl.use === 'string' ? decl.use : undefined;
 }
 
-const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /**
  * The path by which a definition's smallest value would contain itself, if one does: through
  * fields it requires (not optional, no default), and a variant's first variant. Such a value
  * could never end; the checker reports it, and filling defaults stops where it repeats.
  */
-export function requiresItself(defs: NonNullable<Spec["defs"]>, start: string): string[] | undefined {
+export function requiresItself(defs: NonNullable<Spec['defs']>, start: string): string[] | undefined {
   // Shared across branches: a definition searched once without finding the start never will,
   // so definitions that use each other many times are each searched once.
   const seen = new Set([start]);
@@ -88,16 +88,16 @@ export function requiresItself(defs: NonNullable<Spec["defs"]>, start: string): 
       if (name === start) return trail;
       if (seen.has(name) || !defs[name]) return undefined;
       seen.add(name);
-      return visit(defs[name]!, trail);
+      return visit(defs[name], trail);
     }
-    let fields: ObjectField["fields"] | undefined;
-    if (decl.type === "object") fields = (decl as unknown as ObjectField).fields;
-    if (decl.type === "variant") fields = Object.values((decl as unknown as VariantField).variants ?? {})[0]?.fields;
+    let fields: ObjectField['fields'] | undefined;
+    if (decl.type === 'object') fields = (decl as unknown as ObjectField).fields;
+    if (decl.type === 'variant') fields = Object.values((decl as unknown as VariantField).variants ?? {})[0]?.fields;
     for (const [key, field] of Object.entries(fields ?? {})) {
       const found = visit(field, [...trail, key]);
       if (found) return found;
     }
     return undefined;
   };
-  return defs[start] ? visit(defs[start]!, [start]) : undefined;
+  return defs[start] ? visit(defs[start], [start]) : undefined;
 }

@@ -4,16 +4,16 @@
  * (all capitalized), and every spec defined through it is checked, parsed, rendered and
  * described for agents with exactly that vocabulary.
  */
-import { CORE_ELEMENTS, type ElementDef } from "./elements.ts";
-import type { Functions } from "./expr.ts";
-import type { Defined, FunctionsFor, KindValues } from "./infer.ts";
-import { CORE_KINDS, type AnyKind, type PropInfo } from "./kinds.ts";
-import { assertUserName } from "./names.ts";
-import { BUILTIN_PRESETS } from "./presets.ts";
-import type { Fault, FieldDecl, Spec } from "./types.ts";
+import { CORE_ELEMENTS, type ElementDef } from './elements.ts';
+import type { Functions } from './expr.ts';
+import type { Defined, FunctionsFor, KindValues } from './infer.ts';
+import { CORE_KINDS, type AnyKind, type PropInfo } from './kinds.ts';
+import { assertUserName } from './names.ts';
+import { BUILTIN_PRESETS } from './presets.ts';
+import type { Fault, FieldDecl, Spec } from './types.ts';
 
 /** A lint over a whole spec, for policy a format wants beyond what kinds check. */
-export type Rule = (spec: Spec, report: (path: string, message: string, severity?: Fault["severity"]) => void) => void;
+export type Rule = (spec: Spec, report: (path: string, message: string, severity?: Fault['severity']) => void) => void;
 
 export type Presets = { readonly [name: string]: FieldDecl };
 
@@ -43,33 +43,42 @@ export interface FormatOptions<Ks extends readonly AnyKind[], Ps extends Presets
 
 /** What every field may say, whatever its kind. Drives the meta-schema, prompts and the checker. */
 export const BASE_PROPS: { readonly [prop: string]: PropInfo } = {
-  type: { schema: { type: "string" }, description: "The kind. Required unless `use` gives one." },
-  use: { schema: { type: "string" }, description: "A preset or a definition this field builds on; its own properties override the base's. Replaces `type`." },
-  label: { schema: { $ref: "#/$defs/text" }, description: "What the field is called." },
-  description: { schema: { $ref: "#/$defs/text" }, description: "What it does, in a sentence." },
-  hint: { schema: { $ref: "#/$defs/text" }, description: "A short line under the control." },
-  placeholder: { schema: { $ref: "#/$defs/text" }, description: "Shown in an empty control." },
-  examples: { schema: { type: "array" }, description: "Sample values." },
-  aliases: { schema: { type: "array", items: { type: "string" } }, description: "Other keys the value is read from." },
-  deprecated: { schema: { type: ["boolean", "string"] }, description: "true, or what to use instead." },
-  default: { schema: { $ref: "#/$defs/expr" }, description: "The value when absent. May be an expression." },
-  optional: { schema: { type: "boolean" }, description: "The value may be absent." },
-  readOnly: { schema: { type: "boolean" }, description: "Shown but not editable." },
-  visible: { schema: { $ref: "#/$defs/condition" }, description: "Shown, and validated, only while this holds." },
-  enabled: { schema: { $ref: "#/$defs/condition" }, description: "Editable only while this holds." },
-  required: { schema: { $ref: "#/$defs/condition" }, description: "Must be non-empty while this holds." },
-  group: { schema: { type: "string" }, description: "The id of a group in the same scope." },
-  order: { schema: { type: "number" }, description: "Where the field draws among its siblings, lower first; 0 when absent, ties in declaration order." },
-  render: { schema: { $ref: "#/$defs/render" }, description: "A control element (`slider`), or a layout of the field's parts; see Rendering." },
-  meta: { schema: { type: "object" }, description: "Free-form data for the application." },
+  type: { schema: { type: 'string' }, description: 'The kind. Required unless `use` gives one.' },
+  use: {
+    schema: { type: 'string' },
+    description: "A preset or a definition this field builds on; its own properties override the base's. Replaces `type`.",
+  },
+  label: { schema: { $ref: '#/$defs/text' }, description: 'What the field is called.' },
+  description: { schema: { $ref: '#/$defs/text' }, description: 'What it does, in a sentence.' },
+  hint: { schema: { $ref: '#/$defs/text' }, description: 'A short line under the control.' },
+  placeholder: { schema: { $ref: '#/$defs/text' }, description: 'Shown in an empty control.' },
+  examples: { schema: { type: 'array' }, description: 'Sample values.' },
+  aliases: { schema: { type: 'array', items: { type: 'string' } }, description: 'Other keys the value is read from.' },
+  deprecated: { schema: { type: ['boolean', 'string'] }, description: 'true, or what to use instead.' },
+  default: { schema: { $ref: '#/$defs/expr' }, description: 'The value when absent. May be an expression.' },
+  optional: { schema: { type: 'boolean' }, description: 'The value may be absent.' },
+  readOnly: { schema: { type: 'boolean' }, description: 'Shown but not editable.' },
+  visible: { schema: { $ref: '#/$defs/condition' }, description: 'Shown, and validated, only while this holds.' },
+  enabled: { schema: { $ref: '#/$defs/condition' }, description: 'Editable only while this holds.' },
+  required: { schema: { $ref: '#/$defs/condition' }, description: 'Must be non-empty while this holds.' },
+  group: { schema: { type: 'string' }, description: 'The id of a group in the same scope.' },
+  order: {
+    schema: { type: 'number' },
+    description: 'Where the field draws among its siblings, lower first; 0 when absent, ties in declaration order.',
+  },
+  render: {
+    schema: { $ref: '#/$defs/render' },
+    description: "A control element (`slider`), or a layout of the field's parts; see Rendering.",
+  },
+  meta: { schema: { type: 'object' }, description: 'Free-form data for the application.' },
 };
 
-const FORMAT = Symbol.for("fieldspec.format");
-const FUNCTIONS = Symbol.for("fieldspec.functions");
+const FORMAT = Symbol.for('fieldspec.format');
+const FUNCTIONS = Symbol.for('fieldspec.functions');
 
 /** The format a spec was defined through, or the core format. */
 export function formatOf(spec: Spec): Format {
-  return ((spec as unknown as Record<symbol, Format>)[FORMAT] ?? coreFormat) as Format;
+  return (spec as unknown as Record<symbol, Format>)[FORMAT] ?? coreFormat;
 }
 
 /** The function table a spec was defined with. */
@@ -93,18 +102,18 @@ function build<KV, P>(kinds: readonly AnyKind[], elements: readonly ElementDef[]
       Object.defineProperty(spec, FORMAT, { value: format, enumerable: false, configurable: true });
       Object.defineProperty(spec, FUNCTIONS, { value: options?.fns, enumerable: false, configurable: true });
       attachStandard?.(spec);
-      return spec as never;
+      return spec;
     },
     extend(options) {
-      for (const k of options.kinds ?? []) assertUserName("A kind", k.name);
-      for (const e of options.elements ?? []) assertUserName("An element", e.name);
-      for (const name of Object.keys(options.presets ?? {})) assertUserName("A preset", name);
+      for (const k of options.kinds ?? []) assertUserName('A kind', k.name);
+      for (const e of options.elements ?? []) assertUserName('An element', e.name);
+      for (const name of Object.keys(options.presets ?? {})) assertUserName('A preset', name);
       return build(
         [...kinds.filter((k) => !options.kinds?.some((n) => n.name === k.name)), ...(options.kinds ?? [])],
         [...elements.filter((e) => !options.elements?.some((n) => n.name === e.name)), ...(options.elements ?? [])],
         { ...presets, ...options.presets },
         [...rules, ...(options.rules ?? [])],
-      ) as never;
+      );
     },
   };
   return format;
@@ -120,4 +129,4 @@ export function createFormat<const Ks extends readonly AnyKind[] = [], const Ps 
 }
 
 /** Define a spec with the core format. */
-export const define: Format["define"] = (spec, options) => coreFormat.define(spec, options);
+export const define: Format['define'] = (spec, options) => coreFormat.define(spec, options);

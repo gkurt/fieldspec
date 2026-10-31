@@ -14,9 +14,9 @@
  * - Without any `render`, fields draw in declaration order, or by `order` where fields give
  *   one; a grouped field brings its group, drawn where its first field would be.
  */
-import { deref, usedName, type Lookup } from "./defs.ts";
-import { PARTS, type ElementDef } from "./elements.ts";
-import { formatOf, type Format } from "./format.ts";
+import { deref, usedName, type Lookup } from './defs.ts';
+import { PARTS, type ElementDef } from './elements.ts';
+import { formatOf, type Format } from './format.ts';
 import type {
   ArrayField,
   Condition,
@@ -31,7 +31,7 @@ import type {
   Resolved,
   Spec,
   VariantField,
-} from "./types.ts";
+} from './types.ts';
 
 export interface LayoutNode {
   /** A catalog element: `stack`, `row`, `field`, `label`, `slider`, … */
@@ -92,35 +92,35 @@ interface Placed {
   readonly groups: Set<string>;
 }
 
-const REST = "\u0000rest";
+const REST = '\u0000rest';
 
 /** The tree for a spec, or for one of its named layouts. */
 export function layout(spec: Spec, view?: string, format: Format = formatOf(spec)): LayoutNode {
   const fragment = view === undefined ? undefined : spec.layouts?.[view];
   if (view !== undefined && fragment === undefined) throw new Error(`no layout named "${view}"`);
   const ctx: Ctx = { format, lookup: { defs: spec.defs, presets: format.presets } };
-  return layoutScope(scopeOf(spec.fields, spec.groups, ctx), fragment, "root");
+  return layoutScope(scopeOf(spec.fields, spec.groups, ctx), fragment, 'root');
 }
 
 /** The control element that edits a declaration unless its `render` names one. */
 export function defaultControl(format: Format, decl: Resolved): string {
   const seen = new Set<string>();
-  for (let name: string | undefined = decl.type; name !== undefined && !seen.has(name); ) {
+  for (let name: string | undefined = decl.type; name !== undefined && !seen.has(name);) {
     seen.add(name);
     const kind = format.kinds.get(name);
     const control = kind?.control;
-    if (control) return typeof control === "string" ? control : control(decl as never);
+    if (control !== undefined) return typeof control === 'string' ? control : control(decl);
     name = kind?.base;
   }
-  return "input";
+  return 'input';
 }
 
 /** The element a render node names, as an element object; placement shorthands stay as they are. */
 function asElement(node: RenderNode): RenderElement | { field: string } | { group: string } {
-  return typeof node === "string" ? { type: node } : node;
+  return typeof node === 'string' ? { type: node } : node;
 }
 
-function roleOf(ctx: Ctx, type: string): ElementDef["role"] | undefined {
+function roleOf(ctx: Ctx, type: string): ElementDef['role'] | undefined {
   return ctx.format.elements.get(type)?.role;
 }
 
@@ -132,7 +132,7 @@ function takesChildren(ctx: Ctx, type: string): boolean {
 function scopeOf(fields: Fields, groups: Groups, ctx: Ctx): ScopeInfo {
   const rank = (decl: FieldDecl) => {
     const order = deref(ctx.lookup, decl).order;
-    return typeof order === "number" && Number.isFinite(order) ? order : 0;
+    return typeof order === 'number' && Number.isFinite(order) ? order : 0;
   };
   // Sorting is stable, so equal ranks keep declaration order.
   const ordered = Object.entries(fields)
@@ -143,14 +143,23 @@ function scopeOf(fields: Fields, groups: Groups, ctx: Ctx): ScopeInfo {
 }
 
 function layoutScope(scope: ScopeInfo, fragment: RenderNode | undefined, key: string): LayoutNode {
-  if (fragment === undefined) return stack(key, autoNodes(scope, scope.ordered.map(([k]) => k), key));
+  if (fragment === undefined) {
+    return stack(
+      key,
+      autoNodes(
+        scope,
+        scope.ordered.map(([k]) => k),
+        key,
+      ),
+    );
+  }
   const placed: Placed = { fields: new Set(), groups: new Set() };
   const resolved = resolveNode(scope, fragment, `${key}.f`, placed);
   return fillRest(resolved, scope, unplaced(scope, placed, undefined), key);
 }
 
 function stack(key: string, children: LayoutNode[]): LayoutNode {
-  return { type: "stack", key, props: {}, children };
+  return { type: 'stack', key, props: {}, children };
 }
 
 const groupOf = (scope: ScopeInfo, decl: FieldDecl) => deref(scope.ctx.lookup, decl).group;
@@ -234,7 +243,12 @@ function groupNode(scope: ScopeInfo, id: string, key: string, limit?: readonly s
   }
 }
 
-const insideItself = (id: string, key: string): LayoutNode => ({ type: "text", key, props: { text: `Group "${id}" is placed inside itself`, tone: "warning" }, children: [] });
+const insideItself = (id: string, key: string): LayoutNode => ({
+  type: 'text',
+  key,
+  props: { text: `Group "${id}" is placed inside itself`, tone: 'warning' },
+  children: [],
+});
 
 function drawGroup(scope: ScopeInfo, id: string, key: string, limit?: readonly string[]): LayoutNode {
   const group = scope.groups![id]!;
@@ -243,16 +257,22 @@ function drawGroup(scope: ScopeInfo, id: string, key: string, limit?: readonly s
       .filter(([name, decl]) => chainOf(scope, groupOf(scope, decl)).includes(id) && (!limit || limit.includes(name)))
       .map(([name]) => name),
   );
-  const el = asElement(group.render ?? "stack");
-  const container: RenderElement = "type" in el ? el : { type: "stack", children: [el as RenderNode] };
+  const el = asElement(group.render ?? 'stack');
+  const container: RenderElement = 'type' in el ? el : { type: 'stack', children: [el] };
   const def = scope.ctx.format.elements.get(container.type);
   const props: Record<string, Expr> = { ...container.props };
   if (def?.props?.title && props.title === undefined && group.label !== undefined) props.title = group.label as Expr;
-  if (def?.props?.description && props.description === undefined && group.description !== undefined) props.description = group.description as Expr;
+  if (def?.props?.description && props.description === undefined && group.description !== undefined)
+    props.description = group.description as Expr;
   const placed: Placed = { fields: new Set(), groups: new Set() };
   const resolved = resolveNode(scope, { ...container, props }, `${key}.f`, placed);
   const left = unplaced(scope, placed, members);
-  return { ...fillRest(resolved, scope, left, `${key}.s`, id), key, group: id, ...(group.visible !== undefined && { visible: group.visible }) };
+  return {
+    ...fillRest(resolved, scope, left, `${key}.s`, id),
+    key,
+    group: id,
+    ...(group.visible !== undefined && { visible: group.visible }),
+  };
 }
 
 /**
@@ -263,16 +283,18 @@ function drawGroup(scope: ScopeInfo, id: string, key: string, limit?: readonly s
 function fieldNode(ctx: Ctx, raw: FieldDecl, ref: string, key: string, visible?: Condition): LayoutNode {
   const decl = deref(ctx.lookup, raw);
   const render = decl.render === undefined ? undefined : asElement(decl.render);
-  const chosen = render && "type" in render && roleOf(ctx, render.type) === "control" ? render : undefined;
-  const arranged = render && "type" in render && !chosen ? render : undefined;
+  const chosen = render && 'type' in render && roleOf(ctx, render.type) === 'control' ? render : undefined;
+  const arranged = render && 'type' in render && !chosen ? render : undefined;
   const node: Record<string, unknown> = {
-    type: "field",
+    type: 'field',
     key,
     props: {},
     children: [],
     field: ref,
     decl,
-    control: chosen ? { type: chosen.type, props: chosen.props ?? {}, explicit: true } : { type: defaultControl(ctx.format, decl), props: {} },
+    control: chosen
+      ? { type: chosen.type, props: chosen.props ?? {}, explicit: true }
+      : { type: defaultControl(ctx.format, decl), props: {} },
     ...(visible !== undefined && { visible }),
     ...(usedName(raw) !== undefined && { use: usedName(raw) }),
   };
@@ -281,29 +303,29 @@ function fieldNode(ctx: Ctx, raw: FieldDecl, ref: string, key: string, visible?:
     Object.defineProperty(node, prop, { enumerable: true, get: () => (built ??= build()) });
   };
   switch (decl.type) {
-    case "object": {
+    case 'object': {
       const o = decl as ObjectField;
-      lazy("inner", () => layoutScope(scopeOf(o.fields, o.groups, ctx), arranged, `${key}.o`));
+      lazy('inner', () => layoutScope(scopeOf(o.fields, o.groups, ctx), arranged, `${key}.o`));
       return node as unknown as LayoutNode;
     }
-    case "variant": {
+    case 'variant': {
       const v = decl as VariantField;
-      lazy("variants", () => {
+      lazy('variants', () => {
         const variants: Record<string, LayoutNode> = {};
-        for (const [name, variant] of Object.entries(v.variants)) {
+        for (const [name, variant] of Object.entries(v.variants))
           variants[name] = layoutScope(scopeOf(variant.fields, variant.groups, ctx), undefined, `${key}.v.${name}`);
-        }
+
         return variants;
       });
       break;
     }
-    case "array":
-    case "set":
-      lazy("item", () => fieldNode(ctx, (decl as ArrayField).items, "", `${key}.i`));
+    case 'array':
+    case 'set':
+      lazy('item', () => fieldNode(ctx, (decl as ArrayField).items, '', `${key}.i`));
       break;
-    case "record":
-    case "map":
-      lazy("item", () => fieldNode(ctx, (decl as RecordField | MapField).values, "", `${key}.i`));
+    case 'record':
+    case 'map':
+      lazy('item', () => fieldNode(ctx, (decl as RecordField | MapField).values, '', `${key}.i`));
       break;
   }
   if (arranged) node.fragment = resolvePart(ctx, arranged, `${key}.p`, ref);
@@ -313,12 +335,14 @@ function fieldNode(ctx: Ctx, raw: FieldDecl, ref: string, key: string, visible?:
 /** A field's own layout: its parts and controls refer to the field itself. */
 function resolvePart(ctx: Ctx, node: RenderNode, key: string, self: string): LayoutNode {
   const el = asElement(node);
-  if (!("type" in el)) return { type: "control", key, props: {}, children: [], field: self };
+  if (!('type' in el)) return { type: 'control', key, props: {}, children: [], field: self };
   const role = roleOf(ctx, el.type);
-  const bound = role === "part" || role === "control";
+  const bound = role === 'part' || role === 'control';
   const children =
     el.children?.map((c, i) => resolvePart(ctx, c, `${key}.${i}`, self)) ??
-    (bound || !takesChildren(ctx, el.type) ? [] : ["label", "control", "help", "errors"].map((t, i) => resolvePart(ctx, t, `${key}.${i}`, self)));
+    (bound || !takesChildren(ctx, el.type)
+      ? []
+      : ['label', 'control', 'help', 'errors'].map((t, i) => resolvePart(ctx, t, `${key}.${i}`, self)));
   return {
     type: el.type,
     key,
@@ -332,39 +356,39 @@ function resolvePart(ctx: Ctx, node: RenderNode, key: string, self: string): Lay
 function declOf(ctx: Ctx, fields: Fields, ref: string): FieldDecl | undefined {
   let decl: FieldDecl | undefined;
   let scope: Fields | undefined = fields;
-  for (const segment of ref.split("/")) {
+  for (const segment of ref.split('/')) {
     decl = scope?.[segment];
     if (!decl) return undefined;
     const real = deref(ctx.lookup, decl);
-    scope = real.type === "object" ? (real as ObjectField).fields : undefined;
+    scope = real.type === 'object' ? (real as ObjectField).fields : undefined;
   }
   return decl;
 }
 
 function resolveNode(scope: ScopeInfo, node: RenderNode, key: string, placed: Placed): LayoutNode {
   const el = asElement(node);
-  if ("field" in el && !("type" in el)) return placeField(scope, el.field, key, placed);
-  if ("group" in el && !("type" in el)) return placeGroup(scope, el.group, key, placed);
+  if ('field' in el && !('type' in el)) return placeField(scope, el.field, key, placed);
+  if ('group' in el && !('type' in el)) return placeGroup(scope, el.group, key, placed);
   const { type } = el as RenderElement;
   const props = (el as RenderElement).props ?? {};
   const visible = (el as RenderElement).visible;
   switch (type) {
-    case "field":
-      return placeField(scope, String(props.field ?? ""), key, placed, visible);
-    case "group":
-      return placeGroup(scope, String(props.group ?? ""), key, placed);
-    case "rest":
+    case 'field':
+      return placeField(scope, typeof props.field === 'string' ? props.field : '', key, placed, visible);
+    case 'group':
+      return placeGroup(scope, typeof props.group === 'string' ? props.group : '', key, placed);
+    case 'rest':
       return { type: REST, key, props: {}, children: [] };
   }
   const role = roleOf(scope.ctx, type);
-  if (role === "part" || role === "control" || PARTS.has(type)) {
+  if (role === 'part' || role === 'control' || PARTS.has(type)) {
     return {
       type,
       key,
       props,
       ...(visible !== undefined && { visible }),
       children: [],
-      ...(typeof props.field === "string" && { field: props.field }),
+      ...(typeof props.field === 'string' && { field: props.field }),
       ...(Array.isArray(props.fields) && { fields: props.fields as string[] }),
     };
   }
@@ -377,13 +401,13 @@ function resolveNode(scope: ScopeInfo, node: RenderNode, key: string, placed: Pl
 
 function placeField(scope: ScopeInfo, ref: string, key: string, placed: Placed, visible?: Condition): LayoutNode {
   const decl = declOf(scope.ctx, scope.fields, ref);
-  if (!decl) return { type: "text", key, props: { text: `Unknown field "${ref}"`, tone: "warning" }, children: [] };
+  if (!decl) return { type: 'text', key, props: { text: `Unknown field "${ref}"`, tone: 'warning' }, children: [] };
   placed.fields.add(ref);
   return fieldNode(scope.ctx, decl, ref, key, visible);
 }
 
 function placeGroup(scope: ScopeInfo, id: string, key: string, placed: Placed): LayoutNode {
-  if (!scope.groups?.[id]) return { type: "text", key, props: { text: `Unknown group "${id}"`, tone: "warning" }, children: [] };
+  if (!scope.groups?.[id]) return { type: 'text', key, props: { text: `Unknown group "${id}"`, tone: 'warning' }, children: [] };
   // Refused, it is not placed: its fields still follow.
   if (scope.drawing.has(id)) return insideItself(id, key);
   placed.groups.add(id);

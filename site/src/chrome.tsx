@@ -1,29 +1,30 @@
 /** What every page of the site shares: the bar at the top, section headings, the footer. */
-import { useEffect, useState, type ReactNode } from "react";
-import { VERSION } from "../../src/index.ts";
+import { useEffect, useState, type ReactNode } from 'react';
+import { VERSION } from '#src/index.ts';
 
-export const REPO = "https://github.com/gkurt/fieldspec";
+export const REPO = 'https://github.com/gkurt/fieldspec';
 
 /** `links` are [href, text, kept on narrow screens]. */
-export function Nav({ links, home = "#top" }: { links: readonly (readonly [string, string, boolean?])[]; home?: string }) {
-  const [theme, setTheme] = useState<"light" | "dark" | undefined>(() => {
+export function Nav({ links, home = '#top' }: { links: readonly (readonly [string, string, boolean?])[]; home?: string }) {
+  const [theme, setTheme] = useState<'light' | 'dark' | undefined>(() => {
     try {
-      return (localStorage.getItem("fs-theme") as "light" | "dark" | null) ?? undefined;
+      return (localStorage.getItem('fs-theme') as 'light' | 'dark' | null) ?? undefined;
     } catch {
       return undefined;
     }
   });
+  // The theme lives outside React: on the document's root and in storage.
   useEffect(() => {
     if (theme) document.documentElement.dataset.theme = theme;
     else delete document.documentElement.dataset.theme;
     try {
-      if (theme) localStorage.setItem("fs-theme", theme);
-      else localStorage.removeItem("fs-theme");
+      if (theme) localStorage.setItem('fs-theme', theme);
+      else localStorage.removeItem('fs-theme');
     } catch {
       // Storage may be unavailable; the choice then lasts the visit.
     }
   }, [theme]);
-  const dark = theme ? theme === "dark" : typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
+  const dark = theme ? theme === 'dark' : typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches;
   return (
     <nav className="nav">
       <a className="brand" href={home}>
@@ -31,12 +32,17 @@ export function Nav({ links, home = "#top" }: { links: readonly (readonly [strin
       </a>
       <div className="nav-links">
         {links.map(([href, text, keep]) => (
-          <a key={href} href={href} data-keep={keep ? "" : undefined}>
+          <a key={href} href={href} data-keep={keep ? '' : undefined}>
             {text}
           </a>
         ))}
-        <button type="button" className="icon-button" aria-label={dark ? "Use light theme" : "Use dark theme"} onClick={() => setTheme(dark ? "light" : "dark")}>
-          {dark ? "☀" : "☾"}
+        <button
+          type="button"
+          className="icon-button"
+          aria-label={dark ? 'Use light theme' : 'Use dark theme'}
+          onClick={() => setTheme(dark ? 'light' : 'dark')}
+        >
+          {dark ? '☀' : '☾'}
         </button>
       </div>
     </nav>

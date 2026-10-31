@@ -3,15 +3,15 @@
  * evaluated label and options, its issues), edits and patches, and change notification.
  * Renderers for any framework subscribe to it and draw a {@link LayoutNode} tree with it.
  */
-import { evaluate, test, type Env, type Functions, type Scope } from "./expr.ts";
-import { formatOf, functionsOf, type Format } from "./format.ts";
-import type { Infer } from "./infer.ts";
-import { optionsOf } from "./kinds.ts";
-import { layout, type LayoutNode } from "./layout.ts";
-import { applyPatch, type PatchOp } from "./patch.ts";
-import { getAt, joinPointer, parsePointer, setAt, splitPointer } from "./pointer.ts";
-import type { Condition, EnumField, Expr, FieldDecl, GroupDecl, Issue, Json, Resolved, Result, Spec, Text } from "./types.ts";
-import { declAt, decode, decodeField, encode, initialValue, resolve, validate } from "./values.ts";
+import { evaluate, test, textOf, type Env, type Functions, type Scope } from './expr.ts';
+import { formatOf, functionsOf, type Format } from './format.ts';
+import type { Infer } from './infer.ts';
+import { optionsOf } from './kinds.ts';
+import { layout, type LayoutNode } from './layout.ts';
+import { applyPatch, type PatchOp } from './patch.ts';
+import { getAt, joinPointer, parsePointer, setAt, splitPointer } from './pointer.ts';
+import type { Condition, EnumField, Expr, FieldDecl, GroupDecl, Issue, Json, Resolved, Result, Spec, Text } from './types.ts';
+import { declAt, decode, decodeField, encode, initialValue, resolve, validate } from './values.ts';
 
 export interface FieldOption {
   readonly value: unknown;
@@ -63,33 +63,33 @@ export interface Form<V = unknown> {
   /** Bumps on every change; cheap to compare. */
   readonly version: number;
   readonly submitted: boolean;
-  get(path: string): unknown;
-  set(path: string, value: unknown): void;
-  touch(path: string): void;
+  readonly get: (path: string) => unknown;
+  readonly set: (path: string, value: unknown) => void;
+  readonly touch: (path: string) => void;
   /** Apply a JSON Patch whose values are JSON; they are decoded against the spec. Throws on a bad op. */
-  apply(patch: readonly PatchOp[]): void;
-  reset(values?: unknown): void;
-  field(path: string): FieldState | undefined;
+  readonly apply: (patch: readonly PatchOp[]) => void;
+  readonly reset: (values?: unknown) => void;
+  readonly field: (path: string) => FieldState | undefined;
   /** A new item at the end of a list (or a given value). */
-  addItem(path: string, value?: unknown): void;
-  removeItem(path: string): void;
-  moveItem(path: string, from: number, to: number): void;
-  test(condition: Condition | undefined, scope: Scope): boolean;
-  evaluate(expr: Expr | undefined, scope: Scope): unknown;
-  text(text: Text | undefined, scope: Scope): string | undefined;
-  layout(view?: string): LayoutNode;
+  readonly addItem: (path: string, value?: unknown) => void;
+  readonly removeItem: (path: string) => void;
+  readonly moveItem: (path: string, from: number, to: number) => void;
+  readonly test: (condition: Condition | undefined, scope: Scope) => boolean;
+  readonly evaluate: (expr: Expr | undefined, scope: Scope) => unknown;
+  readonly text: (text: Text | undefined, scope: Scope) => string | undefined;
+  readonly layout: (view?: string) => LayoutNode;
   /** Mark the form submitted and validate it. */
-  submit(): Result<V>;
+  readonly submit: () => Result<V>;
   /** The values as JSON. */
-  json(): Json;
-  subscribe(listener: () => void): () => void;
+  readonly json: () => Json;
+  readonly subscribe: (listener: () => void) => () => void;
 }
 
 /** "firstName" → "First name": a label for fields that do not give one. */
 export function humanize(key: string): string {
   const words = key
-    .replace(/[_-]+/g, " ")
-    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
     .trim()
     .toLowerCase();
   return words.charAt(0).toUpperCase() + words.slice(1);
@@ -136,8 +136,8 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
   const text = (t: Text | undefined, scope: Scope): string | undefined => {
     if (t === undefined) return undefined;
     try {
-      const v = evaluate(t as Expr, env(), scope);
-      return v === undefined || v === null ? undefined : String(v);
+      const v = evaluate(t, env(), scope);
+      return v === undefined || v === null ? undefined : textOf(v);
     } catch {
       return undefined;
     }
@@ -159,13 +159,13 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
     if (!located) return undefined;
     const { decl, scope, groups } = located;
     const [parent, key] = splitPointer(path);
-    const parentState = parent === "" ? undefined : form.field(parent);
+    const parentState = parent === '' ? undefined : form.field(parent);
     const ownVisible = safeTest(decl.visible, scope) && groupsVisible(groups, decl.group, scope);
     const visible = (parentState?.visible ?? true) && ownVisible;
     const enabled = (parentState?.enabled ?? true) && safeTest(decl.enabled, scope);
     const label = text(decl.label, scope) ?? (/^\d+$/.test(key) ? `#${Number(key) + 1}` : humanize(key));
     let fieldOptions: FieldOption[] | undefined;
-    if (decl.type === "enum") {
+    if (decl.type === 'enum') {
       fieldOptions = optionsOf(decl as EnumField, env(), scope)
         .filter((o) => safeTest(o.visible, scope))
         .map((o) => ({
@@ -206,12 +206,12 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
 
   const decodeAt = (path: string, value: unknown): unknown => {
     const [parent, last] = splitPointer(path);
-    const target = last === "-" ? joinPointer(parent, 0) : path;
+    const target = last === '-' ? joinPointer(parent, 0) : path;
     let located = declAt(spec, values, target, format);
-    if (!located && last === "-") {
+    if (!located && last === '-') {
       // An empty list has no item 0 yet; its items declaration is what we want.
       const list = declAt(spec, values, parent, format);
-      if (list && "items" in list.decl) return decodeField(vo, list.decl.items as FieldDecl, value);
+      if (list && 'items' in list.decl) return decodeField(vo, list.decl.items as FieldDecl, value);
     }
     return located ? decodeField(vo, located.decl, value) : value;
   };
@@ -243,7 +243,7 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
       changed();
     },
     apply(patch) {
-      const decoded = patch.map((op) => ("value" in op ? { ...op, value: decodeAt(op.path, op.value) } : op)) as PatchOp[];
+      const decoded = patch.map((op) => ('value' in op ? { ...op, value: decodeAt(op.path, op.value) } : op)) as PatchOp[];
       for (const op of patch) edited.add(op.path);
       commit(applyPatch(values, decoded));
     },
@@ -263,12 +263,12 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
       const located = declAt(spec, values, path, format);
       if (!located) return;
       const decl = located.decl;
-      if (decl.type === "set") {
+      if (decl.type === 'set') {
         const set = new Set(list instanceof Set ? list : []);
         set.add(value);
         return form.set(path, set);
       }
-      if (decl.type !== "array") return;
+      if (decl.type !== 'array') return;
       const items = Array.isArray(list) ? list : [];
       const at = joinPointer(path, items.length);
       const item = value !== undefined ? value : initialValue(spec, decl.items as FieldDecl, values, at, vo);
@@ -304,7 +304,7 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
     },
     text,
     layout(view) {
-      const key = view ?? "";
+      const key = view ?? '';
       if (!layouts.has(key)) layouts.set(key, layout(spec, view));
       return layouts.get(key)!;
     },
@@ -312,7 +312,9 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
       submitted = true;
       changed();
       const found = currentIssues();
-      return (found.length === 0 ? { ok: true, value: values, issues: [] } : { ok: false, value: values, issues: found }) as unknown as Result<Infer<S>>;
+      return (found.length === 0
+        ? { ok: true, value: values, issues: [] }
+        : { ok: false, value: values, issues: found }) as unknown as Result<Infer<S>>;
     },
     json: () => encode(spec, values, vo),
     subscribe(listener) {
