@@ -16,7 +16,7 @@ import round3 from '#experiments/writer-specs/out/round3.json' with { type: 'jso
 import round4 from '#experiments/writer-specs/out/round4.json' with { type: 'json' };
 import { createForm, type Spec } from '#src/index.ts';
 import { FormView } from '#src/react/index.tsx';
-import { Footer, Heading, Nav, REPO } from './chrome.tsx';
+import { Footer, Heading, Nav, Page, REPO } from './chrome.tsx';
 import { Json } from './Code.tsx';
 import './styles.css';
 
@@ -153,14 +153,12 @@ function runFor(caseId: string, way: Way): { marks: Mark[]; ms: number; delegate
 
 // ── Page ─────────────────────────────────────────────────────────────────────────────────
 
-const LINKS = [
-  ['#generate', 'Generate'],
-  ['#fill', 'Fill', true],
-  ['#delegate', 'Hand over'],
-  ['#write', 'Write'],
-  ['tutorial.html', 'Tutorial'],
-  ['examples.html', 'Examples'],
-  ['./', 'fieldspec', true],
+const TOC = [
+  ['generate', 'Generating specs'],
+  ['fill', 'Filling forms'],
+  ['delegate', 'Knowing their limits'],
+  ['write', 'Writing specs'],
+  ['lessons', 'What we learned'],
 ] as const;
 
 function App() {
@@ -168,8 +166,8 @@ function App() {
   return (
     <>
       <style>{htmlStyles}</style>
-      <Nav links={LINKS} home="./" />
-      <main>
+      <Nav current="models.html" />
+      <Page toc={TOC}>
         <header className="hero models-hero" id="top">
           <div className="hero-copy">
             <p className="eyebrow">Experiments · small models</p>
@@ -213,7 +211,7 @@ function App() {
         <Delegate />
         <Write />
         <Lessons />
-      </main>
+      </Page>
       <Footer>Every form on this page is drawn by FormView with the example renderers.</Footer>
     </>
   );

@@ -6,7 +6,7 @@ import { parse, prompt, toJSONSchema, toJsonRender, VERSION, type Form } from '#
 import { FormView, useForm, useFormState } from '#src/react/index.tsx';
 import { toZod } from '#src/zod.ts';
 import { Canvas } from './Canvas.tsx';
-import { Footer, Heading, Nav, REPO } from './chrome.tsx';
+import { Footer, Heading, Nav, Page, REPO } from './chrome.tsx';
 import { Code, Json } from './Code.tsx';
 import { Playground } from './Playground.tsx';
 import {
@@ -24,14 +24,18 @@ import {
 import './styles.css';
 import './home.css';
 
-const LINKS = [
-  ['#conditions', 'Features'],
-  ['tutorial.html', 'Tutorial', true],
-  ['#playground', 'Playground', true],
-  ['#interop', 'Interop'],
-  ['examples.html', 'Examples'],
-  ['models.html', 'With AI models'],
-  ['#start', 'Get started'],
+const TOC = [
+  ['outputs', 'One spec'],
+  ['conditions', 'Conditions and checks'],
+  ['layouts', 'Layout'],
+  ['collections', 'Lists, maps and unions'],
+  ['definitions', 'Definitions'],
+  ['multi', 'Editing many at once'],
+  ['playground', 'Playground'],
+  ['interop', 'Interop'],
+  ['extend', 'Extending'],
+  ['sturdy', 'Robustness'],
+  ['start', 'Get started'],
 ] as const;
 
 function App() {
@@ -39,8 +43,8 @@ function App() {
   return (
     <>
       <style>{htmlStyles}</style>
-      <Nav links={LINKS} />
-      <main>
+      <Nav />
+      <Page toc={TOC}>
         <Hero form={hero} />
         <Outputs />
         <Feature
@@ -106,7 +110,7 @@ function App() {
         <Extend />
         <Sturdy />
         <Start />
-      </main>
+      </Page>
       <Footer>Every form on this page is drawn by FormView with the example renderers.</Footer>
     </>
   );

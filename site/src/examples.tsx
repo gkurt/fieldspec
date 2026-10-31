@@ -7,7 +7,7 @@ import { createRoot } from 'react-dom/client';
 import { htmlRenderers, htmlStyles } from '#examples/renderers/html.tsx';
 import { define } from '#src/index.ts';
 import { FormView, useForm, useFormState } from '#src/react/index.tsx';
-import { Footer, Heading, Nav, REPO } from './chrome.tsx';
+import { Footer, Heading, Nav, Page, REPO } from './chrome.tsx';
 import { Code, Json } from './Code.tsx';
 import { cardSource, DialKitDemo } from './DialKit.tsx';
 import { meetupSource, ReactAriaDemo } from './ReactAria.tsx';
@@ -82,21 +82,19 @@ function HtmlDemo() {
   );
 }
 
-const LINKS = [
-  ['#html', 'Plain HTML'],
-  ['#dialkit', 'DialKit'],
-  ['#react-aria', 'React Aria'],
-  ['#shadcn', 'shadcn/ui'],
-  ['tutorial.html', 'Tutorial'],
-  ['./', 'fieldspec', true],
+const TOC = [
+  ['html', 'Plain HTML'],
+  ['dialkit', 'DialKit'],
+  ['react-aria', 'React Aria'],
+  ['shadcn', 'shadcn/ui'],
 ] as const;
 
 function App() {
   return (
     <>
       <style>{htmlStyles}</style>
-      <Nav links={LINKS} home="./" />
-      <main>
+      <Nav current="examples.html" />
+      <Page toc={TOC}>
         <header className="hero models-hero" id="top">
           <div className="hero-copy">
             <p className="eyebrow">Examples · renderers</p>
@@ -152,7 +150,7 @@ function App() {
           <ShadcnDemo />
           <Code code={deploySource} label="deploy.tsx" className="dial-code" />
         </section>
-      </main>
+      </Page>
       <Footer>Every form on this page is drawn by FormView with the example renderers.</Footer>
     </>
   );

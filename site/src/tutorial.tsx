@@ -7,7 +7,7 @@ import { createRoot } from 'react-dom/client';
 import { htmlRenderers, htmlStyles } from '#examples/renderers/html.tsx';
 import { toJSONSchema, type Form, type Spec } from '#src/index.ts';
 import { FormView, useForm, useFormState } from '#src/react/index.tsx';
-import { Footer, Nav, REPO } from './chrome.tsx';
+import { Footer, Nav, Page, REPO } from './chrome.tsx';
 import { Code, highlight, Json } from './Code.tsx';
 import * as L from './lessons.ts';
 import './styles.css';
@@ -333,20 +333,14 @@ const faults = checkSpec(JSON.parse(text), { registry }); // each at a pointer, 
 // What there is to translate, by pointer; its translation goes under "locales".
 const strings = texts(service); // { "/fields/name/label": "Service name", … }`;
 
-const LINKS = [
-  ['./', 'Home', true],
-  ['#one', 'Steps'],
-  ['#code', 'From code'],
-  ['examples.html', 'Examples'],
-  ['models.html', 'With AI models'],
-] as const;
+const TOC = [...STEPS.map((s) => [s.id, s.title] as const), ['code', 'From code'] as const];
 
 function App() {
   return (
     <>
       <style>{htmlStyles}</style>
-      <Nav links={LINKS} home="./" />
-      <main>
+      <Nav current="tutorial.html" />
+      <Page toc={TOC}>
         <header className="hero tutorial-hero" id="top">
           <div className="hero-copy">
             <p className="eyebrow">Tutorial · {STEPS.length} steps</p>
@@ -401,7 +395,7 @@ function App() {
             <Json value={toJSONSchema(L.versions)} label="toJSONSchema(service)" className="lesson-out" />
           </div>
         </section>
-      </main>
+      </Page>
       <Footer>Every form on this page is drawn by FormView with the example renderers.</Footer>
     </>
   );
