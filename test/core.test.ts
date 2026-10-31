@@ -233,6 +233,32 @@ describe('checkSpec', () => {
     expect(messages).toContainEqual(expect.stringContaining('which the function table does not implement'));
     expect(messages).toContainEqual(expect.stringContaining('declared but never called'));
   });
+
+  // Shapes small models wrote: branches inside `$cond`, and operators as keys of their own.
+  test('a misshapen $cond or condition is told the shape', () => {
+    const spec = {
+      fields: {
+        n: { type: 'number' },
+        a: { type: 'number', default: { $cond: { $state: 'n', $then: 1, $else: 2 } } },
+        b: { type: 'number', visible: { $gte: [{ $state: 'n' }, 50] } },
+      },
+    };
+    expect(checkSpec(spec).map((f) => [f.path, f.message])).toEqual([
+      ['/fields/a/default/$cond', expect.stringContaining('`$then` and `$else` sit beside it')],
+      ['/fields/a/default', expect.stringContaining('"$then": 19.95, "$else": 9.95')],
+      ['/fields/b/visible', expect.stringContaining('`{ "$state": "subtotal", "gte": 50 }`. Did you mean "gte"?')],
+    ]);
+    const invented = {
+      fields: { n: { type: 'number' }, m: { type: 'number', value: { $cond: true, $then: { $multiply: [2, 3] }, $else: 0 } } },
+    };
+    expect(checkSpec(invented).map((f) => [f.path, f.message])).toEqual([
+      ['/fields/m/value/$then/$multiply', expect.stringContaining('is not an expression')],
+    ]);
+    const wrapped = { fields: { n: { type: 'number' } }, layouts: { main: { render: 'stack', children: [{ field: 'n' }] } } };
+    expect(checkSpec(wrapped).map((f) => [f.path, f.message])).toEqual([
+      ['/layouts/main/render', expect.stringContaining('belongs on a field; here the element stands by itself')],
+    ]);
+  });
 });
 
 const shape = (node: LayoutNode): unknown => {

@@ -7,7 +7,8 @@
  * An arg that reads a field (`{ "$state": … }`) is a variable of that field's type: an `int` is a
  * CEL int, a `number` a double, a `date` a timestamp, a list of strings a `list<string>`, and so
  * on, so the checker catches `price + 1` where `price + 1.0` is meant. An optional field, which
- * may be absent (null), and any other arg are `dyn`. A URL or a regular expression arrives as its
+ * may be absent (null), and any other arg are `dyn`; JSON does not say whether a whole number is
+ * an int, so an untyped one works as either. A URL or a regular expression arrives as its
  * text, a set as a list. Whole results come back as numbers when they fit, so they fill `number`
  * and `int` fields.
  */
@@ -52,7 +53,8 @@ export function createCel(options: CelOptions = {}): Language {
     description:
       '`{ "$cel": "<a CEL expression>", "args": { "x": <expr> } }` evaluates CEL (Common Expression Language), wherever an expression or the value a condition tests may go. ' +
       'Each arg is a variable of the expression, and it reads nothing else: pass what it needs as args (`{ "$state": … }`). ' +
-      'An arg that reads a field has its type: an int field is a CEL int, a number field a double (write `price + 1.0` and `count + 1`; `double(count)` and `int(price)` convert), a date a timestamp (`end - start >= duration("24h")`), a set a list. An optional field may be null. ' +
+      'An arg that reads a field has its type: an int field is a CEL int, a number field a double (write `price + 1.0` and `count + 1`; `double(count)` and `int(price)` convert; `price * double(count)`, as a double never meets an int), a date a timestamp (`end - start >= duration("24h")`), a set a list. An optional field may be null. ' +
+      'What there is: strings have `size(s)`, `s.contains(x)`, `startsWith`, `endsWith`, `matches(regex)`, `lowerAscii()`, `upperAscii()`, `trim()`, `indexOf`, `substring` and `split(sep)`, and a list of strings `join(sep)`; there is no `len` or `replace` (`s.split(" ").join("-")` replaces). Lists have `size(l)`, `l.map(x, …)`, `filter`, `exists` and `all`. A duration cannot be divided: `(end - start).getHours() / 24` is whole days. There are no `math` functions. ' +
       'Prefer the expressions above, and use `$cel` for what they cannot say: `{ "$cel": "end >= start", "args": { "start": { "$state": "start" }, "end": { "$state": "end" } } }`.',
     check(source, decls) {
       try {
@@ -79,6 +81,15 @@ export function createCel(options: CelOptions = {}): Language {
       try {
         return fromCel(expression(context));
       } catch (error) {
+        // JSON does not tell a whole number's type: an untyped one works as an int where a double has no overload.
+        const ints = Object.entries(args).filter(([name, v]) => variableType(decls?.[name]) === 'dyn' && Number.isSafeInteger(v));
+        if (ints.length > 0 && messageOf(error).includes('overload')) {
+          try {
+            return fromCel(expression({ ...context, ...Object.fromEntries(ints.map(([name, v]) => [name, BigInt(v as number)])) }));
+          } catch {
+            // The first error says more.
+          }
+        }
         throw new Error(messageOf(error), { cause: error });
       }
     },

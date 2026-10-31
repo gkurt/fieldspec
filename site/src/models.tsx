@@ -10,6 +10,10 @@ import generatedBoth from '#experiments/clairic-specs/out/results.json' with { t
 import delegation from '#experiments/delegate/out/delegate-gemma.json' with { type: 'json' };
 import { CASES } from '#experiments/fill/cases.ts';
 import filling from '#experiments/fill/out/fill.json' with { type: 'json' };
+import round1 from '#experiments/writer-specs/out/round1.json' with { type: 'json' };
+import round2 from '#experiments/writer-specs/out/round2.json' with { type: 'json' };
+import round3 from '#experiments/writer-specs/out/round3.json' with { type: 'json' };
+import round4 from '#experiments/writer-specs/out/round4.json' with { type: 'json' };
 import { createForm, type Spec } from '#src/index.ts';
 import { FormView } from '#src/react/index.tsx';
 import { Footer, Heading, Nav, REPO } from './chrome.tsx';
@@ -60,9 +64,45 @@ interface DelegateCase {
   runs: DelegateRun[];
 }
 
+interface Attempt {
+  json: boolean;
+  valid: boolean;
+  behaves: boolean;
+  uses: string[];
+}
+interface Written {
+  id: string;
+  construct: string;
+  run: number;
+  first: Attempt;
+  repaired?: Attempt;
+}
+type Counts = Record<'json' | 'valid' | 'behaves', number>;
+interface Round {
+  summary: { model: string; runs: number; first: Counts; final: Counts };
+  results: Written[];
+}
+
 const GEN_BOTH = generatedBoth as unknown as Generated[];
 const GEN_JEV = generatedJev as unknown as Generated[];
 const FILL = filling as unknown as { runs: FillRun[]; summary: Record<string, Summary> };
+/** The spec-writing runs, each after the change the one before called for. */
+const ROUNDS: readonly { round: Round; change: string }[] = [
+  { round: round1, change: 'The prompt as it was.' },
+  {
+    round: round2,
+    change:
+      "The prompt lists the CEL functions there are, and says when to add and when to replace; the checker shows a $cond's and a condition's shape.",
+  },
+  {
+    round: round3,
+    change: 'The prompt says a migration reads untyped JSON; the checker says a layout is not wrapped in render.',
+  },
+  {
+    round: round4,
+    change: 'An untyped whole number works in CEL as an int or a double; the checker reports an invented operator such as $multiply.',
+  },
+];
 const DELEGATE = delegation as unknown as {
   writer: string;
   results: DelegateCase[];
@@ -117,6 +157,7 @@ const LINKS = [
   ['#generate', 'Generate'],
   ['#fill', 'Fill', true],
   ['#delegate', 'Hand over'],
+  ['#write', 'Write'],
   ['tutorial.html', 'Tutorial'],
   ['examples.html', 'Examples'],
   ['./', 'fieldspec', true],
@@ -170,6 +211,7 @@ function App() {
         <Generate />
         <Fill />
         <Delegate />
+        <Write />
         <Lessons />
       </main>
       <Footer>Every form on this page is drawn by FormView with the example renderers.</Footer>
@@ -517,6 +559,99 @@ function Delegate() {
   );
 }
 
+// ── Writing specs ────────────────────────────────────────────────────────────────────────
+
+const CONSTRUCTS: Record<string, string> = {
+  checks: 'a rule over fields',
+  value: 'a derived value',
+  condition: 'a condition',
+  locales: 'translations',
+  migrations: 'a migration',
+};
+
+const outcome = (a: Attempt) =>
+  !a.json ? 'not JSON' : a.valid ? (a.behaves ? 'behaves' : 'misbehaves') : a.behaves ? 'rejected, behaves' : 'rejected';
+
+function Write() {
+  const latest = ROUNDS.at(-1)!.round;
+  const cases = [...new Set(latest.results.map((r) => r.id))];
+  return (
+    <section className="section" id="write">
+      <Heading kicker="Writing specs" title="The newer vocabulary, from a model that writes">
+        Gemma 4 (Workers AI) wrote whole specs from <code>prompt(registry)</code> for ten descriptions that call for rules over several
+        fields, derived values, translations and a migration, twice each. Every spec was held to a test of how it behaves, which the model
+        never saw; one the checker rejected went back once with its faults. Where it failed, the prompt or the checker changed, and the runs
+        were made again.
+      </Heading>
+      <div className="table-wrap">
+        <table className="names scoreboard">
+          <thead>
+            <tr>
+              <th>Round</th>
+              <th>Behaved, first try</th>
+              <th>After the faults went back</th>
+              <th>Accepted by the checker</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ROUNDS.map(({ round, change }, i) => (
+              <tr key={change}>
+                <th>
+                  {i + 1}
+                  <small>{change}</small>
+                </th>
+                <td>
+                  {round.summary.first.behaves}/{round.summary.runs}
+                </td>
+                <td>
+                  <strong>
+                    {round.summary.final.behaves}/{round.summary.runs}
+                  </strong>
+                </td>
+                <td>
+                  {round.summary.final.valid}/{round.summary.runs}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="table-wrap">
+        <table className="names scoreboard">
+          <thead>
+            <tr>
+              <th>Description, round {ROUNDS.length}</th>
+              <th>Calls for</th>
+              <th>Runs</th>
+              <th>Used</th>
+            </tr>
+          </thead>
+          <tbody>
+            {cases.map((id) => {
+              const runs = latest.results.filter((r) => r.id === id);
+              return (
+                <tr key={id}>
+                  <th>{id}</th>
+                  <td>{CONSTRUCTS[runs[0]!.construct] ?? runs[0]!.construct}</td>
+                  <td>
+                    {runs.map((r) => (
+                      <div key={r.run}>
+                        {outcome(r.first)}
+                        {r.repaired && ` → ${outcome(r.repaired)}`}
+                      </div>
+                    ))}
+                  </td>
+                  <td>{[...new Set(runs.flatMap((r) => (r.repaired ?? r.first).uses))].join(', ') || '—'}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 // ── Lessons ──────────────────────────────────────────────────────────────────────────────
 
 const LESSONS: readonly [string, string][] = [
@@ -539,6 +674,10 @@ const LESSONS: readonly [string, string][] = [
   [
     'Read literally',
     'Jev answers the question as written. "What the person fills in" made it doubt settings; asking whether a phrase gets a value fixed it.',
+  ],
+  [
+    'A fault that shows the shape',
+    'Gemma, writing whole specs, put $cond branches inside $cond and invented $gte and $multiply. Told the rule, it tried again the same way; shown the shape, it fixed the spec. Its first tries barely changed over four rounds; its repairs went from 12 of 20 to all of them.',
   ],
   [
     'Small models leave the field empty',

@@ -69,7 +69,7 @@ A new field with a `default` needs nothing; a renamed key can list its old name 
 Otherwise raise `version` and add `"migrations": { "<new version>": [ … ] }`: JSON Patch
 operations (`add`, `replace`, `remove`, `move`, `copy`) over the stored JSON, `*` for every
 item or key, `value` an expression evaluated where the value goes. `$cel` args there are
-untyped JSON (numbers are doubles). `encode` writes `$version`; `parse` and `createForm` migrate
+untyped JSON (a whole number works as an int or a double). `encode` writes `$version`; `parse` and `createForm` migrate
 older values, and take `from` for values that do not say their version.
 
 ## Code: `$cel` and `$js`

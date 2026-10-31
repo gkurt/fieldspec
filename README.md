@@ -343,7 +343,9 @@ about 25 KB gzipped, synchronously and in microseconds.
   (`price > 2`). A `date` is a timestamp (`end - start >= duration("24h")`), a list or set of
   strings a `list<string>`, a record of ints a `map<string, int>`, and so on.
 - An optional field may be absent, so its arg is `null` or the value, of any type (`dyn`), as is
-  an arg that is not a plain `$state`. Ints inside an object still arrive as ints.
+  an arg that is not a plain `$state`, or one in a migration, which reads untyped JSON. An
+  untyped whole number works as an int or a double, as the expression needs (`timeout * 1000`).
+  Ints inside an object still arrive as ints.
 - A URL or a regular expression arrives as its text. Whole results come back as numbers, so they
   fill `number` and `int` fields.
 - `checkSpec` type-checks each expression against its args: a syntax error, a variable that is
@@ -599,7 +601,12 @@ bun run site        # the homepage: every example on it is live
 
 `experiments/` tries two models that answer with typed values rather than text: Jev
 (TypeSafe), which chooses, and Clairic (Cloudflare Workers AI), which reads values out of text.
-Code proposes, the models decide, and the checker and `parse` have the last word. The homepage's
+Code proposes, the models decide, and the checker and `parse` have the last word. A third
+experiment has a model that writes (Gemma 4) write whole specs from `prompt(registry)`, for
+descriptions that call for checks, `$cel`, derived values, translations and migrations, each
+held to a test of how the spec behaves, with the checker's faults sent back once. Over four
+rounds, each changing the prompt or the checker where the one before failed, the specs that
+behaved after that one repair went from 12 to 20 of 20. The homepage's
 [models page](site/models.html) shows the recorded results.
 
 ```bash
@@ -607,6 +614,7 @@ bun experiments/jev-specs/generate.ts       # specs from descriptions, with Jev 
 bun experiments/clairic-specs/hybrid.ts     # the same, with Clairic reading what the text states
 bun experiments/fill/fill.ts                # filling forms from messages, scored field by field
 bun experiments/delegate/delegate.ts        # handing what they cannot do to a writer model
+bun --conditions=fieldspec@dev experiments/writer-specs/write.ts   # specs written from the prompt, held to tests
 ```
 
 Keys go in `.env.local` (ignored by git): `TYPESAFE_API_KEY` for Jev, and `ANTHROPIC_API_KEY`

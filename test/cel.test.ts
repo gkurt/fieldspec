@@ -141,6 +141,19 @@ describe('typed args', () => {
       '/fields/c/default/$cel: TypeError: no such overload: string > int',
     ]);
   });
+
+  test('an untyped whole number works as an int or a double', () => {
+    const plus = (source: string) => ({ type: 'number', default: { $cel: source, args: { n: { $state: 'n' } } } }) as const;
+    const spec = registry.define({ fields: { n: { type: 'number', optional: true }, a: plus('n + 1'), b: plus('n + 0.5') } });
+    expect(parse(spec, { n: 2 }).value).toEqual({ n: 2, a: 3, b: 2.5 });
+    // A migration reads untyped JSON too.
+    const moved = registry.define({
+      version: 2,
+      fields: { ms: { type: 'int' } },
+      migrations: { '2': [{ op: 'add', path: '/ms', value: { $cel: 's * 1000', args: { s: { $state: '/s' } } } }] },
+    });
+    expect(parse(moved, { $version: 1, s: 5 }).value).toMatchObject({ ms: 5000 });
+  });
 });
 
 describe('checking $cel', () => {

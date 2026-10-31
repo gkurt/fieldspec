@@ -127,7 +127,7 @@ export function prompt(registry: Registry = coreRegistry, options: PromptOptions
     '',
     '## Versions and migrations (`version`, `migrations`)',
     '',
-    'Only when changing a spec whose values are already stored. Adding a field with a `default` needs nothing, and a renamed key can keep its old name in `aliases`. For anything else, raise `version` and add the operations that bring old values forward, keyed by the version they reach: JSON Patch over the values as stored, where `*` stands for every item or key and `value` may be an expression, evaluated where the value goes.',
+    'Only when changing a spec whose values are already stored. Adding a field with a `default` needs nothing, and a renamed key can keep its old name in `aliases`. For anything else, raise `version` and add the operations that bring old values forward, keyed by the version they reach: JSON Patch over the values as stored, where `*` stands for every item or key and `value` may be an expression, evaluated where the value goes. `add` sets a value, making it if it is not there; `replace` changes only one that is. A value that moves to a new key and changes on the way is an `add` at the new key, reading the old one, then a `remove` of the old. The values there are those of the earlier version, so code reads them as untyped JSON, where a whole number works as an int or a double, as the code needs (`timeout * 1000`).',
     '',
     '```json',
     json({

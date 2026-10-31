@@ -55,7 +55,7 @@ Parent-directory imports go through the `#*` alias (`#src/form.ts`), siblings us
 - `site/` — the website (Vite, React), deployed to GitHub Pages by `pages.yml`.
 - `examples/renderers/` — renderer sets to copy (HTML, DialKit, React Aria), not shipped; they import fieldspec by its package name, which the `fieldspec@dev` condition resolves to source.
 - `examples/design.ts` — a custom registry used by tests and the demo; `demo/` — a design-tool demo app.
-- `experiments/` — studies with small models (spec generation, filling); their `out/` is data.
+- `experiments/` — studies with small models (spec generation, filling, writing specs from the prompt); their `out/` is data.
 - `schema/spec.json` — the generated JSON Schema of specs, shipped and served by unpkg.
 - `SKILL.md` — a skill for agents in projects that use fieldspec, shipped in the package.
 - `site/public/llms.txt` — the site's llms.txt: what fieldspec is and where its docs are.

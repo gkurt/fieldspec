@@ -217,7 +217,7 @@ function checkMigrationOp(c: Checker, op: unknown, at: string, last: boolean) {
     else if (prop !== 'value' && (typeof value !== 'string' || !value.startsWith('/')))
       c.fault(`${at}/${prop}`, 'must be a JSON Pointer into the values, starting with /; * stands for every item or key');
   }
-  if (op.value !== undefined && isDynamic(op.value)) checkExpr(c, op.value, `${at}/value`, PAST);
+  if (op.value !== undefined) checkExpr(c, op.value, `${at}/value`, PAST);
   const stars = (p: unknown) => (typeof p === 'string' && p.startsWith('/') ? parsePointer(p).filter((s) => s === '*').length : 0);
   if (typeof op.from === 'string' && stars(op.from) !== stars(op.path))
     c.fault(`${at}/path`, `has ${stars(op.path)} * where \`from\` has ${stars(op.from)}; each * takes what the one in \`from\` stood for`);
@@ -643,7 +643,12 @@ function checkNode(c: Checker, node: unknown, at: string, site: Site): void {
     return placeGroup(c, node.group, `${at}/group`, site);
   }
   const type = node.type;
-  if (typeof type !== 'string') return c.fault(`${at}/type`, 'required: an element name');
+  if (typeof type !== 'string') {
+    // An element wrapped in `render`, as a field's would be.
+    if ('render' in node)
+      return c.fault(`${at}/render`, 'belongs on a field; here the element stands by itself: `{ "type": "stack", "children": [ … ] }`');
+    return c.fault(`${at}/type`, 'required: an element name, as in `{ "type": "stack", "children": [ … ] }`');
+  }
   const def = c.registry.elements.get(type);
   if (!def) return c.fault(`${at}/type`, unknownName('element', type, c.registry.elements.keys()));
   for (const key of Object.keys(node))
@@ -925,7 +930,16 @@ function checkExpr(c: Checker, expr: unknown, at: string, scope: Scope) {
   if (!isObject(expr)) return;
   const keys = EXPR_KEYS.filter((k) => k in expr);
   if (keys.length === 0) {
-    for (const [k, v] of Object.entries(expr)) checkExpr(c, v, `${at}/${escapeSegment(k)}`, scope);
+    for (const [k, v] of Object.entries(expr)) {
+      // `$` keys are the expressions'; an invented one (`$multiply`) would pass as a literal object.
+      if (k.startsWith('$')) {
+        c.fault(
+          `${at}/${escapeSegment(k)}`,
+          `is not an expression: there are ${EXPR_KEYS.join(', ')}. Arithmetic is code: \`{ "$cel": "timeout * 1000", "args": { "timeout": { "$state": "timeout" } } }\`.${mean(k, EXPR_KEYS)}`,
+        );
+      }
+      checkExpr(c, v, `${at}/${escapeSegment(k)}`, scope);
+    }
     return;
   }
   if (keys.length > 1) return c.fault(at, `mixes ${keys.join(' and ')}; an expression has one of them`);
@@ -958,12 +972,15 @@ function checkExpr(c: Checker, expr: unknown, at: string, scope: Scope) {
     case '$cel':
     case '$js':
       return checkCode(c, key, expr, at, scope);
-    case '$cond':
-      checkCondition(c, expr.$cond, `${at}/$cond`, scope);
-      if (!('$then' in expr) || !('$else' in expr)) c.fault(at, 'a $cond needs both $then and $else');
+    case '$cond': {
+      const branches = isObject(expr.$cond) ? ['then', 'else', '$then', '$else'].filter((k) => k in (expr.$cond as object)) : [];
+      if (branches.length > 0) c.fault(`${at}/$cond`, `holds only the condition; ${COND_SHAPE}, not inside \`$cond\``);
+      else checkCondition(c, expr.$cond, `${at}/$cond`, scope);
+      if (!('$then' in expr) || !('$else' in expr)) c.fault(at, `a $cond needs both $then and $else: ${COND_EXAMPLE}`);
       checkExpr(c, expr.$then, `${at}/$then`, scope);
       checkExpr(c, expr.$else, `${at}/$else`, scope);
       return;
+    }
     case '$template':
       if (typeof expr.$template !== 'string') return c.fault(`${at}/$template`, 'must be a string');
       for (const m of expr.$template.matchAll(/\$\{([^}]*)\}/g)) checkPointer(c, m[1]!.trim(), `${at}/$template`, scope);
@@ -1024,6 +1041,9 @@ function checkChecks(c: Checker, checks: unknown, at: string, scope: Scope) {
   });
 }
 
+const COND_EXAMPLE = '`{ "$cond": { "$state": "express", "eq": true }, "$then": 19.95, "$else": 9.95 }`';
+const COND_SHAPE = `\`$then\` and \`$else\` sit beside it: ${COND_EXAMPLE}`;
+
 function checkCondition(c: Checker, cond: unknown, at: string, scope: Scope) {
   if (typeof cond === 'boolean') return;
   if (Array.isArray(cond)) return cond.forEach((x, i) => checkCondition(c, x, `${at}/${i}`, scope));
@@ -1036,14 +1056,16 @@ function checkCondition(c: Checker, cond: unknown, at: string, scope: Scope) {
     return list.forEach((x, i) => checkCondition(c, x, `${at}/${key}/${i}`, scope));
   }
   const sources = ['$state', '$item', '$index', '$computed', ...LANGUAGE_KEYS].filter((k) => k in cond);
-  if (sources.length !== 1) {
+  if (sources.length === 0) {
+    const near = Object.keys(cond)
+      .map((k) => mean(k, OPERATORS))
+      .find(Boolean);
     return c.fault(
       at,
-      sources.length === 0
-        ? 'needs a value to test: $state, $item, $index, $computed, $cel or $js'
-        : `tests ${sources.join(' and ')}; a condition tests one value`,
+      `needs a value to test ($state, $item, $index, $computed, $cel or $js), with at most one operator beside it: \`{ "$state": "subtotal", "gte": 50 }\`.${near ?? ''}`,
     );
   }
+  if (sources.length > 1) return c.fault(at, `tests ${sources.join(' and ')}; a condition tests one value`);
   const ops = OPERATORS.filter((op) => op in cond);
   if (ops.length > 1) c.fault(at, `has ${ops.join(' and ')}; use one operator per condition, and an array to require several`);
   for (const key of Object.keys(cond)) {
