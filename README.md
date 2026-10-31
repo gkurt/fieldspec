@@ -60,8 +60,8 @@ differ from a built-in only by case.
 
 - A field has a `type` (a kind), or a `use` (see Presets), plus what every field may say:
   `label`, `description`, `hint`, `placeholder`, `examples`, `aliases`, `deprecated`, `default`,
-  `optional`, `readOnly`, `visible`, `enabled`, `required`, `checks`, `group`, `order`, `render`,
-  `meta`.
+  `value`, `optional`, `readOnly`, `visible`, `enabled`, `required`, `checks`, `group`, `order`,
+  `render`, `meta`.
 - **Order**: fields draw in the order they are declared. `order` moves one: lower draws first,
   a field without it counts as 0, and equal ones keep their declared order, so `order: -1` puts
   a field at the top and `order: 1` at the bottom. It moves the field, not its value, and a group
@@ -77,7 +77,7 @@ differ from a built-in only by case.
   object (`"plan"` is a sibling), and each leading `../` climbs one level (an array index
   counts as one). `$item`/`$index` read the current array item.
 - **Expressions** (`$state`, `$template`, `$cond`, `$computed`, `$cel`, `$js`) work in defaults,
-  labels, options and element props. `$computed` names a function from a table passed at
+  values, labels, options and element props. `$computed` names a function from a table passed at
   runtime, so the spec stays JSON; `define(spec, { fns })` checks every name is implemented.
   `$cel` and `$js` are code the spec carries itself (see Code).
 - **Groups** gather fields for display without changing the value's shape.
@@ -90,6 +90,29 @@ differ from a built-in only by case.
 - **Suggestions**: a string's `suggestions` are values offered as it is typed, any other still
   allowed: a list of strings, or an expression giving one (`{ "$state": "/roles" }` offers what
   another list holds). A string with suggestions draws as an `autocomplete`.
+
+## Derived values: `value`
+
+`default` fills a value that is absent, and people may change it. `value` decides every value:
+a total, a slug, a count, worked out from the others and worked out again as they change.
+
+```json
+"total": {
+  "type": "number",
+  "value": { "$cel": "price * double(qty)", "args": { "price": { "$state": "price" }, "qty": { "$state": "qty" } } }
+}
+```
+
+- `parse` and `decode` replace a value given for the field, and a form recomputes it on every
+  edit. Its field state is `readOnly`, so controls draw it disabled, and `form.set` on it is undone.
+- Values may read values, in any order, and one that reads a list sees the values inside its items
+  worked out first. A cycle leaves the fields in it at their zero.
+- It is validated like any value: `"max": 100` on a total is a rule about the others.
+- `encode` writes it, so stored JSON carries it for whoever reads it without fieldspec.
+- A literal is a constant: `"value": "v2"`. The checker checks it against the kind, and warns of
+  a `default` beside a `value`, which is never used.
+- JSON Schema marks it `readOnly` and keeps the expression as `x-value`. Standard Schema runs
+  `parse`, so it computes it; `toZod` validates the value it is given as it is.
 
 ## Checks: `checks`
 
@@ -536,10 +559,16 @@ checks meaning (references, conditions, defaults).
   itself is drawn `depth` levels deep (default 3), and the output stops at `maxElements`
   (default 20 000), past which fields are left out with a note. It is tested against json-render itself: its
   spec validator, the shadcn components' props, and its React renderer in a DOM.
-  json-render's state holds JSON, except records and maps are lists of `{ key, value }`, enum
-  values are strings, a set edited with `checks` is a comma-separated string, and a `json` field
-  is text: `toJsonRenderState` / `fromJsonRenderState` convert (a collection holding a value of
-  the wrong shape becomes an empty list, which json-render can repeat over). A list inside a list item
+  json-render's state holds JSON, except records and maps are lists of `{ key, value }`, an
+  enum's value (and a variant's key) is its option's label, so shadcn's `Select` and `Radio`,
+  which take plain strings, show labels (its value, as text, where labels are expressions or
+  repeat), a set edited with `checks` is a comma-separated string, and a `json` field is text:
+  `toJsonRenderState` / `fromJsonRenderState` convert, and conditions comparing an enum compare
+  its label (a collection holding a value of the wrong shape becomes an empty list, which
+  json-render can repeat over). An expression with code in it (`$cel`, `$js`, `$computed`)
+  becomes a call to one function, which runs it as fieldspec does, with typed values read from
+  json-render's state: pass `jsonRenderFunctions(spec)` to `JSONUIProvider` as `functions`. A
+  derived `value` is drawn as text that follows the others. A list inside a list item
   removes its items with the `removeItem` action: declare `JSON_RENDER_ACTIONS` in your catalog
   and pass `jsonRenderActions(store)` as handlers. A `scroll` box is a `Stack` with Tailwind
   classes (`overflow-y-auto max-h-[18rem]`), so Tailwind must see the class.
@@ -551,10 +580,9 @@ checks meaning (references, conditions, defaults).
 
 Experimental. Not yet:
 
-- In json-render output: enum labels in `select` and `radio` (shadcn's take plain strings;
-  `segmented` keeps them), conditions that read an outer list's item from inside an inner
-  list's (json-render reads only the innermost item), and code (`$cel`, `$js`), which json-render cannot run.
-- Fields whose value is always derived. Expression defaults fill absent values only.
+- In json-render output: conditions with code in them (json-render's conditions have no way to
+  call a function, so such a leaf holds and what it guards shows), and conditions that read an
+  outer list's item from inside an inner list's (json-render reads only the innermost item).
 
 ```bash
 bun install

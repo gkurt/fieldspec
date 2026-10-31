@@ -224,7 +224,8 @@ describe('json-render', () => {
     const port = els.find((e) => (e.props.value as { $bindState?: string } | undefined)?.$bindState === '/form/port')!;
     expect(port).toMatchObject({ type: 'Input', props: { label: 'Port', type: 'number' } });
     const replicas = els.find((e) => (e.props.value as { $bindState?: string } | undefined)?.$bindState === '/form/replicas')!;
-    expect(replicas.visible).toEqual({ $state: '/form/mode', eq: 'prod' });
+    // json-render's state holds the enum by its label, so the condition compares that.
+    expect(replicas.visible).toEqual({ $state: '/form/mode', eq: 'Production' });
     expect((out.state?.form as { port?: unknown } | undefined)?.port).toBe(8080);
   });
 });

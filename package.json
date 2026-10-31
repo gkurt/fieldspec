@@ -98,7 +98,7 @@
     "build": "tsdown",
     "prepack": "tsdown",
     "check:package": "publint && attw --pack . --profile esm-only --exclude-entrypoints ./schema.json",
-    "stress": "bun test/stress/explore.ts && bun test/stress/fuzz.ts 0 1000",
+    "stress": "bun --conditions=fieldspec@dev test/stress/explore.ts && bun --conditions=fieldspec@dev test/stress/fuzz.ts 0 1000",
     "schema": "bun scripts/schema.ts",
     "demo": "vite demo --port 4192",
     "site:build": "vite build site",

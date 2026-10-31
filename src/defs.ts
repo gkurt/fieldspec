@@ -1,3 +1,4 @@
+import { isDynamic } from './expr.ts';
 import { isBuiltinName } from './names.ts';
 /**
  * Following `use` to the declaration it names: a definition in the spec's `defs`, or a preset
@@ -6,6 +7,12 @@ import { isBuiltinName } from './names.ts';
  */
 import type { Presets } from './registry.ts';
 import type { Check, FieldDecl, ObjectField, Resolved, Spec, VariantField } from './types.ts';
+
+/** A literal `value` or `default` ends a field's recursion; an expression may give back a value that needs more of it. */
+export function endsWithLiteral(decl: FieldDecl): boolean {
+  const given = decl.value ?? decl.default;
+  return given !== undefined && !isDynamic(given);
+}
 
 /** Where `use` names are looked up. */
 export interface Lookup {
@@ -85,7 +92,7 @@ export function requiresItself(defs: NonNullable<Spec['defs']>, start: string): 
   // so definitions that use each other many times are each searched once.
   const seen = new Set([start]);
   const visit = (decl: FieldDecl, trail: string[]): string[] | undefined => {
-    if (!isObject(decl) || decl.optional || decl.default !== undefined) return undefined;
+    if (!isObject(decl) || decl.optional || endsWithLiteral(decl)) return undefined;
     if (decl.use !== undefined && decl.type === undefined) {
       const name = String(decl.use);
       if (name === start) return trail;

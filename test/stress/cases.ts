@@ -254,6 +254,33 @@ export const CASES: Case[] = [
     spec: { fields: { o: { type: 'object', default: { $state: 'o' }, fields: { x: { type: 'int', default: { $state: '../o/x' } } } } } },
   },
   {
+    name: 'defaults that copy the object they are in, of a definition holding them twice',
+    spec: {
+      fields: { d: { use: 'D0' } },
+      defs: {
+        D0: {
+          type: 'object',
+          fields: { n: { type: 'int' }, c0: { use: 'D0', default: { $state: '' } }, c1: { use: 'D0', default: { $state: '' } } },
+        },
+      },
+    },
+    expect: 'invalid',
+  },
+  {
+    name: 'a default that copies the object it is in, of a definition that requires itself',
+    spec: {
+      fields: { list: { type: 'array', items: { use: 'D0' } } },
+      defs: {
+        D0: {
+          type: 'object',
+          fields: { c0: { use: 'D0', default: { $state: '' } }, x1: { type: 'object', fields: { a3: { use: 'D0' } } } },
+        },
+      },
+    },
+    values: { list: [{}] },
+    expect: 'invalid',
+  },
+  {
     name: 'conditions that read the field they are on',
     spec: {
       fields: {

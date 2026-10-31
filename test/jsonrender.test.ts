@@ -12,7 +12,18 @@ import type * as ShadcnModule from '@json-render/shadcn';
 import { shadcnComponentDefinitions } from '@json-render/shadcn/catalog';
 import type { act, createElement } from 'react';
 import type * as ClientModule from 'react-dom/client';
-import { define, fromJsonRenderState, JSON_RENDER_ACTIONS, jsonRenderActions, parse, toJsonRender, toJsonRenderState } from '#src/index.ts';
+import { createCel } from '#src/cel.ts';
+import {
+  createRegistry,
+  define,
+  fromJsonRenderState,
+  JSON_RENDER_ACTIONS,
+  jsonRenderActions,
+  jsonRenderFunctions,
+  parse,
+  toJsonRender,
+  toJsonRenderState,
+} from '#src/index.ts';
 
 /** The part of React the tests use, imported once the DOM is registered. */
 type ReactModule = { act: typeof act; createElement: typeof createElement };
@@ -92,9 +103,9 @@ type Def = { props: { partial(): { strict(): { safeParse(v: unknown): { success:
 const definitions = shadcnComponentDefinitions as unknown as Record<string, Def>;
 
 /** Each element's props as its component would get them, bindings left out (their values are state's). */
-function propIssues(out: ReturnType<typeof toJsonRender>) {
+function propIssues(out: ReturnType<typeof toJsonRender>, functions?: ReturnType<typeof jsonRenderFunctions>) {
   const issues: string[] = [];
-  const ctx = { stateModel: out.state ?? {}, repeatItem: {}, repeatIndex: 0, repeatBasePath: '/repeat/0' };
+  const ctx = { stateModel: out.state ?? {}, repeatItem: {}, repeatIndex: 0, repeatBasePath: '/repeat/0', functions };
   for (const [key, el] of Object.entries(out.elements)) {
     const def = definitions[el.type];
     if (!def) {
@@ -155,6 +166,54 @@ describe('json-render output, checked by json-render', () => {
     const back = parse(spec, fromJsonRenderState(spec, state));
     expect(back.ok).toBe(true);
     expect(back.value).toEqual(parse(spec, values).value);
+  });
+
+  test("an enum's choices are held by label, which selects show, and conditions compare", () => {
+    const regions = define({
+      fields: {
+        region: {
+          type: 'enum',
+          options: [
+            { value: 'eu', label: 'Europe' },
+            { value: 'us', label: 'United States' },
+          ],
+        },
+        sizes: {
+          type: 'set',
+          items: {
+            type: 'enum',
+            options: [
+              { value: 1, label: 'One' },
+              { value: 2, label: 'Two' },
+            ],
+          },
+          render: 'checks',
+        },
+        // Repeated labels cannot stand for their values: these keep the values.
+        tier: {
+          type: 'enum',
+          options: [
+            { value: 'a', label: 'Same' },
+            { value: 'b', label: 'Same' },
+          ],
+        },
+        vat: { type: 'string', visible: { $state: 'region', eq: 'eu' } },
+      },
+    });
+    const out = toJsonRender(regions, { values: { region: 'us', sizes: [2], tier: 'b' } });
+    const form = (out.state as { form: Record<string, unknown> }).form;
+    expect(form).toMatchObject({ region: 'United States', sizes: 'Two', tier: 'b' });
+    const select = Object.values(out.elements).find((e) => e.type === 'Select' && e.props.name === 'region')!;
+    expect(select.props.options).toEqual(['Europe', 'United States']);
+    expect(
+      Object.values(out.elements).some((e) => JSON.stringify(e.visible) === JSON.stringify({ $state: '/form/region', eq: 'Europe' })),
+    ).toBe(true);
+    expect(parse(regions, fromJsonRenderState(regions, out.state)).value).toEqual({
+      region: 'us',
+      sizes: new Set([2]),
+      tier: 'b',
+      vat: '',
+    });
   });
 });
 
@@ -261,6 +320,56 @@ describe('json-render output, drawn by json-render', () => {
     expect((result.value as { headers: Record<string, string> }).headers).toEqual({ 'X-Trace': 'on', 'X-New': '' });
     expect((result.value as { webhooks: unknown[] }).webhooks).toHaveLength(2);
     await ui.act(() => ui.root.unmount());
+  });
+
+  test('code runs through jsonRenderFunctions, and derived values follow', async () => {
+    const registry = createRegistry({ languages: [createCel()] });
+    const order = registry.define(
+      {
+        fields: {
+          qty: { type: 'int', default: 2 },
+          price: { type: 'number', default: 1.5 },
+          total: {
+            type: 'number',
+            label: 'Total',
+            value: { $cel: 'double(qty) * price', args: { qty: { $state: 'qty' }, price: { $state: 'price' } } },
+          },
+          note: { type: 'string', label: { $computed: 'shout', args: { s: { $state: 'qty' } } } },
+          // A condition json-render cannot run holds.
+          gift: { type: 'boolean', visible: { $cel: 'qty > 5', args: { qty: { $state: 'qty' } } } },
+        },
+      },
+      { fns: { shout: ({ s }) => `Note for ${String(s)}!` } },
+    );
+    const out = toJsonRender(order);
+    expect(propIssues(out, jsonRenderFunctions(order))).toEqual([]);
+    const store = createStateStore(out.state);
+    const { registry: components } = jr.defineRegistry(catalog, {
+      components: shadcn.shadcnComponents,
+      actions: jsonRenderActions(store) as never,
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = client.createRoot(host);
+    await React.act(async () =>
+      root.render(
+        React.createElement(jr.JSONUIProvider, {
+          registry: components,
+          store,
+          functions: jsonRenderFunctions(order),
+          children: React.createElement(jr.Renderer, { spec: out as never, registry: components }),
+        }),
+      ),
+    );
+    expect(host.textContent).toContain('Total');
+    expect(host.textContent).toContain('3');
+    expect(host.textContent).toContain('Note for 2!');
+    expect(host.querySelector('input[name="gift"], button[role="checkbox"]')).not.toBeNull();
+    await React.act(async () => store.set('/form/qty', 4));
+    expect(host.textContent).toContain('6');
+    expect(host.textContent).toContain('Note for 4!');
+    expect(parse(order, fromJsonRenderState(order, store.getSnapshot())).value).toMatchObject({ qty: 4, total: 6 });
+    await React.act(async () => root.unmount());
   });
 
   test('the tabs layout shows one tab at a time', async () => {

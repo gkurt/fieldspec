@@ -1,7 +1,7 @@
 /**
  * Random specs, seeded: every kind, definitions that use each other (in rings too), groups with
- * random parents, renders that place random fields and groups, conditions, defaults, checks and
- * `$cel` over random pointers, translations of random texts, migrations over random paths, and
+ * random parents, renders that place random fields and groups, conditions, defaults, values,
+ * checks and `$cel` over random pointers, translations of random texts, migrations over random paths, and
  * values that only sometimes fit (and say random versions). Many are invalid on purpose; the
  * checker must say so, and nothing may hang either way.
  */
@@ -108,6 +108,8 @@ class Gen {
     if (r.chance(0.1))
       base.default = r.pick<unknown>([{ $state: this.pointer() }, this.cel(), r.pick<unknown>([0, '', 'x', true, [], {}, null])]);
     if (r.chance(0.15)) base.checks = this.checks();
+    if (r.chance(0.08))
+      base.value = r.pick<unknown>([{ $state: this.pointer() }, this.cel(), { $template: `\${${this.pointer()}}!` }, 1, 'x']);
 
     const roll = r.next();
     if (this.defs.length > 0 && (roll < 0.15 || (depth > 3 && roll < 0.5))) return { ...base, use: r.pick(this.defs) };

@@ -28,7 +28,8 @@ if (process.argv[2] === '--one') {
   for (const [i, c] of CASES.entries()) {
     if (only && !c.name.includes(only)) continue;
     const start = performance.now();
-    const child = Bun.spawnSync(['bun', import.meta.path, '--one', String(i)], {
+    // The example renderers import fieldspec by name: the condition makes that the source, as here.
+    const child = Bun.spawnSync(['bun', '--conditions=fieldspec@dev', import.meta.path, '--one', String(i)], {
       env: { ...process.env, STRESS_TRACE: '1' },
       timeout: LIMIT,
     });

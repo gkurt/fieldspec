@@ -36,6 +36,7 @@ const BASE_KEYS = new Set([
   'aliases',
   'deprecated',
   'default',
+  'value',
   'optional',
   'readOnly',
   'visible',
@@ -104,7 +105,7 @@ function objectSchema(ctx: Out, fields: ObjectField['fields'], unknown: ObjectFi
     properties[key] = fieldSchema(ctx, decl);
     const real = deref(ctx.lookup, decl);
     if (real.optional) continue;
-    if (ctx.io === 'output' || (real.default === undefined && !hasZero(ctx.registry, real))) required.push(key);
+    if (ctx.io === 'output' || (real.default === undefined && real.value === undefined && !hasZero(ctx.registry, real))) required.push(key);
   }
   return {
     type: 'object',
@@ -192,7 +193,8 @@ function annotate(s: JsonSchema, decl: Resolved) {
     s.deprecated = true;
     if (typeof decl.deprecated === 'string') s['x-deprecated'] = decl.deprecated;
   }
-  if (decl.readOnly) s.readOnly = true;
+  if (decl.value !== undefined) s['x-value'] = decl.value;
+  if (decl.readOnly || decl.value !== undefined) s.readOnly = true;
   for (const prop of [
     'hint',
     'placeholder',
@@ -401,11 +403,13 @@ function fieldFrom(ctx: FromCtx, raw: Schema): FieldDecl {
     if (Array.isArray(s.examples)) decl.examples = s.examples;
     if (s.default !== undefined) decl.default = s.default;
     if (s.deprecated === true) decl.deprecated = s['x-deprecated'] ?? true;
-    if (s.readOnly === true) decl.readOnly = true;
+    // A derived value is read-only by nature; JSON Schema says so for it.
+    if (s.readOnly === true && s['x-value'] === undefined) decl.readOnly = true;
     for (const prop of [
       'label',
       'description',
       'default',
+      'value',
       'hint',
       'placeholder',
       'aliases',

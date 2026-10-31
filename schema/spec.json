@@ -156,6 +156,10 @@
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
             },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
+            },
             "optional": {
               "type": "boolean",
               "description": "The value may be absent."
@@ -287,6 +291,10 @@
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
             },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
+            },
             "optional": {
               "type": "boolean",
               "description": "The value may be absent."
@@ -398,6 +406,10 @@
             "default": {
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
+            },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
             },
             "optional": {
               "type": "boolean",
@@ -511,6 +523,10 @@
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
             },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
+            },
             "optional": {
               "type": "boolean",
               "description": "The value may be absent."
@@ -605,6 +621,10 @@
             "default": {
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
+            },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
             },
             "optional": {
               "type": "boolean",
@@ -750,6 +770,10 @@
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
             },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
+            },
             "optional": {
               "type": "boolean",
               "description": "The value may be absent."
@@ -857,6 +881,10 @@
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
             },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
+            },
             "optional": {
               "type": "boolean",
               "description": "The value may be absent."
@@ -962,6 +990,10 @@
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
             },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
+            },
             "optional": {
               "type": "boolean",
               "description": "The value may be absent."
@@ -1065,6 +1097,10 @@
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
             },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
+            },
             "optional": {
               "type": "boolean",
               "description": "The value may be absent."
@@ -1159,6 +1195,10 @@
             "default": {
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
+            },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
             },
             "optional": {
               "type": "boolean",
@@ -1267,6 +1307,10 @@
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
             },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
+            },
             "optional": {
               "type": "boolean",
               "description": "The value may be absent."
@@ -1361,6 +1405,10 @@
             "default": {
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
+            },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
             },
             "optional": {
               "type": "boolean",
@@ -1476,6 +1524,10 @@
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
             },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
+            },
             "optional": {
               "type": "boolean",
               "description": "The value may be absent."
@@ -1586,6 +1638,10 @@
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
             },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
+            },
             "optional": {
               "type": "boolean",
               "description": "The value may be absent."
@@ -1693,6 +1749,10 @@
             "default": {
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
+            },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
             },
             "optional": {
               "type": "boolean",
@@ -1802,6 +1862,10 @@
             "default": {
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
+            },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
             },
             "optional": {
               "type": "boolean",
@@ -1920,6 +1984,10 @@
             "default": {
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
+            },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
             },
             "optional": {
               "type": "boolean",
@@ -2055,6 +2123,10 @@
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
             },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
+            },
             "optional": {
               "type": "boolean",
               "description": "The value may be absent."
@@ -2155,6 +2227,10 @@
             "default": {
               "$ref": "#/$defs/expr",
               "description": "The value when absent. May be an expression."
+            },
+            "value": {
+              "$ref": "#/$defs/expr",
+              "description": "What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change."
             },
             "optional": {
               "type": "boolean",

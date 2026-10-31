@@ -42,7 +42,7 @@ export function prompt(registry: Registry = coreRegistry, options: PromptOptions
   for (const [name, info] of Object.entries(BASE_PROPS)) out(`- \`${name}\`${info.required ? ' (required)' : ''}: ${info.description}`);
   out(
     '',
-    'An absent value takes `default`, else the kind\'s zero ("", 0, false, the first option, empty collections). `optional: true` lets it stay absent. Defaults are written in the JSON form of the value.',
+    'An absent value takes `default`, else the kind\'s zero ("", 0, false, the first option, empty collections). `optional: true` lets it stay absent. Defaults are written in the JSON form of the value. A field whose value follows from others (a total, a slug) takes `value` instead: an expression that decides it every time, so the field cannot be edited.',
     '',
     '## Kinds (`type`)',
     '',
@@ -80,7 +80,7 @@ export function prompt(registry: Registry = coreRegistry, options: PromptOptions
     }),
     '```',
     '',
-    '## Expressions (`default`, `label`, `description`, `hint`, `placeholder`, enum `options`, element props)',
+    '## Expressions (`default`, `value`, `label`, `description`, `hint`, `placeholder`, enum `options`, element props)',
     '',
     '- `{ "$state": "/path" }` reads a value. `{ "$template": "Hi ${/name}" }` interpolates.',
     '- `{ "$cond": <condition>, "$then": <expr>, "$else": <expr> }` chooses.',

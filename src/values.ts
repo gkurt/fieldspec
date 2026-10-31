@@ -13,6 +13,7 @@ import type {
   ArrayField,
   Check,
   Condition,
+  Expr,
   FieldDecl,
   GroupDecl,
   Issue,
@@ -61,6 +62,12 @@ export function ctxOf(spec: Spec, options: ValueOptions = {}): Ctx {
 
 /** How deep defaults are filled. Only a definition that requires itself goes this deep, and the checker reports one. */
 const MAX_DEPTH = 64;
+/**
+ * How many computed values deep a computed value may sit. A computed list's items get their own
+ * computed defaults; what those hold does not. A default that copies the object it is in, of a
+ * definition that holds it twice, would otherwise grow without end.
+ */
+const MAX_NESTED = 1;
 const depthOf = (pointer: string) => pointer.split('/').length;
 
 type Fields = { readonly [key: string]: FieldDecl };
@@ -262,9 +269,9 @@ export function encodeField(ctx: Ctx, decl: FieldDecl, value: unknown): unknown 
 // ── Defaults ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Fill every absent field: its default, else its kind's zero. Defaults that are expressions
- * are computed after the literal ones, each reading the others as resolved, in any order;
- * a cycle leaves the fields in it absent.
+ * Fill every absent field: its default, else its kind's zero, and set every field with a `value`
+ * to it. Defaults and values that are expressions are computed after the literal ones, each
+ * reading the others as resolved, in any order; a cycle leaves the fields in it absent.
  */
 export function resolve(spec: Spec, values: unknown, options?: ValueOptions): Record<string, unknown> {
   const ctx = ctxOf(spec, options);
@@ -299,6 +306,12 @@ interface Pending {
   readonly pointer: string;
   readonly decl: FieldDecl;
   readonly scope: Scope;
+  /** The field's `value`, else its `default`. */
+  readonly expr: Expr;
+  /** The definitions around the value, the field's own included, for filling it once computed. */
+  readonly trail: Trail;
+  /** How many computed values it sits inside. */
+  readonly nested?: number;
 }
 
 /**
@@ -355,18 +368,28 @@ function fillField(
 ): unknown {
   const decl = deref(lk(ctx), raw);
   if (depthOf(at) > MAX_DEPTH) return value;
+  const name = usedName(raw);
+  const loops = name !== undefined && trail.includes(name) && loopsBack(ctx, name);
+  if (decl.value !== undefined) {
+    if (loops) return undefined;
+    if (isDynamic(decl.value)) {
+      pending.push({ pointer: at, decl, scope, expr: decl.value, trail: along(trail, raw) });
+      return undefined;
+    }
+    return fillInside(ctx, decl, decodeField(ctx, decl, decl.value), at, pending, along(trail, raw));
+  }
   if (value === undefined) {
     if (decl.default !== undefined) {
       if (isDynamic(decl.default)) {
-        pending.push({ pointer: at, decl, scope });
+        if (loops) return undefined;
+        pending.push({ pointer: at, decl, scope, expr: decl.default, trail: along(trail, raw) });
         return undefined;
       }
       value = decodeField(ctx, decl, decl.default);
     } else if (decl.optional) {
       return undefined;
     } else {
-      const name = usedName(raw);
-      if (name !== undefined && trail.includes(name) && loopsBack(ctx, name)) return undefined;
+      if (loops) return undefined;
       value = zeroOf(ctx, decl);
       if (value === undefined) return undefined;
     }
@@ -394,6 +417,22 @@ function fillInside(ctx: Ctx, decl: FieldDecl, value: unknown, at: string, pendi
         const pointer = joinPointer(at, i);
         return x === undefined ? x : fillInside(ctx, items, x, pointer, pending, inner);
       });
+    }
+    case 'record': {
+      if (!isPlainObject(value)) return value;
+      const values = (decl as RecordField).values;
+      const inner = along(trail, values);
+      return Object.fromEntries(
+        Object.entries(value).map(([k, x]) => [k, x === undefined ? x : fillInside(ctx, values, x, joinPointer(at, k), pending, inner)]),
+      );
+    }
+    case 'map': {
+      if (!(value instanceof Map)) return value;
+      const values = (decl as MapField).values;
+      const inner = along(trail, values);
+      return new Map(
+        [...value].map(([k, x]) => [k, x === undefined ? x : fillInside(ctx, values, x, joinPointer(at, String(k)), pending, inner)]),
+      );
     }
     default:
       return value;
@@ -441,25 +480,32 @@ function computePending(spec: Spec, ctx: Ctx, pending: Pending[], get: () => unk
       languages: ctx.registry.languages,
       declAt: (pointer) => declAt(spec, get(), pointer, ctx.registry)?.decl,
       get(pointer) {
-        // A default reading another default not computed yet computes that one first.
-        for (const [at, other] of byPointer) if ((pointer === at || pointer.startsWith(`${at}/`)) && !state.has(at)) compute(other);
+        // What holds the field holds it too: the field would be worked out from itself.
+        if (pointer === p.pointer || p.pointer.startsWith(pointer === '' ? '/' : `${pointer}/`)) return undefined;
+        // A default or value reading another not computed yet computes that one first.
+        for (const [at, other] of byPointer) {
+          const related = pointer === at || pointer.startsWith(`${at}/`) || at.startsWith(pointer === '' ? '/' : `${pointer}/`);
+          if (related && !state.has(at)) compute(other);
+        }
 
         return getAt(get(), pointer);
       },
     };
     let value: unknown;
     try {
-      value = evaluate(p.decl.default, env, p.scope);
+      value = evaluate(p.expr, env, p.scope);
     } catch {
       value = undefined;
     }
     if (value !== undefined) {
       const more: Pending[] = [];
-      const filled = fillInside(ctx, p.decl, decodeField(ctx, p.decl, value), p.pointer, more);
+      const filled = fillInside(ctx, p.decl, decodeField(ctx, p.decl, value), p.pointer, more, p.trail);
       set(setAt(get(), p.pointer, filled));
-      for (const m of more) {
-        byPointer.set(m.pointer, m);
-        pending.push(m);
+      const nested = (p.nested ?? 0) + 1;
+      for (const m of nested > MAX_NESTED ? [] : more) {
+        const inner = { ...m, nested };
+        byPointer.set(m.pointer, inner);
+        pending.push(inner);
       }
     } else if (!p.decl.optional) {
       const zero = zeroOf(ctx, p.decl);

@@ -74,6 +74,7 @@ const KEPT_IF_EQUAL = new Set([
   'group',
   'order',
   'default',
+  'value',
   'visible',
   'enabled',
   'required',
@@ -453,7 +454,7 @@ function mergeGroups(maps: readonly (Groups | undefined)[], all: boolean): Group
 
 // ── Pruning: what refers to fields that were left out ─────────────────────────────────────
 
-const CONDITIONS = ['visible', 'enabled', 'required', 'default'] as const;
+const CONDITIONS = ['visible', 'enabled', 'required', 'default', 'value'] as const;
 
 /**
  * The fields, without conditions and defaults that read a field no longer there, and without

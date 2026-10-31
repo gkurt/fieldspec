@@ -146,6 +146,12 @@ export interface FieldBase {
   readonly deprecated?: boolean | string;
   /** Used when the value is absent. May be an expression over other values. */
   readonly default?: Expr;
+  /**
+   * What the value always is: usually an expression over other values, computed again as they
+   * change. The field cannot be edited, and a value given for it is replaced. Where `default`
+   * fills an absent value, `value` decides every value.
+   */
+  readonly value?: Expr;
   /** The value may be absent. Otherwise an absent value takes the default or the kind's zero. */
   readonly optional?: boolean;
   readonly readOnly?: boolean;

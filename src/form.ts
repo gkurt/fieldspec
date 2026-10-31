@@ -235,7 +235,7 @@ export function createForm<S extends Spec>(given: S, options: FormOptions = {}):
       visible,
       enabled,
       required: decl.required !== undefined && safeTest(decl.required, scope),
-      readOnly: decl.readOnly === true || (parentState?.readOnly ?? false),
+      readOnly: decl.readOnly === true || decl.value !== undefined || (parentState?.readOnly ?? false),
       label,
       description: text(decl.description, scope),
       hint: text(decl.hint, scope),

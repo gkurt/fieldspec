@@ -1,12 +1,12 @@
 # fieldspec
 
-> A typed, serializable, headless format for configs and the forms that edit them. One JSON document, a spec, says what the values are (kinds, constraints, defaults, conditions, checks) and, optionally, how a form for them is drawn. TypeScript infers the value type from it, agents write it from a generated prompt and meta-schema, and it converts to and from JSON Schema, Zod, Standard Schema and json-render. ESM-only, on npm as `fieldspec`.
+> A typed, serializable, headless format for configs and the forms that edit them. One JSON document, a spec, says what the values are (kinds, constraints, defaults, derived values, conditions, checks) and, optionally, how a form for them is drawn. TypeScript infers the value type from it, agents write it from a generated prompt and meta-schema, and it converts to and from JSON Schema, Zod, Standard Schema and json-render. ESM-only, on npm as `fieldspec`.
 
 Agents writing specs should get their rules from the library rather than from memory: `prompt(registry)` is a system prompt and `metaSchema(registry)` a JSON Schema for structured output, both generated from the registry that will read the spec. `checkSpec(spec, { registry })` then reports every fault at a JSON Pointer, phrased as the fix.
 
 ## Docs
 
-- [README](https://github.com/gkurt/fieldspec/blob/main/README.md): the full reference: fields, kinds, conditions, checks, presets and definitions, rendering, code (`$cel`, `$js`), extending, interop.
+- [README](https://github.com/gkurt/fieldspec/blob/main/README.md): the full reference: fields, kinds, conditions, derived values, checks, presets and definitions, rendering, code (`$cel`, `$js`), translations, versions and migrations, extending, interop.
 - [SKILL.md](https://github.com/gkurt/fieldspec/blob/main/SKILL.md): a skill for coding agents working in a project that uses fieldspec. Also shipped in the package.
 - [Tutorial](https://gkurt.com/fieldspec/tutorial.html): one spec grown a feature at a time, with a live form at every step.
 - [Examples](https://gkurt.com/fieldspec/examples.html): forms drawn with the example renderer sets (HTML, React Aria, DialKit).

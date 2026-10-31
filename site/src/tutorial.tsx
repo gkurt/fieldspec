@@ -220,6 +220,10 @@ const STEPS: readonly Step[] = [
           fills one into text, and <code>$cond</code> picks between two by a condition. <code>$computed</code> calls a function you pass at
           runtime by name, so the spec stays JSON.
         </p>
+        <p>
+          A <code>default</code> fills a value that is absent; a <code>value</code> decides it every time, so the field follows the others
+          and nobody edits it. The address is worked out from the domain and the port.
+        </p>
         <p>Type a service name and turn the internet on: the domain's label follows. Drag the replicas down to 1 for a warning.</p>
       </>
     ),

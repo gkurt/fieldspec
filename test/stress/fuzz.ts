@@ -30,7 +30,8 @@ if (process.argv[2] === '--child') {
   let seed = from;
   while (seed < to) {
     const end = Math.min(seed + BATCH, to);
-    const child = Bun.spawnSync(['bun', import.meta.path, '--child', String(seed), String(end)], {
+    // The example renderers import fieldspec by name: the condition makes that the source, as here.
+    const child = Bun.spawnSync(['bun', '--conditions=fieldspec@dev', import.meta.path, '--child', String(seed), String(end)], {
       env: { ...process.env, STRESS_TRACE: '1' },
       timeout: LIMIT,
     });

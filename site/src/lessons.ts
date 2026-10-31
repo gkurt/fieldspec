@@ -167,11 +167,20 @@ const warned = {
   group: 'scaling',
 } as const;
 
+// Worked out from the others every time, so nobody edits it.
+const address = {
+  type: 'string',
+  group: 'network',
+  visible: { $state: 'public', eq: true },
+  value: { $template: 'https://${domain}:${port}' },
+} as const;
+
 const lately = {
   name: named,
   source,
   ...afterName,
   domain: domainFor,
+  address,
   replicas: warned,
   liveness,
   readiness,
@@ -265,6 +274,7 @@ const de = {
   '/fields/domain/label/$else/$template': 'Domain für ${/name}',
   '/fields/domain/placeholder': 'shop.beispiel.de',
   '/fields/port/label': 'Port',
+  '/fields/address/label': 'Adresse',
   '/fields/replicas/label': 'Replikate',
   '/fields/replicas/hint/$then': 'Mit einem Replikat ist jedes Deployment eine Ausfallzeit.',
   '/fields/autoscale/label': 'Mit der Last skalieren',

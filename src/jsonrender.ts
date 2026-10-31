@@ -5,28 +5,33 @@
  * catalog (rename them with `components`). Lists, sets, records and maps repeat over state with
  * add and remove buttons; a definition that contains itself is unrolled `depth` levels deep.
  * Conditions and expressions share json-render's grammar and pass through with their pointers
- * rewritten for json-render's state.
+ * rewritten for json-render's state. An expression with code in it (`$cel`, `$js`, `$computed`)
+ * becomes a call to one function, which `jsonRenderFunctions` gives, and which runs it as
+ * fieldspec does; a condition with code in it cannot run there, and holds.
  *
  * json-render's state holds the values as JSON, except where its components need otherwise:
- * records and maps are lists of `{ key, value }` entries, enum values are strings, a set of
- * enum values is one comma-separated string, and a `json` field is JSON text.
+ * records and maps are lists of `{ key, value }` entries, an enum's value (and a variant's key)
+ * is its label as text, or its value where the labels are not plain and distinct, a set of enum
+ * values is one comma-separated string, and a `json` field is JSON text.
  * `toJsonRenderState` and `fromJsonRenderState` convert.
  */
 import { deref, type Lookup } from './defs.ts';
-import { textOf } from './expr.ts';
+import { evaluate, LANGUAGE_KEYS, textOf, type Env, type Functions } from './expr.ts';
 import { createForm, humanize } from './form.ts';
 import { defaultControl, type LayoutNode } from './layout.ts';
-import { getAt, resolvePointer } from './pointer.ts';
-import { registryOf, type Registry } from './registry.ts';
+import { getAt, parsePointer, resolvePointer } from './pointer.ts';
+import { functionsOf, registryOf, type Registry } from './registry.ts';
 import type {
   ArrayField,
   Condition,
   EnumField,
+  EnumOption,
   Expr,
   FieldDecl,
   Json,
   MapField,
   ObjectField,
+  OptionValue,
   RecordField,
   RenderElement,
   RenderNode,
@@ -34,7 +39,7 @@ import type {
   Spec,
   VariantField,
 } from './types.ts';
-import { ctxOf, decode, encodeField, initialValue } from './values.ts';
+import { ctxOf, decode, decodeField, encodeField, initialValue } from './values.ts';
 
 export interface FlatElement {
   readonly type: string;
@@ -221,13 +226,25 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
     const ref = refOf(path, cx);
     return ref && 'item' in ref ? { $bindItem: ref.item } : { $bindState: ref?.state ?? base + path };
   };
-  /** A condition or expression, with its pointers made to read json-render's state. */
+  /** A condition or expression without code, with its pointers made to read json-render's state. */
   const rebase = (value: unknown, anchor: string, cx: Cx): unknown => {
     if (Array.isArray(value)) return value.map((v) => rebase(v, anchor, cx));
     if (!value || typeof value !== 'object') return value;
+    // A comparison with an enum compares what json-render's state holds for it.
+    const read = value as Props;
+    const inner = cx.repeats.at(-1);
+    const compared =
+      typeof read.$state === 'string'
+        ? resolvePointer(read.$state, anchor)
+        : typeof read.$item === 'string' && inner !== undefined
+          ? resolvePointer(read.$item, inner)
+          : undefined;
+    const choices = compared === undefined ? undefined : choicesOf(declOf(spec, lookup, compared));
     const out: Props = {};
     for (const [k, v] of Object.entries(value)) {
-      if (k === '$state' && typeof v === 'string') {
+      if ((k === 'eq' || k === 'neq') && choices && !isObject(v)) {
+        out[k] = choices.find((c) => c.value === v)?.state ?? v;
+      } else if (k === '$state' && typeof v === 'string') {
         const ref = refOf(resolvePointer(v, anchor), cx);
         if (ref && 'item' in ref) out.$item = ref.item;
         else out.$state = ref?.state ?? base + resolvePointer(v, anchor);
@@ -247,11 +264,22 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
     }
     return out;
   };
+  /** An expression. One with code, or one wanted as text, becomes a call that runs it with the values it reads. */
+  const expr = (value: unknown, anchor: string, cx: Cx, asText = false): unknown => {
+    if (!asText && !hasCode(value)) return rebase(value, anchor, cx);
+    const item = cx.repeats.at(-1);
+    const reads = [...readsOf(value, anchor, item)];
+    const call: Call = { expr: value as Expr, base: anchor, ...(item !== undefined && { item }), reads, ...(asText && { asText }) };
+    const args: Props = { [CALL]: JSON.stringify(call) };
+    reads.forEach((path, i) => (args[`r${i}`] = rebase({ $state: path }, '', cx)));
+    if (item !== undefined) args[INDEX] = { $index: true };
+    return { $computed: BRIDGE, args };
+  };
   const visibleOf = (conditions: readonly (Condition | undefined)[], anchor: string, cx: Cx) => {
-    const all = conditions.filter((c) => c !== undefined).map((c) => rebase(c, anchor, cx));
+    const all = conditions.filter((c) => c !== undefined).map((c) => rebase(withoutCode(c), anchor, cx));
     return all.length === 0 ? {} : { visible: all.length === 1 ? all[0] : all };
   };
-  const text = (value: unknown, anchor: string, cx: Cx) => (value === undefined ? undefined : rebase(value, anchor, cx));
+  const text = (value: unknown, anchor: string, cx: Cx) => (value === undefined ? undefined : expr(value, anchor, cx));
 
   /** A control element bound to the field at `path`. */
   const control = (decl: Resolved, element: string, own: Props, path: string, anchor: string, label: unknown, cx: Cx): string => {
@@ -262,18 +290,8 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
       label === undefined
         ? inner
         : el('stack', { direction: 'vertical', gap: 'sm' }, [el('text', { text: label, variant: 'caption' }), inner]);
-    const options = () => {
-      // `checks` edits a set: its options are its items'.
-      const choices = element === 'checks' ? deref(lookup, (decl as ArrayField).items) : decl;
-      const list = (choices as EnumField).options;
-      return Array.isArray(list)
-        ? list.map((o) =>
-            typeof o === 'object' && o !== null
-              ? { value: String(o.value), label: o.label ?? String(o.value) }
-              : { value: String(o), label: String(o) },
-          )
-        : undefined;
-    };
+    // `checks` edits a set: its options are its items'.
+    const options = () => choicesOf(element === 'checks' ? deref(lookup, (decl as ArrayField).items) : decl);
     let key: string;
     switch (element) {
       case 'input':
@@ -295,7 +313,7 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
       case 'radio': {
         const list = options();
         if (!list) return note(`${textOf(label ?? name)}: options from an expression are not supported in json-render output`);
-        key = el(element, { label: label ?? '', name, options: list.map((o) => o.value), ...(element === 'select' && placeholder), value });
+        key = el(element, { label: label ?? '', name, options: list.map((o) => o.state), ...(element === 'select' && placeholder), value });
         break;
       }
       case 'segmented':
@@ -304,7 +322,7 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
         if (!items) return note(`${textOf(label ?? name)}: options from an expression are not supported in json-render output`);
         key = caption(
           el(element, {
-            items: items.map((o) => ({ label: rebase(o.label, anchor, cx), value: o.value })),
+            items: items.map((o) => ({ label: expr(o.label, anchor, cx), value: o.state })),
             type: element === 'checks' ? 'multiple' : 'single',
             value,
           }),
@@ -331,7 +349,7 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
           return note(`${textOf(label ?? name)}: no json-render component draws "${element}"`);
         // An application's own control: its props pass through, with the value bound.
         const props: Props = { ...(label !== undefined && { label }), value };
-        for (const [k, v] of Object.entries(own)) props[k] = rebase(v, anchor, cx);
+        for (const [k, v] of Object.entries(own)) props[k] = expr(v, anchor, cx);
         key = el(element, props);
       }
     }
@@ -419,22 +437,13 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
     if (node.variants) {
       const v = decl as VariantField;
       const keyPath = `${path}/${v.key}`;
-      const picker = control(
-        {
-          type: 'enum',
-          options: Object.entries(v.variants).map(([value, variant]) => ({ value, label: variant.label ?? humanize(value) })),
-        },
-        'segmented',
-        {},
-        keyPath,
-        path,
-        label,
-        cx,
-      );
+      const names = keyOf(v);
+      const picker = control(names, 'segmented', {}, keyPath, path, label, cx);
       const key = refOf(keyPath, cx);
       const branches = Object.entries(node.variants).map(([name, inner]) => {
         const branch = emit(inner, path, { ...cx, self: undefined });
-        const on = key && 'item' in key ? { $item: key.item, eq: name } : { $state: key?.state ?? base + keyPath, eq: name };
+        const held = choicesOf(names)?.find((c) => c.value === name)?.state ?? name;
+        const on = key && 'item' in key ? { $item: key.item, eq: held } : { $state: key?.state ?? base + keyPath, eq: held };
         elements[branch] = { ...elements[branch]!, visible: on };
         return branch;
       });
@@ -442,6 +451,12 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
     }
     if (node.item || ['array', 'set', 'record', 'map'].includes(decl.type))
       return withVisible(collection(node, decl, path, anchor, label, cx));
+    // A derived value follows the others as they change: shown, not edited.
+    if (decl.value !== undefined && decl.type !== 'object') {
+      const shown = el('text', { text: expr(decl.value, anchor, cx, true), variant: 'body' });
+      const captioned = label === undefined ? [shown] : [el('text', { text: label, variant: 'caption' }), shown];
+      return withVisible(el('stack', { direction: 'vertical', gap: 'sm' }, captioned));
+    }
     if (node.fragment) return withVisible(emit(node.fragment, anchor, { ...cx, self: { decl, path, label } }));
     return withVisible(control(decl, node.control?.type ?? 'input', node.control?.props ?? {}, path, anchor, label, cx));
   };
@@ -526,7 +541,7 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
           break;
         }
         const out: Props = {};
-        for (const [k, v] of Object.entries(props)) out[k] = rebase(v, anchor, cx);
+        for (const [k, v] of Object.entries(props)) out[k] = expr(v, anchor, cx);
         key = el(node.type, out, kids());
       }
     }
@@ -576,8 +591,11 @@ function asChecks(registry: Registry, decl: Resolved): boolean {
 function stateOf(registry: Registry, lookup: Lookup, decl: Resolved, json: unknown): unknown {
   const at = (d: FieldDecl, v: unknown) => stateOf(registry, lookup, deref(lookup, d), v);
   switch (decl.type) {
-    case 'enum':
+    case 'enum': {
+      const choice = choicesOf(decl)?.find((c) => c.value === json);
+      if (choice) return choice.state;
       return json === undefined || json === null || typeof json === 'string' ? json : textOf(json);
+    }
     case 'json':
       return json === undefined ? json : JSON.stringify(json, null, 2);
     case 'object': {
@@ -591,7 +609,7 @@ function stateOf(registry: Registry, lookup: Lookup, decl: Resolved, json: unkno
       if (!isObject(json)) return json;
       const variant = v.variants[String(json[v.key])];
       if (!variant) return json;
-      const out: Props = { ...json };
+      const out: Props = { ...json, [v.key]: stateOf(registry, lookup, keyOf(v), json[v.key]) };
       for (const [k, d] of Object.entries(variant.fields)) if (k in json) out[k] = at(d, json[k]);
       return out;
     }
@@ -599,7 +617,10 @@ function stateOf(registry: Registry, lookup: Lookup, decl: Resolved, json: unkno
     // value of the wrong shape, which fails validation anyway, shows as empty.
     case 'array':
     case 'set':
-      if (asChecks(registry, decl)) return Array.isArray(json) ? json.map(String).join(',') : json === undefined ? json : '';
+      if (asChecks(registry, decl)) {
+        if (!Array.isArray(json)) return json === undefined ? json : '';
+        return json.map((item) => String(at((decl as ArrayField).items, item))).join(',');
+      }
       if (!Array.isArray(json)) return json === undefined ? json : [];
       return json.map((item) => at((decl as ArrayField).items, item));
     case 'record':
@@ -619,10 +640,9 @@ function jsonOf(registry: Registry, lookup: Lookup, decl: Resolved, state: unkno
   const at = (d: FieldDecl, v: unknown) => jsonOf(registry, lookup, deref(lookup, d), v);
   switch (decl.type) {
     case 'enum': {
-      const options = (decl as EnumField).options;
-      if (typeof state !== 'string' || !Array.isArray(options)) return state;
-      const match = options.map((o) => (isObject(o) ? o.value : o)).find((v) => String(v) === state);
-      return match ?? state;
+      const choices = choicesOf(decl);
+      if (typeof state !== 'string' || !choices) return state;
+      return (choices.find((c) => c.state === state) ?? choices.find((c) => String(c.value) === state))?.value ?? state;
     }
     case 'int':
     case 'number':
@@ -644,10 +664,11 @@ function jsonOf(registry: Registry, lookup: Lookup, decl: Resolved, state: unkno
     case 'variant': {
       const v = decl as VariantField;
       if (!isObject(state)) return state;
-      const variant = v.variants[String(state[v.key])];
+      const name = jsonOf(registry, lookup, keyOf(v), state[v.key]);
+      const variant = v.variants[String(name)];
       if (!variant) return state;
       // Only the chosen variant's fields: those of one chosen before are left behind.
-      const out: Props = { [v.key]: state[v.key] };
+      const out: Props = { [v.key]: name };
       for (const [k, d] of Object.entries(variant.fields)) if (k in state) out[k] = at(d, state[k]);
       return out;
     }
@@ -678,6 +699,187 @@ function jsonOf(registry: Registry, lookup: Lookup, decl: Resolved, state: unkno
 function rootDecl(spec: Spec): Resolved {
   return { type: 'object', fields: spec.fields };
 }
+
+/** An option as json-render's state holds it. */
+interface Choice {
+  readonly value: OptionValue;
+  readonly state: string;
+  readonly label: unknown;
+}
+
+/**
+ * An enum's options as json-render's state holds them: by label, which shadcn's selects (plain
+ * strings) then show, when each label is plain text, none repeats and none has a comma (a set
+ * edited with `checks` joins them with commas); else by value, as text.
+ */
+function choicesOf(decl: Resolved | undefined): readonly Choice[] | undefined {
+  const options = decl?.type === 'enum' ? (decl as EnumField).options : undefined;
+  if (!Array.isArray(options)) return undefined;
+  const all = options.map((o): EnumOption => (isObject(o) ? (o as unknown as EnumOption) : { value: o as OptionValue }));
+  const labels = all.map((o) => (typeof o.label === 'string' ? o.label : String(o.value)));
+  const byLabel = new Set(labels).size === labels.length && labels.every((l) => !l.includes(','));
+  return all.map((o, i) => ({ value: o.value, state: byLabel ? labels[i]! : String(o.value), label: o.label ?? String(o.value) }));
+}
+
+/** A variant's names, as the enum its key is. */
+function keyOf(v: VariantField): Resolved {
+  return {
+    type: 'enum',
+    options: Object.entries(v.variants ?? {}).map(([value, variant]) => ({ value, label: variant.label ?? humanize(value) })),
+  };
+}
+
+/**
+ * The declaration at a path into the values, from the spec alone: any segment in a list (`*`
+ * included) is its item. A variant's key is the enum of its names.
+ */
+function declOf(spec: Spec, lookup: Lookup, path: string): Resolved | undefined {
+  let decl = rootDecl(spec);
+  for (const segment of parsePointer(path)) {
+    let next: FieldDecl | undefined;
+    switch (decl.type) {
+      case 'object':
+        next = (decl as ObjectField).fields?.[segment];
+        break;
+      case 'variant': {
+        const v = decl as VariantField;
+        if (segment === v.key) return keyOf(v);
+        next = Object.values(v.variants ?? {})
+          .map((variant) => variant.fields?.[segment])
+          .find((f) => f !== undefined);
+        break;
+      }
+      case 'array':
+      case 'set':
+        next = (decl as ArrayField).items;
+        break;
+      case 'record':
+        next = (decl as RecordField).values;
+        break;
+      case 'map':
+        next = (decl as MapField).values;
+        break;
+      default:
+        return undefined;
+    }
+    if (!isObject(next)) return undefined;
+    decl = deref(lookup, next);
+  }
+  return decl;
+}
+
+// ── Code ─────────────────────────────────────────────────────────────────────────────────
+
+/** The function `toJsonRender`'s output calls for an expression with code. */
+const BRIDGE = 'fieldspec';
+/** The arg that says what to run, and the one that holds the repeat index. */
+const CALL = '~call';
+const INDEX = '~index';
+
+/** What to run: an expression, where it sits, and the values it reads, passed as args `r0`, `r1`, …. */
+interface Call {
+  readonly expr: Expr;
+  readonly base: string;
+  readonly item?: string;
+  readonly reads: readonly string[];
+  /** Give the result as text. */
+  readonly asText?: boolean;
+}
+
+const CODE_KEYS: readonly string[] = ['$computed', ...LANGUAGE_KEYS];
+
+function hasCode(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(hasCode);
+  if (!isObject(value)) return false;
+  return Object.entries(value).some(([k, v]) => (CODE_KEYS.includes(k) && typeof v === 'string') || hasCode(v));
+}
+
+/** A condition without the leaves json-render cannot run: they hold. */
+function withoutCode(condition: unknown): unknown {
+  if (Array.isArray(condition)) return condition.map(withoutCode);
+  if (!isObject(condition)) return condition;
+  if (Array.isArray(condition.$and)) return { $and: condition.$and.map(withoutCode) };
+  if (Array.isArray(condition.$or)) return { $or: condition.$or.map(withoutCode) };
+  return hasCode(condition) ? true : condition;
+}
+
+/** Every pointer an expression reads, absolute. */
+function readsOf(value: unknown, base: string, item: string | undefined, out = new Set<string>()): Set<string> {
+  if (Array.isArray(value)) {
+    for (const v of value) readsOf(v, base, item, out);
+    return out;
+  }
+  if (!isObject(value)) return out;
+  for (const [k, v] of Object.entries(value)) {
+    if (k === '$state' && typeof v === 'string') {
+      out.add(resolvePointer(v, base));
+    } else if (k === '$item' && typeof v === 'string') {
+      if (item !== undefined) out.add(resolvePointer(v, item));
+    } else if (k === '$template' && typeof v === 'string') {
+      for (const match of v.matchAll(/\$\{([^}]*)\}/g)) out.add(resolvePointer(match[1]!.trim(), base));
+    } else {
+      readsOf(v, base, item, out);
+    }
+  }
+  return out;
+}
+
+export interface JsonRenderFunctionsOptions {
+  readonly registry?: Registry;
+  /** The `$computed` functions, where not the ones the spec was defined with. */
+  readonly fns?: Functions;
+}
+
+/**
+ * The function `toJsonRender`'s output calls for an expression with code in it (`$cel`, `$js`,
+ * `$computed`), which json-render cannot run itself: it reads the values from json-render's
+ * state as fieldspec does and runs the expression with the registry's languages and the spec's
+ * functions. Pass it to json-render's `JSONUIProvider` as `functions`.
+ */
+export function jsonRenderFunctions(
+  spec: Spec,
+  options: JsonRenderFunctionsOptions = {},
+): Record<string, (args: Record<string, unknown>) => unknown> {
+  const registry = options.registry ?? registryOf(spec);
+  const fns = options.fns ?? functionsOf(spec);
+  const lookup: Lookup = { defs: spec.defs, presets: registry.presets };
+  const ctx = ctxOf(spec, { registry });
+  return {
+    [BRIDGE](args) {
+      if (typeof args[CALL] !== 'string') return undefined;
+      const call = JSON.parse(args[CALL]) as Call;
+      const values = new Map(
+        call.reads.map((path, i) => {
+          const decl = declOf(spec, lookup, path);
+          const state = args[`r${i}`];
+          return [path, decl ? decodeField(ctx, decl, jsonOf(registry, lookup, decl, state)) : state];
+        }),
+      );
+      const env: Env = {
+        values: undefined,
+        fns,
+        languages: registry.languages,
+        get: (pointer) => values.get(pointer),
+        declAt: (pointer) => declOf(spec, lookup, pointer),
+      };
+      const index = args[INDEX];
+      try {
+        const result = evaluate(call.expr, env, {
+          base: call.base,
+          ...(call.item !== undefined && { item: call.item }),
+          ...(typeof index === 'number' && { index }),
+        });
+        return call.asText === true || !isPlain(result) ? textOf(result) : result;
+      } catch {
+        return undefined;
+      }
+    },
+  };
+}
+
+/** Whether json-render can take a value as it is: JSON, not a Date, URL or the like. */
+const isPlain = (value: unknown): boolean =>
+  value === null || ['string', 'number', 'boolean', 'undefined'].includes(typeof value) || Array.isArray(value) || isObject(value);
 
 function stateOfSpec(spec: Spec, json: unknown, registry: Registry): unknown {
   return stateOf(registry, { defs: spec.defs, presets: registry.presets }, rootDecl(spec), json);

@@ -61,6 +61,11 @@ export const BASE_PROPS: { readonly [prop: string]: PropInfo } = {
   aliases: { schema: { type: 'array', items: { type: 'string' } }, description: 'Other keys the value is read from.' },
   deprecated: { schema: { type: ['boolean', 'string'] }, description: 'true, or what to use instead.' },
   default: { schema: { $ref: '#/$defs/expr' }, description: 'The value when absent. May be an expression.' },
+  value: {
+    schema: { $ref: '#/$defs/expr' },
+    description:
+      'What the value always is: an expression over other values, computed again as they change, e.g. a total or a slug. The field cannot be edited. Use `default` for a value people may change.',
+  },
   optional: { schema: { type: 'boolean' }, description: 'The value may be absent.' },
   readOnly: { schema: { type: 'boolean' }, description: 'Shown but not editable.' },
   visible: { schema: { $ref: '#/$defs/condition' }, description: 'Shown, and validated, only while this holds.' },

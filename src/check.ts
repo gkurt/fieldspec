@@ -1,4 +1,4 @@
-import { deref, requiresItself, type Lookup } from './defs.ts';
+import { deref, endsWithLiteral, requiresItself, type Lookup } from './defs.ts';
 /**
  * Checking a spec. Total: every fault is collected, each at a JSON Pointer into the spec and
  * phrased as the fix, because whoever wrote it (often an agent) fixes them all in one pass.
@@ -337,10 +337,14 @@ function checkDecl(c: Checker, decl: unknown, at: string, scope: Scope, self: re
   if (!usesBase) checkInside(c, d, type, at, scope, self);
   if (decl.render !== undefined) checkFieldRender(c, decl.render, `${at}/render`, scope, d, self);
 
-  if (decl.default !== undefined) {
-    if (isDynamic(decl.default)) checkExpr(c, decl.default, `${at}/default`, scope);
-    else checkLiteral(c, d, decl.default, `${at}/default`);
+  for (const prop of ['default', 'value'] as const) {
+    const given = decl[prop];
+    if (given === undefined) continue;
+    if (isDynamic(given)) checkExpr(c, given, `${at}/${prop}`, scope);
+    else checkLiteral(c, d, given, `${at}/${prop}`);
   }
+  if (decl.value !== undefined && decl.default !== undefined)
+    c.fault(`${at}/default`, 'is never used: `value` decides every value. Remove one of them', 'warning');
   if (Array.isArray(decl.examples)) decl.examples.forEach((example, i) => checkLiteral(c, d, example, `${at}/examples/${i}`, 'warning'));
 }
 
@@ -889,7 +893,7 @@ function smallestSizes(spec: Spec): (name: string) => number {
   const defs = spec.defs ?? {};
   const memo = new Map<string, number>();
   const ofDecl = (decl: FieldDecl): number => {
-    if (!isObject(decl) || decl.optional || decl.default !== undefined) return 1;
+    if (!isObject(decl) || decl.optional || endsWithLiteral(decl)) return 1;
     if (decl.use !== undefined && decl.type === undefined) return ofName(String(decl.use));
     let fields: Fields | undefined;
     if (decl.type === 'object') fields = (decl as unknown as ObjectField).fields;

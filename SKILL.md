@@ -44,6 +44,16 @@ A failing check is an issue at the field (`code: "check"`, or the check's `code`
 only on a present, otherwise valid, visible value. A definition's checks add up with a use's
 own.
 
+## Values worked out from others: `value`
+
+A field that follows from others (a total, a slug, a count) takes `value`, not `default`: an
+expression that decides it every time, so it cannot be edited and a given value is replaced.
+`default` only fills an absent value, which people may then change.
+
+```json
+"slug": { "type": "string", "value": { "$cel": "name.lowerAscii().split(' ').join('-')", "args": { "name": { "$state": "name" } } } }
+```
+
 ## Translations: `locales`
 
 Write a spec in one language. When asked for others, `texts(spec)` lists every string to
@@ -121,4 +131,5 @@ registry, so a custom kind or element works everywhere at once.
 
 `toJSONSchema` / `fromJSONSchema` (draft 2020-12, `x-` keywords for the rest), `toZod` /
 `fromZod` from `fieldspec/zod`, Standard Schema on every defined spec (`spec["~standard"]`),
-and `toJsonRender` for json-render's shadcn components.
+and `toJsonRender` for json-render's shadcn components; where a spec has code (`$cel`, `$js`,
+`$computed`), pass `jsonRenderFunctions(spec)` to json-render's `JSONUIProvider` as `functions`.

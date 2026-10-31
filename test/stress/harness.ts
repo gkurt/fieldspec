@@ -22,6 +22,7 @@ import {
   fromJsonRenderState,
   JSON_RENDER_ACTIONS,
   jsonRenderActions,
+  jsonRenderFunctions,
   layout,
   localize,
   migrate,
@@ -219,9 +220,11 @@ export async function exercise(spec: Spec, values: unknown = {}, options: Exerci
           registry,
           store,
           handlers: jsonRenderActions(store),
+          functions: jsonRenderFunctions(spec),
           children: createElement(Renderer, { spec: flat as never, registry }),
         } as never);
-        await mount(element, options.seed ?? 1, clicks);
+        // json-render's own actions reject, unhandled, on the state of a spec the checker rejects.
+        await mount(element, options.seed ?? 1, valid ? clicks : 0);
         fromJsonRenderState(spec, store.getSnapshot());
       });
     }
