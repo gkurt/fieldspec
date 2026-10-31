@@ -1,0 +1,19 @@
+core:changelogs:
+  - content: "---\npackages:\n  fieldspec:\n    type: minor\n---\n\n### Readable pattern messages\n\nA string that does not match its `pattern` says \"This isn't a valid slug\", named after the definition or preset the field uses, else its label or key; `patternMessage` replaces it. Custom kinds read the same name from `ctx.name`.\n\n### Constraints beside a definition's `$ref`\n\nIn JSON Schema, what a field adds to its definition's constraints sits beside the `$ref`, so validators apply it, and a field that changes one is written out in full.\n"
+    filename: pattern-messages.md
+    v: 0.0.0
+  - content: "---\npackages:\n  fieldspec:\n    type: minor\n---\n\n### First release\n\nOne JSON document, a spec, says what a config's values are and, optionally, how a form for them is drawn.\n\n### The format\n\nKinds for text, numbers, booleans, enums, dates, colours, URLs, files, JSON and containers (objects, variants, lists, sets, records, maps); presets and definitions, including ones that contain themselves; conditions and text as serializable expressions over the form's state; groups, layouts and a `render` on any field or group. Registries extend the core with your own kinds, elements and presets, and `checkSpec` reports each fault at its spot, phrased as the fix.\n\n### Types, values and forms\n\n`Infer<typeof spec>` is the value type. `parse`, `validate`, `encode`, `decode` and `applyPatch` work on values; `createForm` is a headless form with conditions, issues and a layout tree, and `commonFields` edits many values at once.\n\n### Interop and agents\n\nJSON Schema and Zod (`fieldspec/zod`) both ways, Standard Schema, and json-render specs and state. `prompt(registry)` and `metaSchema(registry)` give agents a system prompt and a structured-output schema.\n\n### Rendering\n\n`fieldspec/react` draws a form with renderers you bring: a table or a function that picks one per element, each typed by its role. It ships no look of its own; `listOf`, `entriesOf`, `variantOf`, `objectOf`, `choicesOf` and `checksOf` carry what controls do, and the repository's `examples/renderers` are sets to copy (plain HTML, DialKit, React Aria).\n"
+    filename: first-release.md
+    v: 0.0.0
+  - content: "---\npackages:\n  fieldspec:\n    type: minor\n---\n\n### Items named by `namedBy`\n\nA list's, record's or map's `namedBy` names its items by a field of theirs or a text expression, in place of their position or key.\n\n### Strings with `suggestions`\n\nA string's `suggestions`, a list or an expression, are offered as it is typed, and draw as the new `autocomplete` control.\n\n### The `accordion` control\n\nDraws a list's, record's or map's items as sections headed by their names.\n\n### `useFormState`\n\nReads a form's values, issues and JSON as a new object on every change, so components stay current under the React Compiler; `useField` does too, and `FormView` opts out of compiling.\n"
+    filename: named-items.md
+    v: 0.0.0
+core:packages:
+  - changelogIds:
+      - pattern-messages.md
+      - first-release.md
+      - named-items.md
+    id: npm:fieldspec
+    updated: true
+npm:packages:
+  - id: npm:fieldspec
