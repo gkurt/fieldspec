@@ -2,7 +2,8 @@
  * The tutorial's steps: one spec, the settings of a web service, grown a feature at a time.
  * Each step is a whole spec; the page shows what changed since the one before.
  */
-import { define, type Infer } from '#src/index.ts';
+import { createCel } from '#src/cel.ts';
+import { createRegistry, define, type Infer } from '#src/index.ts';
 
 // The fields, as they are first written. Later steps change some of them.
 const name = { type: 'string' } as const;
@@ -185,8 +186,48 @@ export const expressions = define({
   defs: { Probe },
 });
 
-export const layouts = define({
-  fields: lately,
+// `$cel` needs an engine: a registry with fieldspec/cel's language runs it.
+const withCel = createRegistry({ languages: [createCel()] });
+
+const capped = {
+  ...maxReplicas,
+  group: 'scaling',
+  checks: [
+    {
+      assert: { $state: 'maxReplicas', gte: { $state: 'replicas' } },
+      message: { $template: 'Fewer than the ${replicas} replicas it starts with' },
+    },
+  ],
+} as const;
+const alertTarget = {
+  type: 'string',
+  label: 'Target',
+  checks: [
+    {
+      assert: {
+        $cel: 'channel == "email" ? target.contains("@") : target.startsWith("#")',
+        args: { channel: { $state: 'channel' }, target: { $state: 'target' } },
+      },
+      message: { $cond: { $state: 'channel', eq: 'email' }, $then: 'An email address has an @', $else: 'A Slack channel starts with #' },
+    },
+  ],
+} as const;
+const checkedAlerts = {
+  ...alerts,
+  items: { ...alerts.items, fields: { ...alerts.items.fields, target: alertTarget } },
+  default: [{ channel: 'slack', target: 'ops' }],
+} as const;
+
+const checked = { ...lately, maxReplicas: capped, alerts: checkedAlerts } as const;
+
+export const checks = withCel.define({
+  fields: checked,
+  groups: groupsOf,
+  defs: { Probe },
+});
+
+export const layouts = withCel.define({
+  fields: checked,
   groups: groupsOf,
   defs: { Probe },
   layouts: {

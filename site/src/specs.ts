@@ -224,7 +224,12 @@ export const PLAYGROUND: Record<string, Spec> = {
     title: 'Sign up',
     fields: {
       email: { use: 'email', required: true },
-      password: { use: 'password', required: true, hint: 'At least 12 characters.' },
+      password: {
+        use: 'password',
+        required: true,
+        hint: 'At least 12 characters.',
+        checks: [{ assert: { $state: 'password', neq: { $state: 'email' } }, message: 'Must differ from your email' }],
+      },
       team: { type: 'boolean', render: 'switch', label: 'Signing up a team' },
       seats: { type: 'int', min: 2, max: 50, default: 5, render: 'slider', visible: { $state: 'team', eq: true } },
       interests: { type: 'set', items: { type: 'enum', options: ['design', 'code', 'ops'] }, render: 'checks' },

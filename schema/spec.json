@@ -142,6 +142,13 @@
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
             },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
+            },
             "group": {
               "type": "string",
               "description": "The id of a group in the same scope."
@@ -266,6 +273,13 @@
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
             },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
+            },
             "group": {
               "type": "string",
               "description": "The id of a group in the same scope."
@@ -370,6 +384,13 @@
             "required": {
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
             },
             "group": {
               "type": "string",
@@ -476,6 +497,13 @@
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
             },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
+            },
             "group": {
               "type": "string",
               "description": "The id of a group in the same scope."
@@ -563,6 +591,13 @@
             "required": {
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
             },
             "group": {
               "type": "string",
@@ -701,6 +736,13 @@
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
             },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
+            },
             "group": {
               "type": "string",
               "description": "The id of a group in the same scope."
@@ -801,6 +843,13 @@
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
             },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
+            },
             "group": {
               "type": "string",
               "description": "The id of a group in the same scope."
@@ -899,6 +948,13 @@
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
             },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
+            },
             "group": {
               "type": "string",
               "description": "The id of a group in the same scope."
@@ -995,6 +1051,13 @@
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
             },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
+            },
             "group": {
               "type": "string",
               "description": "The id of a group in the same scope."
@@ -1082,6 +1145,13 @@
             "required": {
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
             },
             "group": {
               "type": "string",
@@ -1183,6 +1253,13 @@
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
             },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
+            },
             "group": {
               "type": "string",
               "description": "The id of a group in the same scope."
@@ -1270,6 +1347,13 @@
             "required": {
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
             },
             "group": {
               "type": "string",
@@ -1378,6 +1462,13 @@
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
             },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
+            },
             "group": {
               "type": "string",
               "description": "The id of a group in the same scope."
@@ -1481,6 +1572,13 @@
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
             },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
+            },
             "group": {
               "type": "string",
               "description": "The id of a group in the same scope."
@@ -1581,6 +1679,13 @@
             "required": {
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
             },
             "group": {
               "type": "string",
@@ -1683,6 +1788,13 @@
             "required": {
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
             },
             "group": {
               "type": "string",
@@ -1794,6 +1906,13 @@
             "required": {
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
             },
             "group": {
               "type": "string",
@@ -1922,6 +2041,13 @@
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
             },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
+            },
             "group": {
               "type": "string",
               "description": "The id of a group in the same scope."
@@ -2015,6 +2141,13 @@
             "required": {
               "$ref": "#/$defs/condition",
               "description": "Must be non-empty while this holds."
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/check"
+              },
+              "description": "Rules the value must keep, often over other fields: `[{ \"assert\": <condition>, \"message\": \"…\" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`."
             },
             "group": {
               "type": "string",
@@ -3338,6 +3471,27 @@
           "additionalProperties": false
         }
       ]
+    },
+    "check": {
+      "type": "object",
+      "description": "A rule the value must keep: `assert` holds while it is valid; while it fails, the field shows `message`.",
+      "properties": {
+        "assert": {
+          "$ref": "#/$defs/condition"
+        },
+        "message": {
+          "$ref": "#/$defs/text"
+        },
+        "code": {
+          "type": "string",
+          "description": "The issue's code. Default \"check\"."
+        }
+      },
+      "required": [
+        "assert",
+        "message"
+      ],
+      "additionalProperties": false
     },
     "expr": {
       "anyOf": [

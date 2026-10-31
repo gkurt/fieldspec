@@ -60,7 +60,8 @@ differ from a built-in only by case.
 
 - A field has a `type` (a kind), or a `use` (see Presets), plus what every field may say:
   `label`, `description`, `hint`, `placeholder`, `examples`, `aliases`, `deprecated`, `default`,
-  `optional`, `readOnly`, `visible`, `enabled`, `required`, `group`, `order`, `render`, `meta`.
+  `optional`, `readOnly`, `visible`, `enabled`, `required`, `checks`, `group`, `order`, `render`,
+  `meta`.
 - **Order**: fields draw in the order they are declared. `order` moves one: lower draws first,
   a field without it counts as 0, and equal ones keep their declared order, so `order: -1` puts
   a field at the top and `order: 1` at the bottom. It moves the field, not its value, and a group
@@ -89,6 +90,34 @@ differ from a built-in only by case.
 - **Suggestions**: a string's `suggestions` are values offered as it is typed, any other still
   allowed: a list of strings, or an expression giving one (`{ "$state": "/roles" }` offers what
   another list holds). A string with suggestions draws as an `autocomplete`.
+
+## Checks: `checks`
+
+A kind's constraints (`min`, `pattern`, `maxItems`, …) judge a value on its own. A field's
+`checks` are the rest of what a value must keep, usually over other fields: each is a condition,
+`assert`, that holds while the value is valid, and a `message` the field shows while it does not.
+
+```json
+"end": {
+  "type": "date",
+  "checks": [{ "assert": { "$state": "end", "gte": { "$state": "start" } }, "message": "Ends before it starts" }]
+}
+```
+
+- A failing check is an issue at the field, `{ path: "/end", code: "check", message }`, from
+  `parse`, `validate`, a form's field state and `toZod`. `code` gives it another code.
+- The condition is evaluated where the field's `visible` is, so `"start"` is a sibling. On an
+  array's object items, pointers are relative to the item.
+- Checks run on a value that is present and otherwise valid: not on an absent optional value, a
+  hidden field, or one that already fails its kind's constraints. Every failing check is
+  reported, in order.
+- `message` is text, so it may be an expression: `{ "$template": "At most ${seats} admins" }`.
+- A definition's checks hold wherever it is used: a field's own `checks` add to its base's
+  rather than replacing them.
+- What a condition cannot say, `$cel` can (see Code): `{ "assert": { "$cel": "admins <= seats / 2", "args": { … } }, "message": "…" }`.
+  A check that fails to run is a `condition` issue, with the engine's error.
+- JSON Schema carries them as `x-checks`; the checker reports a check without `assert` or
+  `message`, and warns of one whose `assert` is a constant.
 
 ## Presets and definitions: `use`
 
@@ -260,7 +289,7 @@ For what the expressions above cannot say, a spec can carry code: an expression 
 ```
 
 Code goes wherever an expression does, and is the value a condition tests (compared with `eq`,
-`gt`, … or for truthiness). It reads only its `args`, so the checker, `commonFields` and the
+`gt`, … or for truthiness), a check's `assert` included. It reads only its `args`, so the checker, `commonFields` and the
 rest still see what a spec depends on.
 
 The core runs neither. A registry takes a language for each, from an entry point of its own, so

@@ -45,13 +45,14 @@ function App() {
         <Outputs />
         <Feature
           id="conditions"
-          kicker="Conditions and expressions"
+          kicker="Conditions, checks and expressions"
           title="Rules are data, not callbacks"
           text={
             <>
               <code>visible</code>, <code>enabled</code> and <code>required</code> take conditions; labels, defaults and options take
-              expressions. Pointers without a leading slash are relative, so a definition works wherever it is placed. Try picking up
-              instead, or choosing the US.
+              expressions; <code>checks</code> hold a value to rules over the others. What a condition cannot say, <code>$cel</code> can.
+              Pointers without a leading slash are relative, so a definition works wherever it is placed. Try picking up instead, or
+              choosing the US.
             </>
           }
           code={<Code code={shippingSource} label="spec.json" />}
@@ -228,7 +229,7 @@ const OUTPUTS: readonly [string, string, string][] = [
   ['Validation', 'parse(spec, json)', 'Typed values, or every issue with a JSON Pointer path and a code.'],
   ['Forms', 'layout(spec)', 'A headless tree any renderer walks. FormView draws it in React with renderers you bring.'],
   ['JSON Schema', 'toJSONSchema(spec)', 'Draft 2020-12, both ways, with x- keywords for what it cannot say.'],
-  ['Zod', 'toZod(spec)', "A Zod schema refined with the spec's own conditional rules. fromZod goes back."],
+  ['Zod', 'toZod(spec)', "A Zod schema refined with the spec's own conditions and checks. fromZod goes back."],
   ['Standard Schema', 'spec["~standard"]', 'Every defined spec validates wherever Standard Schema is accepted.'],
   ['json-render', 'toJsonRender(spec)', "The whole form for json-render's shadcn components, bound to its state."],
   ['Agents', 'prompt(registry)', 'A system prompt and a meta-schema for structured output, from the registry itself.'],

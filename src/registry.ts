@@ -66,6 +66,11 @@ export const BASE_PROPS: { readonly [prop: string]: PropInfo } = {
   visible: { schema: { $ref: '#/$defs/condition' }, description: 'Shown, and validated, only while this holds.' },
   enabled: { schema: { $ref: '#/$defs/condition' }, description: 'Editable only while this holds.' },
   required: { schema: { $ref: '#/$defs/condition' }, description: 'Must be non-empty while this holds.' },
+  checks: {
+    schema: { type: 'array', items: { $ref: '#/$defs/check' } },
+    description:
+      'Rules the value must keep, often over other fields: `[{ "assert": <condition>, "message": "…" }]`. Each `assert` holds while the value is valid; while it fails, the field shows `message`.',
+  },
   group: { schema: { type: 'string' }, description: 'The id of a group in the same scope.' },
   order: {
     schema: { type: 'number' },

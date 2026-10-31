@@ -154,6 +154,11 @@ export interface FieldBase {
   readonly enabled?: Condition;
   /** Must be non-empty (not absent, null, "", or an empty collection) while true and visible. */
   readonly required?: Condition;
+  /**
+   * Rules the value must keep beyond its kind's own, often over other fields: each `assert`
+   * holds while the value is valid. They run on a value that is present and otherwise valid.
+   */
+  readonly checks?: readonly Check[];
   /** The id of a group in the same scope. */
   readonly group?: string;
   /**
@@ -345,6 +350,18 @@ export type FieldDecl = CoreField | UseField | (FieldBase & { readonly [prop: st
 
 /** A field with its `use` followed: what every walker works with. */
 export type Resolved = Exclude<FieldDecl, UseField>;
+
+/**
+ * A rule a field's value must keep: `{ "assert": { "$cel": "end >= start", "args": { … } }, "message": "Ends before it starts" }`.
+ * The condition is evaluated where the field's `visible` is; while it fails, the field has an
+ * issue saying `message`.
+ */
+export interface Check {
+  readonly assert: Condition;
+  readonly message: Text;
+  /** The issue's code, for applications that tell checks apart. Default `"check"`. */
+  readonly code?: string;
+}
 
 export interface GroupDecl {
   readonly label?: Text;

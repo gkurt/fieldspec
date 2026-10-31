@@ -58,7 +58,7 @@ export function prompt(registry: Registry = coreRegistry, options: PromptOptions
     out('');
   }
   out(
-    '## Conditions (`visible`, `enabled`, `required`, element `visible`)',
+    "## Conditions (`visible`, `enabled`, `required`, a check's `assert`, element `visible`)",
     '',
     '- `true` / `false`.',
     '- A leaf tests one value: `{ "$state": "/mode", "eq": "advanced" }`. Without an operator it tests truthiness. Operators: eq, neq, gt, gte, lt, lte, in (one per leaf). Add `"not": true` to invert.',
@@ -66,6 +66,19 @@ export function prompt(registry: Registry = coreRegistry, options: PromptOptions
     '- Inside an array item, `{ "$item": "kind" }` reads the item\'s own field and `{ "$index": true }` its position.',
     '- An array means all hold: `[ {…}, {…} ]`. Use `{ "$or": [ … ] }` for any, `{ "$and": [ … ] }` to nest all inside an or.',
     '- Operands may be expressions: `{ "$state": "/end", "gt": { "$state": "/start" } }`.',
+    '',
+    '## Checks (`checks`)',
+    '',
+    'A field\'s `checks` are rules its value must keep beyond its kind\'s constraints, usually over other fields. Each is `{ "assert": <condition>, "message": <text> }`: the condition holds while the value is valid, and while it fails the field shows the message. Put a check on the field whose value is wrong, write the message for people, and prefer kind constraints (`min`, `pattern`, …) where they suffice. Checks run only on a present, otherwise valid value; a definition\'s checks hold wherever it is used.',
+    '',
+    '```json',
+    json({
+      end: {
+        type: 'date',
+        checks: [{ assert: { $state: 'end', gte: { $state: 'start' } }, message: 'Ends before it starts' }],
+      },
+    }),
+    '```',
     '',
     '## Expressions (`default`, `label`, `description`, `hint`, `placeholder`, enum `options`, element props)',
     '',

@@ -219,6 +219,24 @@ const STEPS: readonly Step[] = [
     ),
   },
   {
+    id: 'checks',
+    title: 'Checks',
+    text: (
+      <>
+        <p>
+          A field's <code>checks</code> are rules its value keeps beyond its kind's own, usually over other fields. Each is a condition,{' '}
+          <code>assert</code>, that holds while the value is valid, and a <code>message</code> the field shows while it does not. Turn on{' '}
+          <em>Scale with load</em> and set its bound below the replicas.
+        </p>
+        <p>
+          What a condition cannot say, <code>$cel</code> can: a <a href="https://cel.dev">CEL</a> expression over the values it is given as{' '}
+          <code>args</code>, typed by the fields they read, so the checker catches a mistake before anyone fills the form. The alert's
+          target must suit its channel; the first one does not. A registry with <code>fieldspec/cel</code>'s language runs it.
+        </p>
+      </>
+    ),
+  },
+  {
     id: 'layouts',
     title: 'Layouts',
     view: 'tabs',
@@ -237,12 +255,14 @@ const STEPS: readonly Step[] = [
   },
 ];
 
-const FROM_CODE = `import { checkSpec, define, parse, toJSONSchema, type Infer } from "fieldspec";
+const FROM_CODE = `import { checkSpec, createRegistry, parse, toJSONSchema, type Infer } from "fieldspec";
+import { createCel } from "fieldspec/cel";
 import { FormView, useForm } from "fieldspec/react";
 import { htmlRenderers } from "./renderers/html"; // copied from fieldspec's examples/renderers
 
-// The spec above. define keeps its literal types for Infer.
-const service = define({ fields: { … }, groups: { … }, defs: { … }, layouts: { … } });
+// The registry runs $cel. Its define keeps the spec's literal types for Infer.
+const registry = createRegistry({ languages: [createCel()] });
+const service = registry.define({ fields: { … }, groups: { … }, defs: { … }, layouts: { … } });
 
 type Service = Infer<typeof service>;
 
@@ -255,7 +275,7 @@ function Settings() {
 }
 
 // A spec that arrives as JSON, from a file or a model, is checked first:
-const faults = checkSpec(JSON.parse(text)); // each at a pointer, phrased as the fix`;
+const faults = checkSpec(JSON.parse(text), { registry }); // each at a pointer, phrased as the fix`;
 
 const LINKS = [
   ['./', 'Home', true],
@@ -280,9 +300,9 @@ function App() {
               <span className="accent-text">one field at a time.</span>
             </h1>
             <p className="lede">
-              One spec, the settings of a web service, grows a feature at a time: kinds, checks, presets, controls, conditions, groups,
-              nesting, collections, unions, definitions, expressions and layouts. Each step shows what changed, the form fieldspec draws
-              from it, and the value that form edits. Every form is live.
+              One spec, the settings of a web service, grows a feature at a time: kinds, presets, controls, conditions, groups, nesting,
+              collections, unions, definitions, expressions, checks and layouts. Each step shows what changed, the form fieldspec draws from
+              it, and the value that form edits. Every form is live.
             </p>
           </div>
           <ol className="toc" aria-label="Steps">

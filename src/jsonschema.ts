@@ -40,6 +40,7 @@ const BASE_KEYS = new Set([
   'visible',
   'enabled',
   'required',
+  'checks',
   'group',
   'order',
   'render',
@@ -179,7 +180,19 @@ function annotate(s: JsonSchema, decl: Resolved) {
     if (typeof decl.deprecated === 'string') s['x-deprecated'] = decl.deprecated;
   }
   if (decl.readOnly) s.readOnly = true;
-  for (const prop of ['hint', 'placeholder', 'aliases', 'visible', 'enabled', 'required', 'group', 'order', 'render', 'meta'] as const)
+  for (const prop of [
+    'hint',
+    'placeholder',
+    'aliases',
+    'visible',
+    'enabled',
+    'required',
+    'checks',
+    'group',
+    'order',
+    'render',
+    'meta',
+  ] as const)
     if (decl[prop] !== undefined) s[`x-${prop}`] = decl[prop];
   const namedBy = (decl as { namedBy?: unknown }).namedBy;
   if (namedBy !== undefined) s['x-namedBy'] = namedBy;
@@ -382,6 +395,7 @@ function fieldFrom(ctx: FromCtx, raw: Schema): FieldDecl {
       'visible',
       'enabled',
       'required',
+      'checks',
       'group',
       'order',
       'render',

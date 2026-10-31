@@ -196,6 +196,17 @@ export function metaSchema(registry: Registry = coreRegistry, options: MetaSchem
           leaf,
         ],
       },
+      check: {
+        type: 'object',
+        description: 'A rule the value must keep: `assert` holds while it is valid; while it fails, the field shows `message`.',
+        properties: {
+          assert: { $ref: '#/$defs/condition' },
+          message: { $ref: '#/$defs/text' },
+          code: { type: 'string', description: 'The issue\'s code. Default "check".' },
+        },
+        required: ['assert', 'message'],
+        additionalProperties: false,
+      },
       expr: {
         anyOf: [
           { type: ['string', 'number', 'boolean', 'null'] },

@@ -202,6 +202,7 @@ function checkDecl(c: Checker, decl: unknown, at: string, scope: Scope, self: re
 
   for (const prop of ['visible', 'enabled', 'required'] as const)
     if (decl[prop] !== undefined) checkCondition(c, decl[prop], `${at}/${prop}`, scope);
+  if (decl.checks !== undefined) checkChecks(c, decl.checks, `${at}/checks`, scope);
 
   const suggestions = decl.suggestions;
   if (Array.isArray(suggestions)) {
@@ -413,7 +414,7 @@ function kindChain(registry: Registry, type: string): AnyKind[] {
 function checkLiteral(c: Checker, decl: FieldDecl, value: unknown, at: string, severity: Fault['severity'] = 'error') {
   // Dynamic options cannot be known until the values are.
   if (decl.type === 'enum' && !Array.isArray(decl.options)) return;
-  const ctx = { registry: c.registry, fns: undefined, defs: c.spec.defs };
+  const ctx = { registry: c.registry, fns: undefined, defs: c.spec.defs, checks: false };
   const issues: { path: string; message: string; code: string }[] = [];
   const scrubbed: FieldDecl = { ...decl, required: undefined, visible: undefined };
   try {
@@ -901,6 +902,25 @@ function checkCode(c: Checker, key: LanguageKey, expr: Record<string, unknown>, 
   }
   const why = language.check(source, decls);
   if (why !== undefined) c.fault(`${at}/${key}`, why);
+}
+
+const CHECK_PROPS = ['assert', 'message', 'code'];
+
+function checkChecks(c: Checker, checks: unknown, at: string, scope: Scope) {
+  if (!Array.isArray(checks)) return c.fault(at, 'must be an array of checks: `{ "assert": <condition>, "message": "…" }`');
+  checks.forEach((check: unknown, i) => {
+    const cat = `${at}/${i}`;
+    if (!isObject(check)) return c.fault(cat, 'must be a check: `{ "assert": <condition>, "message": "…" }`');
+    for (const prop of Object.keys(check))
+      if (!CHECK_PROPS.includes(prop)) c.fault(`${cat}/${escapeSegment(prop)}`, `is not a property of a check.${mean(prop, CHECK_PROPS)}`);
+    if (check.assert === undefined) c.fault(`${cat}/assert`, 'required: the condition that holds while the value is valid');
+    else if (typeof check.assert === 'boolean')
+      c.fault(`${cat}/assert`, 'a constant check always passes or always fails; test a value', 'warning');
+    else checkCondition(c, check.assert, `${cat}/assert`, scope);
+    if (check.message === undefined) c.fault(`${cat}/message`, 'required: what is wrong while `assert` fails, as people will read it');
+    else checkText(c, check.message, `${cat}/message`, scope);
+    if (check.code !== undefined && typeof check.code !== 'string') c.fault(`${cat}/code`, 'must be a string');
+  });
 }
 
 function checkCondition(c: Checker, cond: unknown, at: string, scope: Scope) {

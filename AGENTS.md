@@ -55,6 +55,8 @@ Parent-directory imports go through the `#*` alias (`#src/form.ts`), siblings us
 - `examples/design.ts` — a custom registry used by tests and the demo; `demo/` — a design-tool demo app.
 - `experiments/` — studies with small models (spec generation, filling); their `out/` is data.
 - `schema/spec.json` — the generated JSON Schema of specs, shipped and served by unpkg.
+- `SKILL.md` — a skill for agents in projects that use fieldspec, shipped in the package.
+- `site/public/llms.txt` — the site's llms.txt: what fieldspec is and where its docs are.
 
 ## Architecture
 
@@ -94,6 +96,6 @@ Parent-directory imports go through the `#*` alias (`#src/form.ts`), siblings us
 ## Documentation
 
 When changing user-facing APIs, update all relevant docs in the same change:
-docs pages, README.md, SKILL.md, AGENTS.md, llms.txt. Documentation must not go stale.
+docs pages (`site/`), README.md, SKILL.md, AGENTS.md, `site/public/llms.txt`. Documentation must not go stale.
 Every change that ships needs a Tegami changelog entry (`.tegami/<slug>.md`; see the
 `changelog` skill).

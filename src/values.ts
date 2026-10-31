@@ -3,13 +3,14 @@ import { deref, requiresItself, usedName, type Lookup } from './defs.ts';
  * Values against a spec: from JSON and back, defaults, and validation. `parse` is the one most
  * callers want: JSON (or already-decoded values) in, typed values or issues with paths out.
  */
-import { evaluate, isDynamic, test, type Env, type Functions, type Scope } from './expr.ts';
+import { evaluate, isDynamic, test, textOf, type Env, type Functions, type Scope } from './expr.ts';
 import type { Infer } from './infer.ts';
 import { CONTAINER_KINDS, isJson, type AnyKind } from './kinds.ts';
 import { child, getAt, joinPointer, parsePointer, setAt } from './pointer.ts';
 import { registryOf, functionsOf, type Registry } from './registry.ts';
 import type {
   ArrayField,
+  Check,
   Condition,
   FieldDecl,
   GroupDecl,
@@ -35,6 +36,8 @@ export interface ValueCtx {
   readonly registry: Registry;
   readonly fns: Functions | undefined;
   readonly defs?: Spec['defs'];
+  /** Whether fields' `checks` run. Default true; false where no values are known. */
+  readonly checks?: boolean;
 }
 type Ctx = ValueCtx;
 
@@ -507,6 +510,31 @@ function checkFields(
 
 export function checkField(ctx: Ctx, env: Env, given: FieldDecl, value: unknown, at: string, scope: Scope, issues: Issue[]) {
   const decl = deref(lk(ctx), given);
+  const before = issues.length;
+  checkValue(ctx, env, given, decl, value, at, scope, issues);
+  if (!decl.checks || ctx.checks === false || value === undefined || value === null) return;
+  if (issues.slice(before).some((i) => i.path === at)) return;
+  for (const check of decl.checks) {
+    let held: boolean;
+    try {
+      held = test(check.assert, env, scope);
+    } catch (error) {
+      issues.push({ path: at, code: 'condition', message: (error as Error).message });
+      continue;
+    }
+    if (!held) issues.push({ path: at, code: check.code ?? 'check', message: messageOf(check, env, scope) });
+  }
+}
+
+function messageOf(check: Check, env: Env, scope: Scope): string {
+  try {
+    return textOf(evaluate(check.message, env, scope)) || 'is not valid';
+  } catch {
+    return 'is not valid';
+  }
+}
+
+function checkValue(ctx: Ctx, env: Env, given: FieldDecl, decl: Resolved, value: unknown, at: string, scope: Scope, issues: Issue[]) {
   const issue = (code: string, message: string, path = at) => issues.push({ path, code, message });
   if (value === undefined || value === null) {
     const required = decl.required !== undefined && safeTest(decl.required, env, scope, issues, at);

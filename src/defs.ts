@@ -5,7 +5,7 @@ import { isBuiltinName } from './names.ts';
  * definitions, then the registry's own presets.
  */
 import type { Presets } from './registry.ts';
-import type { FieldDecl, ObjectField, Resolved, Spec, VariantField } from './types.ts';
+import type { Check, FieldDecl, ObjectField, Resolved, Spec, VariantField } from './types.ts';
 
 /** Where `use` names are looked up. */
 export interface Lookup {
@@ -24,7 +24,8 @@ const cache = new WeakMap<object, WeakMap<object, WeakMap<FieldDecl, Resolved>>>
 
 /**
  * The declaration a field stands for: itself, or the base its `use` names with the field's
- * own properties laid over it (outermost wins, `render` replaced whole). The same input gives
+ * own properties laid over it (outermost wins, `render` replaced whole), except `checks`, which
+ * add up: a definition's rules hold wherever it is used. The same input gives
  * the same object, so results can be compared and cached. An unknown or circular name gives a
  * `json` field, which accepts anything; the checker reports it.
  */
@@ -50,7 +51,9 @@ export function deref(lookup: Lookup, decl: FieldDecl): Resolved {
     seen.add(use);
     target = next;
   }
-  const out = Object.assign({}, target, ...overrides) as Resolved;
+  const out = Object.assign({}, target, ...overrides) as Resolved & { checks?: readonly Check[] };
+  const checks = [target, ...overrides].flatMap((d) => (d.checks as readonly Check[] | undefined) ?? []);
+  if (checks.length > 0) out.checks = checks;
   memo.set(decl, out);
   return out;
 }
