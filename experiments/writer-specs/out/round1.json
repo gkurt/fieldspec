@@ -1,0 +1,2070 @@
+{
+  "summary": {
+    "model": "@cf/google/gemma-4-26b-a4b-it",
+    "runs": 20,
+    "first": {
+      "json": 20,
+      "valid": 7,
+      "behaves": 10
+    },
+    "final": {
+      "json": 20,
+      "valid": 12,
+      "behaves": 12
+    },
+    "byConstruct": {
+      "checks": {
+        "runs": 6,
+        "behaves": 6
+      },
+      "value": {
+        "runs": 8,
+        "behaves": 2
+      },
+      "condition": {
+        "runs": 2,
+        "behaves": 2
+      },
+      "locales": {
+        "runs": 2,
+        "behaves": 2
+      },
+      "migrations": {
+        "runs": 2,
+        "behaves": 0
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "stay",
+      "construct": "checks",
+      "run": 1,
+      "first": {
+        "ms": 5786,
+        "tokens": 5572,
+        "json": true,
+        "valid": true,
+        "behaves": true,
+        "faults": [],
+        "wrong": [],
+        "uses": [
+          "checks"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Hotel Stay",
+          "fields": {
+            "checkIn": {
+              "type": "date",
+              "label": "Check-in",
+              "description": "The date you arrive at the hotel.",
+              "required": true
+            },
+            "checkOut": {
+              "type": "date",
+              "label": "Check-out",
+              "description": "The date you depart the hotel.",
+              "required": true,
+              "checks": [
+                {
+                  "assert": {
+                    "$state": "checkOut",
+                    "gt": {
+                      "$state": "checkIn"
+                    }
+                  },
+                  "message": "Check-out is before check-in"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "stay",
+      "construct": "checks",
+      "run": 2,
+      "first": {
+        "ms": 6251,
+        "tokens": 5579,
+        "json": true,
+        "valid": true,
+        "behaves": true,
+        "faults": [],
+        "wrong": [],
+        "uses": [
+          "checks"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Hotel Stay",
+          "fields": {
+            "checkIn": {
+              "type": "date",
+              "label": "Check-in Date",
+              "description": "The date you plan to arrive at the hotel.",
+              "required": true
+            },
+            "checkOut": {
+              "type": "date",
+              "label": "Check-out Date",
+              "description": "The date you plan to depart from the hotel.",
+              "required": true,
+              "checks": [
+                {
+                  "assert": {
+                    "$state": "checkOut",
+                    "gt": {
+                      "$state": "checkIn"
+                    }
+                  },
+                  "message": "Check-out is before check-in"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "signup",
+      "construct": "checks",
+      "run": 1,
+      "first": {
+        "ms": 6636,
+        "tokens": 5636,
+        "json": true,
+        "valid": false,
+        "behaves": true,
+        "faults": [
+          "  /fields/password/checks/0/assert/$cel: TypeError: Unknown variable: this"
+        ],
+        "wrong": [],
+        "uses": [
+          "checks",
+          "$cel"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Sign Up",
+          "fields": {
+            "email": {
+              "use": "email",
+              "label": "Email Address",
+              "required": true
+            },
+            "password": {
+              "use": "password",
+              "label": "Password",
+              "description": "Create a secure password.",
+              "hint": "At least 8 characters",
+              "required": true,
+              "checks": [
+                {
+                  "assert": {
+                    "$cel": "this.length >= 8"
+                  },
+                  "message": "Password must be at least 8 characters"
+                }
+              ]
+            },
+            "confirm": {
+              "use": "password",
+              "label": "Confirm Password",
+              "required": true,
+              "checks": [
+                {
+                  "assert": {
+                    "$state": "confirm",
+                    "eq": {
+                      "$state": "password"
+                    }
+                  },
+                  "message": "Passwords do not match"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "repaired": {
+        "ms": 7082,
+        "tokens": 5988,
+        "json": true,
+        "valid": false,
+        "behaves": true,
+        "faults": [
+          "  /fields/password/checks/0/assert/$cel: TypeError: found no matching overload for 'len(string)'"
+        ],
+        "wrong": [],
+        "uses": [
+          "checks",
+          "$cel"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Sign Up",
+          "fields": {
+            "email": {
+              "use": "email",
+              "label": "Email Address",
+              "required": true
+            },
+            "password": {
+              "use": "password",
+              "label": "Password",
+              "description": "Create a secure password.",
+              "hint": "At least 8 characters",
+              "required": true,
+              "checks": [
+                {
+                  "assert": {
+                    "$cel": "len(password) >= 8",
+                    "args": {
+                      "password": {
+                        "$state": "password"
+                      }
+                    }
+                  },
+                  "message": "Password must be at least 8 characters"
+                }
+              ]
+            },
+            "confirm": {
+              "use": "password",
+              "label": "Confirm Password",
+              "required": true,
+              "checks": [
+                {
+                  "assert": {
+                    "$state": "confirm",
+                    "eq": {
+                      "$state": "password"
+                    }
+                  },
+                  "message": "Passwords do not match"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "signup",
+      "construct": "checks",
+      "run": 2,
+      "first": {
+        "ms": 6041,
+        "tokens": 5609,
+        "json": true,
+        "valid": true,
+        "behaves": true,
+        "faults": [],
+        "wrong": [],
+        "uses": [
+          "checks"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Sign Up",
+          "fields": {
+            "email": {
+              "use": "email",
+              "label": "Email address",
+              "required": true
+            },
+            "password": {
+              "use": "password",
+              "label": "Password",
+              "description": "Create a secure password.",
+              "hint": "At least 8 characters long.",
+              "minLength": 8,
+              "required": true
+            },
+            "confirm": {
+              "use": "password",
+              "label": "Confirm Password",
+              "description": "Re-type your password to ensure it is correct.",
+              "required": true,
+              "checks": [
+                {
+                  "assert": {
+                    "$state": "confirm",
+                    "eq": {
+                      "$state": "password"
+                    }
+                  },
+                  "message": "Passwords do not match"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "seats",
+      "construct": "checks",
+      "run": 1,
+      "first": {
+        "ms": 7611,
+        "tokens": 5627,
+        "json": true,
+        "valid": true,
+        "behaves": true,
+        "faults": [],
+        "wrong": [],
+        "uses": [
+          "checks",
+          "$cel"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Team Plan",
+          "fields": {
+            "seats": {
+              "type": "int",
+              "label": "Seats",
+              "description": "Total number of seats available for the team.",
+              "min": 1,
+              "max": 100,
+              "default": 1
+            },
+            "admins": {
+              "type": "int",
+              "label": "Admins",
+              "description": "Number of seats reserved for administrators.",
+              "min": 0,
+              "max": 100,
+              "default": 0,
+              "checks": [
+                {
+                  "assert": {
+                    "$cel": "admins <= seats / 2",
+                    "args": {
+                      "admins": {
+                        "$state": "admins"
+                      },
+                      "seats": {
+                        "$state": "seats"
+                      }
+                    }
+                  },
+                  "message": "At most half of the seats may be admins"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "seats",
+      "construct": "checks",
+      "run": 2,
+      "first": {
+        "ms": 7900,
+        "tokens": 5704,
+        "json": true,
+        "valid": false,
+        "behaves": true,
+        "faults": [
+          "  /layouts/default/children/0/field: is not a property of an element; settings go under `props`",
+          "  /layouts/default/children/0/props/field: required: which field. One of \"seats\", \"admins\"",
+          "  /layouts/default/children/1/field: is not a property of an element; settings go under `props`",
+          "  /layouts/default/children/1/props/field: required: which field. One of \"seats\", \"admins\""
+        ],
+        "wrong": [],
+        "uses": [
+          "checks",
+          "$cel"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Team Plan",
+          "fields": {
+            "seats": {
+              "type": "int",
+              "label": "Seats",
+              "description": "Total number of available seats in the plan.",
+              "min": 1,
+              "max": 100,
+              "default": 1
+            },
+            "admins": {
+              "type": "int",
+              "label": "Admins",
+              "description": "Number of seats assigned to administrators.",
+              "min": 0,
+              "default": 0,
+              "checks": [
+                {
+                  "assert": {
+                    "$cel": "admins <= seats / 2",
+                    "args": {
+                      "admins": {
+                        "$state": "admins"
+                      },
+                      "seats": {
+                        "$state": "seats"
+                      }
+                    }
+                  },
+                  "message": "Admins cannot exceed half of the total seats"
+                }
+              ]
+            }
+          },
+          "layouts": {
+            "default": {
+              "type": "stack",
+              "children": [
+                {
+                  "type": "field",
+                  "field": "seats"
+                },
+                {
+                  "type": "field",
+                  "field": "admins"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "repaired": {
+        "ms": 8815,
+        "tokens": 6199,
+        "json": true,
+        "valid": true,
+        "behaves": true,
+        "faults": [],
+        "wrong": [],
+        "uses": [
+          "checks",
+          "$cel"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Team Plan",
+          "fields": {
+            "seats": {
+              "type": "int",
+              "label": "Seats",
+              "description": "Total number of available seats in the plan.",
+              "min": 1,
+              "max": 100,
+              "default": 1
+            },
+            "admins": {
+              "type": "int",
+              "label": "Admins",
+              "description": "Number of seats assigned to administrators.",
+              "min": 0,
+              "default": 0,
+              "checks": [
+                {
+                  "assert": {
+                    "$cel": "admins <= seats / 2",
+                    "args": {
+                      "admins": {
+                        "$state": "admins"
+                      },
+                      "seats": {
+                        "$state": "seats"
+                      }
+                    }
+                  },
+                  "message": "Admins cannot exceed half of the total seats"
+                }
+              ]
+            }
+          },
+          "layouts": {
+            "default": {
+              "type": "stack",
+              "children": [
+                {
+                  "type": "field",
+                  "props": {
+                    "field": "seats"
+                  }
+                },
+                {
+                  "type": "field",
+                  "props": {
+                    "field": "admins"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "line",
+      "construct": "value",
+      "run": 1,
+      "first": {
+        "ms": 6134,
+        "tokens": 5610,
+        "json": true,
+        "valid": false,
+        "behaves": false,
+        "faults": [
+          "  /fields/total/value/$cel: TypeError: no such overload: double * int"
+        ],
+        "wrong": [
+          "/total is 0 for {\"price\":2.5,\"quantity\":4,\"total\":1}, not 10"
+        ],
+        "uses": [
+          "$cel",
+          "value"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Order Line",
+          "fields": {
+            "price": {
+              "type": "number",
+              "label": "Price",
+              "min": 0,
+              "description": "The unit price of the item.",
+              "order": 1
+            },
+            "quantity": {
+              "type": "int",
+              "label": "Quantity",
+              "min": 1,
+              "default": 1,
+              "order": 2
+            },
+            "total": {
+              "type": "number",
+              "label": "Total",
+              "readOnly": true,
+              "value": {
+                "$cel": "price * quantity",
+                "args": {
+                  "price": {
+                    "$state": "price"
+                  },
+                  "quantity": {
+                    "$state": "quantity"
+                  }
+                }
+              },
+              "order": 3
+            }
+          }
+        }
+      },
+      "repaired": {
+        "ms": 6270,
+        "tokens": 5899,
+        "json": true,
+        "valid": true,
+        "behaves": true,
+        "faults": [],
+        "wrong": [],
+        "uses": [
+          "$cel",
+          "value"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Order Line",
+          "fields": {
+            "price": {
+              "type": "number",
+              "label": "Price",
+              "min": 0,
+              "description": "The unit price of the item.",
+              "order": 1
+            },
+            "quantity": {
+              "type": "int",
+              "label": "Quantity",
+              "min": 1,
+              "default": 1,
+              "order": 2
+            },
+            "total": {
+              "type": "number",
+              "label": "Total",
+              "readOnly": true,
+              "value": {
+                "$cel": "price * double(quantity)",
+                "args": {
+                  "price": {
+                    "$state": "price"
+                  },
+                  "quantity": {
+                    "$state": "quantity"
+                  }
+                }
+              },
+              "order": 3
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "line",
+      "construct": "value",
+      "run": 2,
+      "first": {
+        "ms": 6849,
+        "tokens": 5610,
+        "json": true,
+        "valid": false,
+        "behaves": false,
+        "faults": [
+          "  /fields/total/value/$cel: TypeError: no such overload: double * int"
+        ],
+        "wrong": [
+          "/total is 0 for {\"price\":2.5,\"quantity\":4,\"total\":1}, not 10"
+        ],
+        "uses": [
+          "$cel",
+          "value"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Order Line",
+          "fields": {
+            "price": {
+              "type": "number",
+              "label": "Price",
+              "min": 0,
+              "description": "The unit price of the item.",
+              "order": 1
+            },
+            "quantity": {
+              "type": "int",
+              "label": "Quantity",
+              "min": 1,
+              "default": 1,
+              "order": 2
+            },
+            "total": {
+              "type": "number",
+              "label": "Total",
+              "readOnly": true,
+              "value": {
+                "$cel": "price * quantity",
+                "args": {
+                  "price": {
+                    "$state": "price"
+                  },
+                  "quantity": {
+                    "$state": "quantity"
+                  }
+                }
+              },
+              "order": 3
+            }
+          }
+        }
+      },
+      "repaired": {
+        "ms": 3308,
+        "tokens": 5900,
+        "json": true,
+        "valid": true,
+        "behaves": true,
+        "faults": [],
+        "wrong": [],
+        "uses": [
+          "$cel",
+          "value"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Order Line",
+          "fields": {
+            "price": {
+              "type": "number",
+              "label": "Price",
+              "min": 0,
+              "description": "The unit price of the item.",
+              "order": 1
+            },
+            "quantity": {
+              "type": "int",
+              "label": "Quantity",
+              "min": 1,
+              "default": 1,
+              "order": 2
+            },
+            "total": {
+              "type": "number",
+              "label": "Total",
+              "readOnly": true,
+              "value": {
+                "$cel": "price * double(quantity)",
+                "args": {
+                  "price": {
+                    "$state": "price"
+                  },
+                  "quantity": {
+                    "$state": "quantity"
+                  }
+                }
+              },
+              "order": 3
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "slug",
+      "construct": "value",
+      "run": 1,
+      "first": {
+        "ms": 5622,
+        "tokens": 5547,
+        "json": true,
+        "valid": false,
+        "behaves": false,
+        "faults": [
+          "  /fields/slug/value/$cel: ParseError: Unexpected token: DIVIDE"
+        ],
+        "wrong": [
+          "/slug is \"\" for {\"title\":\"Hello Big World\"}, not \"hello-big-world\""
+        ],
+        "uses": [
+          "$cel",
+          "value"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Blog Post",
+          "fields": {
+            "title": {
+              "type": "string",
+              "label": "Title",
+              "required": true,
+              "placeholder": "Enter post title..."
+            },
+            "slug": {
+              "type": "string",
+              "label": "Slug",
+              "description": "The URL-friendly version of the title.",
+              "value": {
+                "$cel": "string(title).replace(/\\s+/g, '-').toLowerCase()",
+                "args": {
+                  "title": {
+                    "$state": "title"
+                  }
+                }
+              },
+              "readOnly": true
+            }
+          }
+        }
+      },
+      "repaired": {
+        "ms": 4245,
+        "tokens": 5753,
+        "json": true,
+        "valid": false,
+        "behaves": false,
+        "faults": [
+          "  /fields/slug/value/transform: is not part of a $template expression"
+        ],
+        "wrong": [
+          "/slug is \"Hello Big World\" for {\"title\":\"Hello Big World\"}, not \"hello-big-world\""
+        ],
+        "uses": [
+          "value"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Blog Post",
+          "fields": {
+            "title": {
+              "type": "string",
+              "label": "Title",
+              "required": true,
+              "placeholder": "Enter post title..."
+            },
+            "slug": {
+              "type": "string",
+              "label": "Slug",
+              "description": "The URL-friendly version of the title.",
+              "value": {
+                "$template": "${/title}",
+                "transform": "slug"
+              },
+              "readOnly": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "slug",
+      "construct": "value",
+      "run": 2,
+      "first": {
+        "ms": 7192,
+        "tokens": 5530,
+        "json": true,
+        "valid": false,
+        "behaves": false,
+        "faults": [
+          "  /fields/slug/value/$cel: TypeError: found no matching overload for 'replace(string, string, string)'"
+        ],
+        "wrong": [
+          "/slug is \"\" for {\"title\":\"Hello Big World\"}, not \"hello-big-world\""
+        ],
+        "uses": [
+          "$cel",
+          "value"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Blog Post",
+          "fields": {
+            "title": {
+              "type": "string",
+              "label": "Title",
+              "required": true
+            },
+            "slug": {
+              "type": "string",
+              "label": "Slug",
+              "description": "URL-friendly version of the title.",
+              "value": {
+                "$cel": "lower(replace(title, ' ', '-'))",
+                "args": {
+                  "title": {
+                    "$state": "title"
+                  }
+                }
+              },
+              "readOnly": true
+            }
+          }
+        }
+      },
+      "repaired": {
+        "ms": 1709,
+        "tokens": 5758,
+        "json": true,
+        "valid": false,
+        "behaves": false,
+        "faults": [
+          "  /fields/slug/value/$cel: TypeError: found no matching overload for 'string.replace(string, string)'"
+        ],
+        "wrong": [
+          "/slug is \"\" for {\"title\":\"Hello Big World\"}, not \"hello-big-world\""
+        ],
+        "uses": [
+          "$cel",
+          "value"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Blog Post",
+          "fields": {
+            "title": {
+              "type": "string",
+              "label": "Title",
+              "required": true
+            },
+            "slug": {
+              "type": "string",
+              "label": "Slug",
+              "description": "URL-friendly version of the title.",
+              "value": {
+                "$cel": "lower(title.replace(' ', '-'))",
+                "args": {
+                  "title": {
+                    "$state": "title"
+                  }
+                }
+              },
+              "readOnly": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "nights",
+      "construct": "value",
+      "run": 1,
+      "first": {
+        "ms": 5421,
+        "tokens": 5853,
+        "json": true,
+        "valid": false,
+        "behaves": false,
+        "faults": [
+          "  /fields/nights/value/$cel: TypeError: Unknown variable: duration",
+          "  /layouts/default/type: required: an element name"
+        ],
+        "wrong": [
+          "/nights is 0 for {\"arrive\":\"2026-05-01\",\"leave\":\"2026-05-04\"}, not 3"
+        ],
+        "uses": [
+          "checks",
+          "$cel",
+          "value"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Booking",
+          "fields": {
+            "arrive": {
+              "type": "date",
+              "label": "Arrival Date",
+              "required": true,
+              "description": "The date you plan to arrive.",
+              "checks": [
+                {
+                  "assert": {
+                    "$cel": "arrive < leave",
+                    "args": {
+                      "arrive": {
+                        "$state": "arrive"
+                      },
+                      "leave": {
+                        "$state": "leave"
+                      }
+                    }
+                  },
+                  "message": "Arrival must be before departure"
+                }
+              ]
+            },
+            "leave": {
+              "type": "date",
+              "label": "Departure Date",
+              "required": true,
+              "description": "The date you plan to leave.",
+              "checks": [
+                {
+                  "assert": {
+                    "$cel": "leave > arrive",
+                    "args": {
+                      "arrive": {
+                        "$state": "arrive"
+                      },
+                      "leave": {
+                        "$state": "leave"
+                      }
+                    }
+                  },
+                  "message": "Departure must be after arrival"
+                }
+              ]
+            },
+            "nights": {
+              "type": "int",
+              "label": "Nights",
+              "readOnly": true,
+              "value": {
+                "$cel": "duration.inDays(leave - arrive)",
+                "args": {
+                  "arrive": {
+                    "$state": "arrive"
+                  },
+                  "leave": {
+                    "$state": "leave"
+                  }
+                }
+              },
+              "description": "Total number of nights calculated from dates."
+            }
+          },
+          "groups": {
+            "dates": {
+              "label": "Stay Details",
+              "render": "row"
+            }
+          },
+          "layouts": {
+            "default": {
+              "render": "stack",
+              "children": [
+                {
+                  "group": "dates"
+                },
+                {
+                  "field": "nights"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "repaired": {
+        "ms": 12325,
+        "tokens": 6413,
+        "json": true,
+        "valid": false,
+        "behaves": false,
+        "faults": [
+          "  /fields/nights/value/$cel: TypeError: no such overload: google.protobuf.Duration / int",
+          "  /layouts/default/type: required: an element name"
+        ],
+        "wrong": [
+          "/nights is 0 for {\"arrive\":\"2026-05-01\",\"leave\":\"2026-05-04\"}, not 3"
+        ],
+        "uses": [
+          "checks",
+          "$cel",
+          "value"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Booking",
+          "fields": {
+            "arrive": {
+              "type": "date",
+              "label": "Arrival Date",
+              "required": true,
+              "description": "The date you plan to arrive.",
+              "checks": [
+                {
+                  "assert": {
+                    "$cel": "arrive < leave",
+                    "args": {
+                      "arrive": {
+                        "$state": "arrive"
+                      },
+                      "leave": {
+                        "$state": "leave"
+                      }
+                    }
+                  },
+                  "message": "Arrival must be before departure"
+                }
+              ]
+            },
+            "leave": {
+              "type": "date",
+              "label": "Departure Date",
+              "required": true,
+              "description": "The date you plan to leave.",
+              "checks": [
+                {
+                  "assert": {
+                    "$cel": "leave > arrive",
+                    "args": {
+                      "arrive": {
+                        "$state": "arrive"
+                      },
+                      "leave": {
+                        "$state": "leave"
+                      }
+                    }
+                  },
+                  "message": "Departure must be after arrival"
+                }
+              ]
+            },
+            "nights": {
+              "type": "int",
+              "label": "Nights",
+              "readOnly": true,
+              "value": {
+                "$cel": "int((leave - arrive) / 86400000)",
+                "args": {
+                  "arrive": {
+                    "$state": "arrive"
+                  },
+                  "leave": {
+                    "$state": "leave"
+                  }
+                }
+              },
+              "description": "Total number of nights calculated from dates."
+            }
+          },
+          "groups": {
+            "dates": {
+              "label": "Stay Details",
+              "render": "row"
+            }
+          },
+          "layouts": {
+            "default": {
+              "render": "stack",
+              "children": [
+                {
+                  "group": "dates"
+                },
+                {
+                  "field": "nights"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "nights",
+      "construct": "value",
+      "run": 2,
+      "first": {
+        "ms": 8529,
+        "tokens": 5699,
+        "json": true,
+        "valid": false,
+        "behaves": false,
+        "faults": [
+          "  /fields/nights/value/$cel: TypeError: no such overload: google.protobuf.Duration / google.protobuf.Duration"
+        ],
+        "wrong": [
+          "/nights is 0 for {\"arrive\":\"2026-05-01\",\"leave\":\"2026-05-04\"}, not 3"
+        ],
+        "uses": [
+          "checks",
+          "$cel",
+          "value"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Booking",
+          "fields": {
+            "arrive": {
+              "type": "date",
+              "label": "Arrival Date",
+              "description": "The date you plan to check in.",
+              "required": true
+            },
+            "leave": {
+              "type": "date",
+              "label": "Departure Date",
+              "description": "The date you plan to check out.",
+              "required": true,
+              "checks": [
+                {
+                  "assert": {
+                    "$cel": "leave > arrive",
+                    "args": {
+                      "arrive": {
+                        "$state": "arrive"
+                      },
+                      "leave": {
+                        "$state": "leave"
+                      }
+                    }
+                  },
+                  "message": "Departure must be after arrival"
+                }
+              ]
+            },
+            "nights": {
+              "type": "int",
+              "label": "Nights",
+              "description": "Total duration of stay.",
+              "readOnly": true,
+              "value": {
+                "$cel": "int((leave - arrive) / duration('1d'))",
+                "args": {
+                  "arrive": {
+                    "$state": "arrive"
+                  },
+                  "leave": {
+                    "$state": "leave"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "repaired": {
+        "ms": 3336,
+        "tokens": 6102,
+        "json": true,
+        "valid": false,
+        "behaves": false,
+        "faults": [
+          "  /fields/nights/value/$cel: TypeError: found no matching overload for 'duration(google.protobuf.Duration)'"
+        ],
+        "wrong": [
+          "/nights is 0 for {\"arrive\":\"2026-05-01\",\"leave\":\"2026-05-04\"}, not 3"
+        ],
+        "uses": [
+          "checks",
+          "$cel",
+          "value"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Booking",
+          "fields": {
+            "arrive": {
+              "type": "date",
+              "label": "Arrival Date",
+              "description": "The date you plan to check in.",
+              "required": true
+            },
+            "leave": {
+              "type": "date",
+              "label": "Departure Date",
+              "description": "The date you plan to check out.",
+              "required": true,
+              "checks": [
+                {
+                  "assert": {
+                    "$cel": "leave > arrive",
+                    "args": {
+                      "arrive": {
+                        "$state": "arrive"
+                      },
+                      "leave": {
+                        "$state": "leave"
+                      }
+                    }
+                  },
+                  "message": "Departure must be after arrival"
+                }
+              ]
+            },
+            "nights": {
+              "type": "int",
+              "label": "Nights",
+              "description": "Total duration of stay.",
+              "readOnly": true,
+              "value": {
+                "$cel": "int(duration(leave - arrive).seconds() / 86400)",
+                "args": {
+                  "arrive": {
+                    "$state": "arrive"
+                  },
+                  "leave": {
+                    "$state": "leave"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "shipping",
+      "construct": "value",
+      "run": 1,
+      "first": {
+        "ms": 6505,
+        "tokens": 5651,
+        "json": true,
+        "valid": false,
+        "behaves": false,
+        "faults": [
+          "  /fields/shipping/value/$cond: needs a value to test ($state, $item, $index, $computed, $cel or $js), with at most one operator beside it: `{ \"$state\": \"subtotal\", \"gte\": 50 }`. Did you mean \"gte\"?",
+          "  /fields/shipping/value/$else/$cond: holds only the condition; `$then` and `$else` sit beside it: `{ \"$cond\": { \"$state\": \"express\", \"eq\": true }, \"$then\": 19.95, \"$else\": 9.95 }`, not inside `$cond`",
+          "  /fields/shipping/value/$else: a $cond needs both $then and $else: `{ \"$cond\": { \"$state\": \"express\", \"eq\": true }, \"$then\": 19.95, \"$else\": 9.95 }`"
+        ],
+        "wrong": [
+          "/shipping is 0 for {\"subtotal\":20,\"express\":false}, not 9.95",
+          "/shipping is 0 for {\"subtotal\":20,\"express\":true}, not 19.95"
+        ],
+        "uses": [
+          "value"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Checkout",
+          "fields": {
+            "subtotal": {
+              "type": "number",
+              "label": "Subtotal",
+              "min": 0,
+              "step": 0.01,
+              "default": 0
+            },
+            "express": {
+              "type": "boolean",
+              "label": "Express Shipping",
+              "default": false
+            },
+            "shipping": {
+              "type": "number",
+              "label": "Shipping Cost",
+              "readOnly": true,
+              "value": {
+                "$cond": {
+                  "$gte": [
+                    {
+                      "$state": "subtotal"
+                    },
+                    50
+                  ]
+                },
+                "$then": 0,
+                "$else": {
+                  "$cond": {
+                    "$state": "express",
+                    "$then": 19.95,
+                    "$else": 9.95
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "repaired": {
+        "ms": 6857,
+        "tokens": 6106,
+        "json": true,
+        "valid": false,
+        "behaves": false,
+        "faults": [
+          "  /fields/shipping/value/$cond: holds only the condition; `$then` and `$else` sit beside it: `{ \"$cond\": { \"$state\": \"express\", \"eq\": true }, \"$then\": 19.95, \"$else\": 9.95 }`, not inside `$cond`",
+          "  /fields/shipping/value: a $cond needs both $then and $else: `{ \"$cond\": { \"$state\": \"express\", \"eq\": true }, \"$then\": 19.95, \"$else\": 9.95 }`"
+        ],
+        "wrong": [
+          "/shipping is 0 for {\"subtotal\":20,\"express\":false}, not 9.95",
+          "/shipping is 0 for {\"subtotal\":20,\"express\":true}, not 19.95"
+        ],
+        "uses": [
+          "value"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Checkout",
+          "fields": {
+            "subtotal": {
+              "type": "number",
+              "label": "Subtotal",
+              "min": 0,
+              "step": 0.01,
+              "default": 0
+            },
+            "express": {
+              "type": "boolean",
+              "label": "Express Shipping",
+              "default": false
+            },
+            "shipping": {
+              "type": "number",
+              "label": "Shipping Cost",
+              "readOnly": true,
+              "value": {
+                "$cond": {
+                  "assert": {
+                    "$gte": [
+                      {
+                        "$state": "subtotal"
+                      },
+                      50
+                    ]
+                  },
+                  "then": 0,
+                  "else": {
+                    "$cond": {
+                      "assert": {
+                        "$state": "express"
+                      },
+                      "then": 19.95,
+                      "else": 9.95
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "shipping",
+      "construct": "value",
+      "run": 2,
+      "first": {
+        "ms": 7371,
+        "tokens": 5650,
+        "json": true,
+        "valid": false,
+        "behaves": false,
+        "faults": [
+          "  /fields/shipping/value/$cond: needs a value to test ($state, $item, $index, $computed, $cel or $js), with at most one operator beside it: `{ \"$state\": \"subtotal\", \"gte\": 50 }`. Did you mean \"gte\"?",
+          "  /fields/shipping/value/$else/$cond: holds only the condition; `$then` and `$else` sit beside it: `{ \"$cond\": { \"$state\": \"express\", \"eq\": true }, \"$then\": 19.95, \"$else\": 9.95 }`, not inside `$cond`",
+          "  /fields/shipping/value/$else: a $cond needs both $then and $else: `{ \"$cond\": { \"$state\": \"express\", \"eq\": true }, \"$then\": 19.95, \"$else\": 9.95 }`"
+        ],
+        "wrong": [
+          "/shipping is 0 for {\"subtotal\":20,\"express\":false}, not 9.95",
+          "/shipping is 0 for {\"subtotal\":20,\"express\":true}, not 19.95"
+        ],
+        "uses": [
+          "value"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Checkout",
+          "fields": {
+            "subtotal": {
+              "type": "number",
+              "label": "Subtotal",
+              "min": 0,
+              "step": 0.01,
+              "default": 0
+            },
+            "express": {
+              "type": "boolean",
+              "label": "Express Shipping",
+              "default": false
+            },
+            "shipping": {
+              "type": "number",
+              "label": "Shipping",
+              "readOnly": true,
+              "value": {
+                "$cond": {
+                  "$gte": [
+                    {
+                      "$state": "subtotal"
+                    },
+                    50
+                  ]
+                },
+                "$then": 0,
+                "$else": {
+                  "$cond": {
+                    "$state": "express",
+                    "$then": 19.95,
+                    "$else": 9.95
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "repaired": {
+        "ms": 6865,
+        "tokens": 6104,
+        "json": true,
+        "valid": false,
+        "behaves": false,
+        "faults": [
+          "  /fields/shipping/value/$cond: holds only the condition; `$then` and `$else` sit beside it: `{ \"$cond\": { \"$state\": \"express\", \"eq\": true }, \"$then\": 19.95, \"$else\": 9.95 }`, not inside `$cond`",
+          "  /fields/shipping/value: a $cond needs both $then and $else: `{ \"$cond\": { \"$state\": \"express\", \"eq\": true }, \"$then\": 19.95, \"$else\": 9.95 }`"
+        ],
+        "wrong": [
+          "/shipping is 0 for {\"subtotal\":20,\"express\":false}, not 9.95",
+          "/shipping is 0 for {\"subtotal\":20,\"express\":true}, not 19.95"
+        ],
+        "uses": [
+          "value"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Checkout",
+          "fields": {
+            "subtotal": {
+              "type": "number",
+              "label": "Subtotal",
+              "min": 0,
+              "step": 0.01,
+              "default": 0
+            },
+            "express": {
+              "type": "boolean",
+              "label": "Express Shipping",
+              "default": false
+            },
+            "shipping": {
+              "type": "number",
+              "label": "Shipping",
+              "readOnly": true,
+              "value": {
+                "$cond": {
+                  "assert": {
+                    "$gte": [
+                      {
+                        "$state": "subtotal"
+                      },
+                      50
+                    ]
+                  },
+                  "then": 0,
+                  "else": {
+                    "$cond": {
+                      "assert": {
+                        "$state": "express"
+                      },
+                      "then": 19.95,
+                      "else": 9.95
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "vat",
+      "construct": "condition",
+      "run": 1,
+      "first": {
+        "ms": 7949,
+        "tokens": 5665,
+        "json": true,
+        "valid": true,
+        "behaves": true,
+        "faults": [],
+        "wrong": [],
+        "uses": [],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Invoice Address",
+          "fields": {
+            "company": {
+              "type": "string",
+              "label": "Company",
+              "optional": true
+            },
+            "country": {
+              "type": "enum",
+              "label": "Country",
+              "options": [
+                {
+                  "value": "nl",
+                  "label": "Netherlands"
+                },
+                {
+                  "value": "de",
+                  "label": "Germany"
+                },
+                {
+                  "value": "us",
+                  "label": "United States"
+                }
+              ],
+              "default": "us"
+            },
+            "vatNumber": {
+              "type": "string",
+              "label": "VAT Number",
+              "visible": {
+                "$state": "country",
+                "in": [
+                  "nl",
+                  "de"
+                ]
+              },
+              "required": {
+                "$state": "country",
+                "in": [
+                  "nl",
+                  "de"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "vat",
+      "construct": "condition",
+      "run": 2,
+      "first": {
+        "ms": 8704,
+        "tokens": 5709,
+        "json": true,
+        "valid": true,
+        "behaves": true,
+        "faults": [],
+        "wrong": [],
+        "uses": [],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Invoice Address",
+          "fields": {
+            "company": {
+              "type": "string",
+              "label": "Company",
+              "optional": true,
+              "placeholder": "e.g. Acme Corp"
+            },
+            "country": {
+              "type": "enum",
+              "label": "Country",
+              "options": [
+                {
+                  "value": "nl",
+                  "label": "Netherlands"
+                },
+                {
+                  "value": "de",
+                  "label": "Germany"
+                },
+                {
+                  "value": "us",
+                  "label": "United States"
+                }
+              ],
+              "default": "us"
+            },
+            "vatNumber": {
+              "type": "string",
+              "label": "VAT Number",
+              "required": {
+                "$or": [
+                  {
+                    "$state": "country",
+                    "eq": "nl"
+                  },
+                  {
+                    "$state": "country",
+                    "eq": "de"
+                  }
+                ]
+              },
+              "visible": {
+                "$and": [
+                  {
+                    "$state": "country",
+                    "neq": "us"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "german",
+      "construct": "locales",
+      "run": 1,
+      "first": {
+        "ms": 7065,
+        "tokens": 5646,
+        "json": true,
+        "valid": false,
+        "behaves": true,
+        "faults": [
+          "  /fields/message/type: a field with `use` takes its kind from the base; leave `type` out"
+        ],
+        "wrong": [],
+        "uses": [
+          "locales"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Contact Form",
+          "fields": {
+            "name": {
+              "type": "string",
+              "label": "Name",
+              "placeholder": "Your full name",
+              "required": true
+            },
+            "email": {
+              "use": "email",
+              "label": "Email",
+              "placeholder": "email@example.com",
+              "required": true
+            },
+            "message": {
+              "type": "string",
+              "use": "multiline",
+              "label": "Message",
+              "placeholder": "How can we help you?",
+              "required": true
+            }
+          },
+          "locales": {
+            "de": {
+              "/fields/name/label": "Name",
+              "/fields/name/placeholder": "Ihr vollständiger Name",
+              "/fields/email/label": "E-Mail",
+              "/fields/email/placeholder": "beispiel@mail.de",
+              "/fields/message/label": "Nachricht",
+              "/fields/message/placeholder": "Wie können wir Ihnen helfen?"
+            }
+          }
+        }
+      },
+      "repaired": {
+        "ms": 6278,
+        "tokens": 5979,
+        "json": true,
+        "valid": true,
+        "behaves": true,
+        "faults": [],
+        "wrong": [],
+        "uses": [
+          "locales"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Contact Form",
+          "fields": {
+            "name": {
+              "type": "string",
+              "label": "Name",
+              "placeholder": "Your full name",
+              "required": true
+            },
+            "email": {
+              "use": "email",
+              "label": "Email",
+              "placeholder": "email@example.com",
+              "required": true
+            },
+            "message": {
+              "use": "multiline",
+              "label": "Message",
+              "placeholder": "How can we help you?",
+              "required": true
+            }
+          },
+          "locales": {
+            "de": {
+              "/fields/name/label": "Name",
+              "/fields/name/placeholder": "Ihr vollständiger Name",
+              "/fields/email/label": "E-Mail",
+              "/fields/email/placeholder": "beispiel@mail.de",
+              "/fields/message/label": "Nachricht",
+              "/fields/message/placeholder": "Wie können wir Ihnen helfen?"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "german",
+      "construct": "locales",
+      "run": 2,
+      "first": {
+        "ms": 7142,
+        "tokens": 5647,
+        "json": true,
+        "valid": false,
+        "behaves": true,
+        "faults": [
+          "  /fields/message/type: a field with `use` takes its kind from the base; leave `type` out"
+        ],
+        "wrong": [],
+        "uses": [
+          "locales"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Contact Form",
+          "fields": {
+            "name": {
+              "type": "string",
+              "label": "Name",
+              "placeholder": "Your full name",
+              "required": true
+            },
+            "email": {
+              "use": "email",
+              "label": "Email",
+              "placeholder": "you@example.com",
+              "required": true
+            },
+            "message": {
+              "type": "string",
+              "label": "Message",
+              "use": "multiline",
+              "placeholder": "How can we help you?",
+              "required": true
+            }
+          },
+          "locales": {
+            "de": {
+              "/fields/name/label": "Name",
+              "/fields/name/placeholder": "Ihr vollständiger Name",
+              "/fields/email/label": "E-Mail",
+              "/fields/email/placeholder": "ihre@beispiel.de",
+              "/fields/message/label": "Nachricht",
+              "/fields/message/placeholder": "Wie können wir Ihnen helfen?"
+            }
+          }
+        }
+      },
+      "repaired": {
+        "ms": 2540,
+        "tokens": 5982,
+        "json": true,
+        "valid": true,
+        "behaves": true,
+        "faults": [],
+        "wrong": [],
+        "uses": [
+          "locales"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "title": "Contact Form",
+          "fields": {
+            "name": {
+              "type": "string",
+              "label": "Name",
+              "placeholder": "Your full name",
+              "required": true
+            },
+            "email": {
+              "use": "email",
+              "label": "Email",
+              "placeholder": "you@example.com",
+              "required": true
+            },
+            "message": {
+              "use": "multiline",
+              "label": "Message",
+              "placeholder": "How can we help you?",
+              "required": true
+            }
+          },
+          "locales": {
+            "de": {
+              "/fields/name/label": "Name",
+              "/fields/name/placeholder": "Ihr vollständiger Name",
+              "/fields/email/label": "E-Mail",
+              "/fields/email/placeholder": "ihre@beispiel.de",
+              "/fields/message/label": "Nachricht",
+              "/fields/message/placeholder": "Wie können wir Ihnen helfen?"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "timeout",
+      "construct": "migrations",
+      "run": 1,
+      "first": {
+        "ms": 9619,
+        "tokens": 5793,
+        "json": true,
+        "valid": false,
+        "behaves": false,
+        "faults": [
+          "  /migrations/2/0/value/$cond: holds only the condition; `$then` and `$else` sit beside it: `{ \"$cond\": { \"$state\": \"express\", \"eq\": true }, \"$then\": 19.95, \"$else\": 9.95 }`, not inside `$cond`",
+          "  /migrations/2/0/value: a $cond needs both $then and $else: `{ \"$cond\": { \"$state\": \"express\", \"eq\": true }, \"$then\": 19.95, \"$else\": 9.95 }`"
+        ],
+        "wrong": [
+          "/timeoutMs is 1000 for {\"$version\":1,\"timeout\":5,\"retries\":2}, not 5000"
+        ],
+        "uses": [
+          "$cel",
+          "migrations"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "version": 2,
+          "title": "Job Runner Settings",
+          "fields": {
+            "timeoutMs": {
+              "type": "int",
+              "label": "Timeout",
+              "description": "The maximum time allowed for a job to run.",
+              "unit": "ms",
+              "default": 1000,
+              "hint": "Time in milliseconds"
+            },
+            "retries": {
+              "type": "int",
+              "label": "Retries",
+              "description": "Number of times to attempt a job after failure.",
+              "default": 3,
+              "min": 0
+            }
+          },
+          "migrations": {
+            "2": [
+              {
+                "op": "replace",
+                "path": "/timeoutMs",
+                "value": {
+                  "$cond": {
+                    "$state": "/$version",
+                    "eq": 1,
+                    "$then": {
+                      "$cel": "timeout * 1000",
+                      "args": {
+                        "timeout": {
+                          "$cond": {
+                            "$state": "/timeout",
+                            "eq": null,
+                            "$then": 1,
+                            "$else": {
+                              "$state": "/timeout"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "$else": {
+                      "$state": "/timeoutMs"
+                    }
+                  }
+                }
+              },
+              {
+                "op": "remove",
+                "path": "/timeout"
+              }
+            ]
+          }
+        }
+      },
+      "repaired": {
+        "ms": 8025,
+        "tokens": 6287,
+        "json": true,
+        "valid": false,
+        "behaves": false,
+        "faults": [
+          "  /migrations/2/0/value/$cond: holds only the condition; `$then` and `$else` sit beside it: `{ \"$cond\": { \"$state\": \"express\", \"eq\": true }, \"$then\": 19.95, \"$else\": 9.95 }`, not inside `$cond`",
+          "  /migrations/2/0/value: a $cond needs both $then and $else: `{ \"$cond\": { \"$state\": \"express\", \"eq\": true }, \"$then\": 19.95, \"$else\": 9.95 }`"
+        ],
+        "wrong": [
+          "/timeoutMs is 1000 for {\"$version\":1,\"timeout\":5,\"retries\":2}, not 5000"
+        ],
+        "uses": [
+          "$cel",
+          "migrations"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "version": 2,
+          "title": "Job Runner Settings",
+          "fields": {
+            "timeoutMs": {
+              "type": "int",
+              "label": "Timeout",
+              "description": "The maximum time allowed for a job to run.",
+              "unit": "ms",
+              "default": 1000,
+              "hint": "Time in milliseconds"
+            },
+            "retries": {
+              "type": "int",
+              "label": "Retries",
+              "description": "Number of times to attempt a job after failure.",
+              "default": 3,
+              "min": 0
+            }
+          },
+          "migrations": {
+            "2": [
+              {
+                "op": "replace",
+                "path": "/timeoutMs",
+                "value": {
+                  "$cond": {
+                    "assert": {
+                      "$state": "/$version",
+                      "eq": 1
+                    },
+                    "then": {
+                      "$cel": "timeout * 1000",
+                      "args": {
+                        "timeout": {
+                          "$state": "/timeout"
+                        }
+                      }
+                    },
+                    "else": {
+                      "$state": "/timeoutMs"
+                    }
+                  }
+                }
+              },
+              {
+                "op": "remove",
+                "path": "/timeout"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "timeout",
+      "construct": "migrations",
+      "run": 2,
+      "first": {
+        "ms": 2494,
+        "tokens": 5740,
+        "json": true,
+        "valid": true,
+        "behaves": false,
+        "faults": [],
+        "wrong": [
+          "/timeoutMs is 1000 for {\"$version\":1,\"timeout\":5,\"retries\":2}, not 5000"
+        ],
+        "uses": [
+          "$cel",
+          "migrations"
+        ],
+        "spec": {
+          "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+          "version": 2,
+          "title": "Job Runner Settings",
+          "fields": {
+            "timeoutMs": {
+              "type": "int",
+              "label": "Timeout",
+              "description": "Maximum time allowed for a job to run.",
+              "unit": "ms",
+              "default": 1000,
+              "hint": "Milliseconds"
+            },
+            "retries": {
+              "type": "int",
+              "label": "Retries",
+              "description": "Number of times to retry a failed job.",
+              "min": 0,
+              "default": 3
+            }
+          },
+          "migrations": {
+            "2": [
+              {
+                "op": "replace",
+                "path": "/timeoutMs",
+                "value": {
+                  "$cond": {
+                    "$state": "/$version",
+                    "eq": 1
+                  },
+                  "$then": {
+                    "$cel": "timeout * 1000",
+                    "args": {
+                      "timeout": {
+                        "$state": "/timeout"
+                      }
+                    }
+                  },
+                  "$else": 1000
+                }
+              },
+              {
+                "op": "remove",
+                "path": "/timeout"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
