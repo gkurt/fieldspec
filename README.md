@@ -236,11 +236,12 @@ by its name (see `namedBy`); its `open` prop says which start open (`"none"`, `"
 
 `fieldspec/react` draws it, but not its look: `FormView` walks the layout tree and asks the
 renderers you give it to draw each element. fieldspec decides what a form holds and does; how it
-looks is yours. [examples/renderers](examples/renderers) has three sets to copy and make your
+looks is yours. [examples/renderers](examples/renderers) has four sets to copy and make your
 own: plain HTML (`html.tsx`, with `htmlStyles`), [DialKit](https://github.com/joshpuckett/dialkit)'s
-controls (`dialkit.tsx`) and [React Aria Components](https://react-spectrum.adobe.com/react-aria/)
-(`react-aria.tsx`, accessible and unstyled, laid over the HTML set). The website draws every form
-with them.
+controls (`dialkit.tsx`), [React Aria Components](https://react-spectrum.adobe.com/react-aria/)
+(`react-aria.tsx`, accessible and unstyled, laid over the HTML set) and
+[shadcn/ui](https://ui.shadcn.com) (`shadcn.tsx`, styled by Tailwind and your shadcn theme). The
+website draws every form with them.
 
 ```tsx
 import { FormView, useForm } from "fieldspec/react";

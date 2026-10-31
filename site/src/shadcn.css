@@ -1,0 +1,82 @@
+/*
+ * Tailwind for the shadcn demo, on a page that is not Tailwind's: the theme and utilities, without
+ * preflight, which would restyle the whole page. Classes come from the shadcn set only, and its
+ * colours from the site's own tokens, the greys mixed from its text colour as shadcn's are, so it
+ * follows the site's light and dark themes. In an app built with shadcn, its globals.css does all
+ * of this.
+ */
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tw-animate-css';
+@source '../../examples/renderers/shadcn.tsx';
+@source '../../examples/renderers/shadcn/ui';
+
+@custom-variant dark {
+  :root[data-theme='dark'] & {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) & {
+      @slot;
+    }
+  }
+}
+
+@theme inline {
+  --color-background: var(--card);
+  --color-foreground: var(--fg);
+  --color-card: var(--card);
+  --color-card-foreground: var(--fg);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--fg);
+  --color-primary: var(--fg);
+  --color-primary-foreground: var(--card);
+  --color-secondary: color-mix(in oklab, var(--fg) 7%, var(--card));
+  --color-secondary-foreground: var(--fg);
+  --color-muted: color-mix(in oklab, var(--fg) 7%, var(--card));
+  --color-muted-foreground: var(--muted);
+  --color-accent: color-mix(in oklab, var(--fg) 7%, var(--card));
+  --color-accent-foreground: var(--fg);
+  --color-destructive: var(--bad);
+  --color-border: var(--line);
+  --color-input: color-mix(in oklab, var(--fg) 16%, transparent);
+  --color-ring: var(--muted);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.625rem;
+}
+
+/*
+ * What preflight would do, inside the demo and the popovers it opens only. Before the utilities, at
+ * a class's weight: the utilities win, and the HTML set's styles on this page do not.
+ */
+:is(.shadcn-host, [data-slot='popover-content'], [data-slot='select-content']) :where(*, ::before, ::after) {
+  margin: 0;
+  padding: 0;
+  border: 0 solid var(--color-border);
+  outline-color: color-mix(in oklab, var(--color-ring) 50%, transparent);
+}
+:is(.shadcn-host, [data-slot='popover-content'], [data-slot='select-content']) :where(button, input, select, textarea) {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  background-color: transparent;
+  border-radius: 0;
+}
+:is(.shadcn-host, [data-slot='popover-content'], [data-slot='select-content']) :where(svg) {
+  display: block;
+  vertical-align: middle;
+}
+:is(.shadcn-host, [data-slot='popover-content'], [data-slot='select-content']) :where(table) {
+  border-collapse: collapse;
+}
+:is(.shadcn-host, [data-slot='popover-content'], [data-slot='select-content']) :where(h1, h2, h3, h4, h5, h6) {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+@tailwind utilities source(none);

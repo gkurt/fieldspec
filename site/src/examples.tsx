@@ -1,5 +1,5 @@
 /**
- * The example renderer sets, each drawing a live form: plain HTML, DialKit and React Aria. The
+ * The example renderer sets, each drawing a live form: plain HTML, DialKit, React Aria and shadcn/ui. The
  * sets live in examples/renderers, to copy; fieldspec itself ships no look.
  */
 import { StrictMode } from 'react';
@@ -11,6 +11,7 @@ import { Footer, Heading, Nav, REPO } from './chrome.tsx';
 import { Code, Json } from './Code.tsx';
 import { cardSource, DialKitDemo } from './DialKit.tsx';
 import { meetupSource, ReactAriaDemo } from './ReactAria.tsx';
+import { deploySource, ShadcnDemo } from './Shadcn.tsx';
 import './styles.css';
 
 const teamSpec = define({
@@ -85,6 +86,7 @@ const LINKS = [
   ['#html', 'Plain HTML'],
   ['#dialkit', 'DialKit'],
   ['#react-aria', 'React Aria'],
+  ['#shadcn', 'shadcn/ui'],
   ['tutorial.html', 'Tutorial'],
   ['./', 'fieldspec', true],
 ] as const;
@@ -105,7 +107,7 @@ function App() {
             </h1>
             <p className="lede">
               fieldspec decides what a form holds and does; how it looks is yours. <code>FormView</code> asks a renderer set to draw each
-              element, and these three sets, in <a href={`${REPO}/tree/main/examples/renderers`}>examples/renderers</a>, are there to copy
+              element, and these four sets, in <a href={`${REPO}/tree/main/examples/renderers`}>examples/renderers</a>, are there to copy
               into your app and make your own.
             </p>
           </div>
@@ -138,6 +140,17 @@ function App() {
           </Heading>
           <ReactAriaDemo />
           <Code code={meetupSource} label="meetup.tsx" className="dial-code" />
+        </section>
+        <section className="section" id="shadcn">
+          <Heading kicker="With shadcn/ui" title="Your components, drawing the spec">
+            The shadcn set draws every element with <a href="https://ui.shadcn.com">shadcn/ui</a>'s components, the ones you already keep in{' '}
+            <code>components/ui</code>: <code>Field</code> for labels, help and errors, input groups for units, a select, radio and toggle
+            groups, a slider, a calendar in a popover, a command list for the framework's suggestions, an accordion for the domains, and a
+            collapsible for the advanced settings. It has no stylesheet of its own: Tailwind and your theme style it, so it looks like the
+            rest of your app. Clear the project's name, or give it a capital, to see the field's error.
+          </Heading>
+          <ShadcnDemo />
+          <Code code={deploySource} label="deploy.tsx" className="dial-code" />
         </section>
       </main>
       <Footer>Every form on this page is drawn by FormView with the example renderers.</Footer>

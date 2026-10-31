@@ -117,7 +117,7 @@ import { FormView, useForm } from 'fieldspec/react';
 ```
 
 fieldspec ships no look. Copy a renderer set from the repository's `examples/renderers`
-(`html.tsx`, `react-aria.tsx`, `dialkit.tsx`) and make it your own. Behaviour lives in
+(`html.tsx`, `react-aria.tsx`, `dialkit.tsx`, `shadcn.tsx`) and make it your own. Behaviour lives in
 `listOf`, `entriesOf`, `objectOf`, `variantOf`, `choicesOf` and `checksOf`; renderers only draw.
 Read a form in your own components with `useFormState(form)` or `useField(form, path)`.
 

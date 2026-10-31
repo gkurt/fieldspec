@@ -384,7 +384,7 @@ function dateText(value: unknown, time: boolean): string {
  * focus. `row(i)` goes on each item's element, `handle(i, name)` on its handle. Items are keyed
  * by position, so after a move from the keyboard the focus is sent after the item.
  */
-function useReorder(list: ListControl, disabled: boolean) {
+export function useReorder(list: ListControl, disabled: boolean) {
   const [drag, setDrag] = useState<{ from: number; over: number } | undefined>();
   const id = useId();
   const refocus = useRef<number | undefined>(undefined);

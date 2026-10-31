@@ -553,8 +553,9 @@ function Start() {
       <div className="feature-copy">
         <Heading kicker="Get started" title="Define, parse, draw">
           <code>define</code> checks the spec and keeps its type. <code>parse</code> turns JSON into typed values. <code>FormView</code>{' '}
-          draws it with renderers you bring: copy a set from the repository's <code>examples/renderers</code> (plain HTML, DialKit or React
-          Aria; see them in <a href="examples.html">the examples</a>) and make it yours, or walk <code>layout(spec)</code> yourself.
+          draws it with renderers you bring: copy a set from the repository's <code>examples/renderers</code> (plain HTML, DialKit, React
+          Aria or shadcn/ui; see them in <a href="examples.html">the examples</a>) and make it yours, or walk <code>layout(spec)</code>{' '}
+          yourself.
         </Heading>
         <div className="ctas">
           <a className="button primary" href={REPO}>
