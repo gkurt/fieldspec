@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://unpkg.com/fieldspec@0.0.0/schema/spec.json",
-  "title": "fieldspec spec 0.0.0",
+  "$id": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json",
+  "title": "fieldspec spec 0.1.0",
   "description": "A fieldspec spec: the fields of a config or form, their kinds, constraints, defaults and conditions, and how a form for them is drawn. Built-in names are lowercase; names an application or a spec defines are capitalized.",
   "type": "object",
   "properties": {
