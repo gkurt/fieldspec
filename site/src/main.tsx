@@ -3,7 +3,7 @@ import { StrictMode, useMemo, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { htmlRenderers, htmlStyles } from '#examples/renderers/html.tsx';
 import { parse, prompt, toJSONSchema, toJsonRender, VERSION, type Form } from '#src/index.ts';
-import { FormView, useForm, useFormVersion } from '#src/react/index.tsx';
+import { FormView, useForm, useFormState } from '#src/react/index.tsx';
 import { toZod } from '#src/zod.ts';
 import { Canvas } from './Canvas.tsx';
 import { Footer, Heading, Nav, REPO } from './chrome.tsx';
@@ -117,7 +117,8 @@ function App() {
           <Heading kicker="With React Aria" title="Accessible controls, from the same spec">
             The React Aria example renderers draw a form with{' '}
             <a href="https://react-spectrum.adobe.com/react-aria/">React Aria Components</a>: number fields with steppers, a date picker
-            with a calendar, radio and toggle-button groups, checkbox groups, colour fields with swatches. Each control carries its own
+            with a calendar, radio and toggle-button groups, checkbox groups, colour fields with swatches, and a combobox for the city's
+            suggestions. The speakers are an accordion, each section headed by the speaker's name (namedBy). Each control carries its own
             label, help and errors, wired the way React Aria wires them. fieldspec keeps the values, conditions and checks; pick "Online" to
             see the city give way to a stream link.
           </Heading>
@@ -135,8 +136,8 @@ function App() {
 
 function Hero({ form }: { form: Form }) {
   const [view, setView] = useState<'spec' | 'type'>('spec');
-  useFormVersion(form);
-  const result = parse(account, form.json());
+  const { json } = useFormState(form);
+  const result = parse(account, json);
   return (
     <header className="hero" id="top">
       <div className="hero-copy">
@@ -296,14 +297,14 @@ const INTEROP = ['JSON Schema', 'Zod', 'json-render', 'Agent prompt'] as const;
 
 function Interop({ form }: { form: Form }) {
   const [tab, setTab] = useState<(typeof INTEROP)[number]>('JSON Schema');
-  useFormVersion(form);
+  const { values } = useFormState(form);
   const zod = useMemo(() => toZod(account), []);
   const body = (() => {
     switch (tab) {
       case 'JSON Schema':
         return <Json value={toJSONSchema(account)} />;
       case 'Zod': {
-        const r = zod.safeParse(form.values);
+        const r = zod.safeParse(values);
         return (
           <>
             <Code code={`import { toZod } from "fieldspec/zod";\n\nconst schema = toZod(account);\nschema.safeParse(values);`} />
@@ -319,7 +320,7 @@ function Interop({ form }: { form: Form }) {
         );
       }
       case 'json-render':
-        return <Json value={toJsonRender(account, { values: form.values })} />;
+        return <Json value={toJsonRender(account, { values })} />;
       case 'Agent prompt':
         return <Code code={prompt().split('\n').slice(0, 60).join('\n') + '\n…'} />;
     }

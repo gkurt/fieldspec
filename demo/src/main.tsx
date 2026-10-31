@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { design, type GradientValue } from '#examples/design.ts';
 import { htmlStyles } from '#examples/renderers/html.tsx';
 import { checkSpec, formatFaults, prompt, SCHEMA_URL, toJSONSchema, toJsonRender } from '#src/index.ts';
-import { defineRenderers, FormView, useForm, useFormVersion, type ControlProps } from '#src/react/index.tsx';
+import { defineRenderers, FormView, useForm, useFormState, type ControlProps } from '#src/react/index.tsx';
 import { JsonTree, jsonTreeStyles } from './JsonTree.tsx';
 import { Selection, selectionStyles } from './Selection.tsx';
 
@@ -194,20 +194,20 @@ function App() {
 
 function Workspace() {
   const form = useForm(spec);
-  useFormVersion(form);
+  const { json, issues } = useFormState(form);
   const [view, setView] = useState<string | undefined>(undefined);
   const [tab, setTab] = useState<(typeof TABS)[number]>('Values');
   const faults = useMemo(() => checkSpec(spec), []);
   const output = (() => {
     switch (tab) {
       case 'Values':
-        return <JsonTree key="values" value={{ values: form.json(), issues: form.issues }} depth={3} />;
+        return <JsonTree key="values" value={{ values: json, issues }} depth={3} />;
       case 'Spec':
         return <JsonTree key="spec" value={JSON.parse(JSON.stringify(spec))} />;
       case 'JSON Schema':
         return <JsonTree key="schema" value={toJSONSchema(spec)} />;
       case 'json-render':
-        return <JsonTree key="json-render" value={toJsonRender(spec, { values: form.json() })} />;
+        return <JsonTree key="json-render" value={toJsonRender(spec, { values: json })} />;
       case 'Prompt':
         return <pre>{prompt(design)}</pre>;
     }

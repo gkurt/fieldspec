@@ -151,6 +151,8 @@ function annotate(s: JsonSchema, decl: Resolved) {
   if (decl.readOnly) s.readOnly = true;
   for (const prop of ['hint', 'placeholder', 'aliases', 'visible', 'enabled', 'required', 'group', 'order', 'render', 'meta'] as const)
     if (decl[prop] !== undefined) s[`x-${prop}`] = decl[prop];
+  const namedBy = (decl as { namedBy?: unknown }).namedBy;
+  if (namedBy !== undefined) s['x-namedBy'] = namedBy;
 }
 
 function shapeOf(ctx: Out, decl: Resolved): JsonSchema {
@@ -352,6 +354,7 @@ function fieldFrom(ctx: FromCtx, raw: Schema): FieldDecl {
       'order',
       'render',
       'meta',
+      'namedBy',
     ])
       if (s[`x-${prop}`] !== undefined) decl[prop] = s[`x-${prop}`];
 

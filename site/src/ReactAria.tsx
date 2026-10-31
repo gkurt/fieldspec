@@ -1,7 +1,7 @@
 import { reactAriaRenderers, reactAriaStyles } from '#examples/renderers/react-aria.tsx';
 /** A form drawn with React Aria Components, beside the values it edits. */
 import { define } from '#src/index.ts';
-import { FormView, useForm, useFormVersion } from '#src/react/index.tsx';
+import { FormView, useForm, useFormState } from '#src/react/index.tsx';
 import { Json } from './Code.tsx';
 
 export const meetupSpec = define({
@@ -19,13 +19,30 @@ export const meetupSpec = define({
       render: 'radio',
     },
     city: {
-      type: 'enum',
-      options: ['Amsterdam', 'Berlin', 'Istanbul', 'Lisbon'],
+      type: 'string',
+      suggestions: ['Amsterdam', 'Berlin', 'Istanbul', 'Lisbon'],
       default: 'Istanbul',
       visible: { $state: 'format', eq: 'venue' },
     },
     link: { type: 'url', label: 'Stream link', visible: { $state: 'format', eq: 'online' } },
     listing: { type: 'enum', options: ['public', 'unlisted', 'private'], default: 'public', render: 'segmented' },
+    speakers: {
+      type: 'array',
+      namedBy: 'name',
+      render: { type: 'accordion', props: { open: 'first', addLabel: 'Add a speaker' } },
+      items: {
+        type: 'object',
+        fields: {
+          name: { type: 'string', placeholder: 'Who' },
+          talk: { type: 'string', label: 'Talk' },
+          minutes: { type: 'int', min: 5, max: 60, default: 20, render: 'slider', unit: ' min' },
+        },
+      },
+      default: [
+        { name: 'Ada', talk: 'Specs all the way down', minutes: 25 },
+        { name: 'Lin', talk: 'Forms agents can fill', minutes: 15 },
+      ],
+    },
     topics: { type: 'set', items: { type: 'enum', options: ['forms', 'schemas', 'a11y', 'AI'] }, default: ['forms'] },
     waitlist: { type: 'boolean', default: true, render: 'switch', label: 'Keep a waitlist' },
     reminder: { use: 'percent', default: 0.25, label: 'Remind when this full' },
@@ -47,7 +64,7 @@ import { reactAriaRenderers, reactAriaStyles } from "./renderers/react-aria"; //
 
 export function ReactAriaDemo() {
   const form = useForm(meetupSpec);
-  useFormVersion(form);
+  const { json } = useFormState(form);
   return (
     <div className="aria-demo">
       <style>{reactAriaStyles}</style>
@@ -59,7 +76,7 @@ export function ReactAriaDemo() {
       </figure>
       <figure>
         <figcaption>form.json()</figcaption>
-        <Json value={form.json()} className="aria-json" />
+        <Json value={json} className="aria-json" />
       </figure>
     </div>
   );

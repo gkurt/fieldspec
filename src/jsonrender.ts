@@ -277,13 +277,15 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
     let key: string;
     switch (element) {
       case 'input':
+      case 'autocomplete':
       case 'date':
       case 'color':
       case 'file': {
         const numeric = decl.type === 'number' || decl.type === 'int';
         const kind =
           own.secret === true ? 'password' : numeric ? 'number' : (decl as { format?: string }).format === 'email' ? 'email' : 'text';
-        key = el(element, { label: label ?? '', name, type: kind, ...placeholder, value });
+        // json-render's inputs have no suggestions: an autocomplete is a plain text box there.
+        key = el(element === 'autocomplete' ? 'input' : element, { label: label ?? '', name, type: kind, ...placeholder, value });
         break;
       }
       case 'textarea':

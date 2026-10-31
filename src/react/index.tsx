@@ -1,3 +1,8 @@
+// The form is a store whose object stays the same while its contents change. FormView re-renders on
+// every change and reads it afresh, so a memoizing compiler (the React Compiler) must leave this
+// module alone; components of your own read the form through `useFormState` and `useField`.
+'use no memo';
+
 /**
  * React rendering. The form is headless; `FormView` walks its layout tree and asks your
  * renderers to draw each node: a table keyed by element name (layout like `stack` and `row`,
@@ -14,7 +19,7 @@ import type { Format } from '#src/format.ts';
 import type { Infer } from '#src/infer.ts';
 import { defaultControl, type LayoutNode } from '#src/layout.ts';
 import { resolvePointer } from '#src/pointer.ts';
-import type { Expr } from '#src/types.ts';
+import type { Expr, Issue, Json } from '#src/types.ts';
 
 // ── Hooks ────────────────────────────────────────────────────────────────────────────────
 
@@ -24,7 +29,7 @@ export function useForm<S extends Parameters<typeof createForm>[0]>(spec: S, opt
   return form;
 }
 
-/** Re-render when the form changes. Returns its version. */
+/** Re-render when the form changes. Returns its version. To read the form as well, use {@link useFormState}. */
 export function useFormVersion(form: Form): number {
   return useSyncExternalStore(
     form.subscribe,
@@ -33,10 +38,55 @@ export function useFormVersion(form: Form): number {
   );
 }
 
+/** The form as it is now. A new object on every change, unlike the form itself. */
+export interface FormState<V = unknown> {
+  readonly version: number;
+  readonly values: V;
+  readonly issues: readonly Issue[];
+  /** The values as JSON. */
+  readonly json: Json;
+}
+
+const states = new WeakMap<Form, FormState>();
+
+function stateOf<V>(form: Form<V>): FormState<V> {
+  const known = states.get(form);
+  if (known?.version === form.version) return known as FormState<V>;
+  let json: Json | undefined;
+  const state: FormState<V> = {
+    version: form.version,
+    values: form.values,
+    get issues() {
+      return form.issues;
+    },
+    get json() {
+      return (json ??= form.json());
+    },
+  };
+  states.set(form, state);
+  return state;
+}
+
+/**
+ * The form's values, issues and JSON, re-rendering on every change. Read the form in your own
+ * components through this rather than the form object, which stays the same as it changes, so
+ * what a memoizing compiler (the React Compiler) keeps follows each change.
+ */
+export function useFormState<V>(form: Form<V>): FormState<V> {
+  return useSyncExternalStore(
+    form.subscribe,
+    () => stateOf(form),
+    () => stateOf(form),
+  );
+}
+
 /** A field's live state, or undefined if the path is not a field. */
 export function useField(form: Form, path: string): FieldState | undefined {
-  useFormVersion(form);
-  return form.field(path);
+  return useSyncExternalStore(
+    form.subscribe,
+    () => form.field(path),
+    () => form.field(path),
+  );
 }
 
 // ── The renderer table ───────────────────────────────────────────────────────────────────

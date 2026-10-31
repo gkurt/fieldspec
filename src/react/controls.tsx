@@ -19,6 +19,8 @@ export interface ListItem {
   readonly index: number;
   /** The item's pointer. */
   readonly path: string;
+  /** What the item is called: its name from the list's `namedBy`, else its position ("#2"). */
+  readonly label: string;
   /** Draws the item as the spec lays it out. */
   readonly render: () => ReactNode;
 }
@@ -42,7 +44,8 @@ export function listOf(p: ControlProps): ListControl {
   return {
     items: values.map((_, index) => {
       const path = joinPointer(field.path, index);
-      return { index, path, render: () => (item ? p.render(item, path, { item: path, index }) : null) };
+      const label = p.form.field(path)?.label ?? `#${index + 1}`;
+      return { index, path, label, render: () => (item ? p.render(item, path, { item: path, index }) : null) };
     }),
     canAdd: !p.disabled && (maxItems === undefined || values.length < maxItems),
     add: (value) => p.form.addItem(field.path, value),
@@ -57,6 +60,8 @@ export interface Entry {
   readonly key: unknown;
   /** The key as text, to show and edit. */
   readonly label: string;
+  /** Its name from the record's or map's `namedBy`, if it has one there. */
+  readonly name?: string;
   readonly path: string;
   /** Draws the entry's value as the spec lays it out. */
   readonly render: () => ReactNode;
@@ -93,10 +98,18 @@ export function entriesOf(p: ControlProps): EntriesControl {
     return { key };
   };
   const item = p.fieldNode?.item;
+  const { namedBy } = field.decl as { namedBy?: unknown };
   return {
     entries: pairs.map(([key]) => {
       const path = joinPointer(field.path, String(key));
-      return { key, label: String(key), path, render: () => (item ? p.render(item, path, { item: path }) : null) };
+      const name = namedBy === undefined ? undefined : p.form.field(path)?.label;
+      return {
+        key,
+        label: String(key),
+        ...(name !== undefined && { name }),
+        path,
+        render: () => (item ? p.render(item, path, { item: path }) : null),
+      };
     }),
     add: (typed) => {
       const read = readKey(typed);

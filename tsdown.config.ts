@@ -11,4 +11,10 @@ export default defineConfig({
   platform: 'neutral',
   dts: true,
   sourcemap: true,
+  inputOptions: {
+    // src/react/index.tsx opens with 'use no memo', and its entry keeps it: the warning that it may not is moot.
+    onLog(level, log, handler) {
+      if (log.code !== 'MODULE_LEVEL_DIRECTIVE') handler(level, log);
+    },
+  },
 });

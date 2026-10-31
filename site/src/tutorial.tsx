@@ -6,7 +6,7 @@ import { StrictMode, useMemo, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { htmlRenderers, htmlStyles } from '#examples/renderers/html.tsx';
 import { toJSONSchema, type Form, type Spec } from '#src/index.ts';
-import { FormView, useForm, useFormVersion } from '#src/react/index.tsx';
+import { FormView, useForm, useFormState } from '#src/react/index.tsx';
 import { Footer, Nav, REPO } from './chrome.tsx';
 import { Code, highlight, Json } from './Code.tsx';
 import * as L from './lessons.ts';
@@ -386,13 +386,13 @@ function Live({ spec, view, type }: { spec: Spec; view?: string; type?: string }
 }
 
 function Value({ form }: { form: Form }) {
-  useFormVersion(form);
+  const { json, issues } = useFormState(form);
   return (
     <>
-      <Json value={form.json()} className="lesson-out" />
-      {form.issues.length > 0 && (
+      <Json value={json} className="lesson-out" />
+      {issues.length > 0 && (
         <ul className="faults" aria-label="Issues">
-          {form.issues.map((i) => (
+          {issues.map((i) => (
             <li key={`${i.path}:${i.message}`} className="error">
               <code>{i.path}</code> {i.message}
             </li>

@@ -1,8 +1,8 @@
 /**
  * An example renderer set: React Aria Components drawing fieldspec forms. fieldspec keeps the form (values, conditions,
  * validation, lists, layouts); React Aria draws its controls: text and number fields, sliders,
- * switches, checkboxes, selects, radio and toggle-button groups, date pickers and colour
- * fields, each with its own label, help and errors, and their accessibility. Controls React
+ * switches, checkboxes, selects, radio and toggle-button groups, date pickers, colour fields
+ * and comboboxes for suggestions, each with its own label, help and errors, and their accessibility. Controls React
  * Aria has none for here (lists, records, variants, files) keep the HTML set's (./html.tsx).
  * Needs `react-aria-components` and `@internationalized/date`.
  *
@@ -32,6 +32,7 @@ import {
   Checkbox,
   CheckboxGroup,
   ColorField,
+  ComboBox,
   ColorSwatch,
   ColorSwatchPicker,
   ColorSwatchPickerItem,
@@ -449,6 +450,44 @@ const colorOf = (v: unknown) => {
 };
 
 /** A colour typed as hex, with a swatch, and the field's swatches to pick from. */
+/** A text box offering the field's suggestions, filtered as it is typed; any other value is allowed. */
+function AriaAutocomplete(p: ControlProps) {
+  const f = p.field;
+  const { draft, error, placeholder, change } = useParsedText(p, parserFor(p.form.format, f.decl.type));
+  const items = (f.suggestions ?? []).map((s) => ({ id: s }));
+  return (
+    <ComboBox
+      className="fs-aria-combobox"
+      allowsCustomValue
+      menuTrigger="focus"
+      inputValue={draft}
+      onInputChange={change}
+      onBlur={p.touch}
+      defaultItems={items}
+      {...common(p)}
+      isInvalid={invalid(f) || !!error}
+    >
+      <FieldLabel field={f} node={p.node} />
+      <Group className="fs-aria-group">
+        <Input className="fs-input" placeholder={placeholder} />
+        <Button className="fs-aria-button" aria-label="Show suggestions">
+          ▾
+        </Button>
+      </Group>
+      <Notes field={f} extra={error} />
+      <Popover className="fs-aria-popover">
+        <ListBox className="fs-aria-listbox">
+          {(item: { id: string }) => (
+            <ListBoxItem id={item.id} textValue={item.id} className="fs-aria-option">
+              {item.id}
+            </ListBoxItem>
+          )}
+        </ListBox>
+      </Popover>
+    </ComboBox>
+  );
+}
+
 function AriaColor(p: ControlProps) {
   const f = p.field;
   const value = f.mixed ? null : colorOf(f.value);
@@ -506,6 +545,7 @@ const ARIA_RENDERERS = new Set<ElementRenderer>([
   AriaChecks,
   AriaDate,
   AriaColor,
+  AriaAutocomplete,
 ]);
 
 function AriaTextarea(p: ControlProps) {
@@ -557,6 +597,7 @@ export const reactAriaRenderers: Renderers = {
     checks: AriaChecks,
     date: AriaDate,
     color: AriaColor,
+    autocomplete: AriaAutocomplete,
   }),
 };
 
@@ -567,7 +608,7 @@ export const reactAriaRenderers: Renderers = {
  */
 export const reactAriaStyles = `
 [data-fieldspec] .fs-aria-text, [data-fieldspec] .fs-aria-number, [data-fieldspec] .fs-aria-select, [data-fieldspec] .fs-aria-date,
-[data-fieldspec] .fs-aria-colorfield, [data-fieldspec] .fs-aria-radios, [data-fieldspec] .fs-aria-checks, [data-fieldspec] .fs-aria-segmented { display: flex; flex-direction: column; gap: 4px; }
+[data-fieldspec] .fs-aria-colorfield, [data-fieldspec] .fs-aria-combobox, [data-fieldspec] .fs-aria-radios, [data-fieldspec] .fs-aria-checks, [data-fieldspec] .fs-aria-segmented { display: flex; flex-direction: column; gap: 4px; }
 [data-fieldspec] .fs-aria-group { display: flex; align-items: center; gap: 6px; }
 [data-fieldspec] .fs-aria-group .fs-input { flex: 1; min-width: 0; }
 [data-fieldspec] .fs-aria-unit { color: var(--fs-muted, color-mix(in srgb, currentColor 60%, transparent)); font-size: 0.9em; }

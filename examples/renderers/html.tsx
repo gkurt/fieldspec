@@ -17,7 +17,8 @@ import {
 } from 'fieldspec/react';
 /**
  * fieldspec's forms in plain HTML: inputs, selects, fieldsets, a list whose items reorder by
- * dragging or the keyboard, a record whose keys are renamed in place. An example renderer set to
+ * dragging or the keyboard, a record whose keys are renamed in place, accordions of named items,
+ * and text boxes offering suggestions. An example renderer set to
  * copy and restyle; `htmlStyles` is its look, all `fs-*` classes.
  *
  * `<FormView form={form} renderers={htmlRenderers} />`, with `<style>{htmlStyles}</style>` once.
@@ -593,6 +594,143 @@ function KeyInput({ value, disabled, rename }: { value: string; disabled: boolea
   );
 }
 
+/** A text box offering the field's suggestions through the browser's own list; any other value is allowed. */
+function Autocomplete(p: ControlProps) {
+  const list = `${p.id}-suggestions`;
+  return (
+    <>
+      <ParsedText p={p} parse={parserFor(p.form.format, p.field.decl.type)} extra={{ list, autoComplete: 'off' }} />
+      <datalist id={list}>
+        {(p.field.suggestions ?? []).map((s) => (
+          <option key={s} value={s} />
+        ))}
+      </datalist>
+    </>
+  );
+}
+
+/** Which sections of an accordion start open: none, the first, or all. */
+const startsOpen = (p: ControlProps, index: number) => p.props.open === 'all' || (p.props.open === 'first' && index === 0);
+
+/** A button in a section's heading: it acts without opening or closing the section. */
+function HeadingButton({
+  label,
+  disabled,
+  onPress,
+  children,
+}: {
+  label: string;
+  disabled: boolean;
+  onPress: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onPress();
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+/**
+ * Items as sections that open and close, each headed by its name (the list's `namedBy`, else its
+ * position or key). A list's sections move up and down; a record's or map's key is renamed inside.
+ */
+function Accordion(p: ControlProps) {
+  return p.field.decl.type === 'array' ? <ListAccordion {...p} /> : <EntriesAccordion {...p} />;
+}
+
+function ListAccordion(p: ControlProps) {
+  const list = listOf(p);
+  return (
+    <div className="fs-accordion">
+      {list.items.map(({ index: i, label, render }) => (
+        // By position, as a list's rows are: a section keeps its open state while its item changes.
+        <details key={i} className="fs-section-item" open={startsOpen(p, i)}>
+          <summary>
+            <span className="fs-summary-label">{label}</span>
+            <span className="fs-summary-actions">
+              <HeadingButton label={`Move ${label} up`} disabled={p.disabled || i === 0} onPress={() => list.move(i, i - 1)}>
+                ↑
+              </HeadingButton>
+              <HeadingButton
+                label={`Move ${label} down`}
+                disabled={p.disabled || i === list.items.length - 1}
+                onPress={() => list.move(i, i + 1)}
+              >
+                ↓
+              </HeadingButton>
+              <HeadingButton label={`Remove ${label}`} disabled={p.disabled} onPress={() => list.remove(i)}>
+                ✕
+              </HeadingButton>
+            </span>
+          </summary>
+          <div className="fs-section-body">{render()}</div>
+        </details>
+      ))}
+      <div>
+        <button type="button" disabled={!list.canAdd} onClick={() => list.add()}>
+          {text(p.props.addLabel) ?? 'Add'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function EntriesAccordion(p: ControlProps) {
+  const entries = entriesOf(p);
+  const [key, setKey] = useState('');
+  const add = () => {
+    if (entries.add(key) === undefined) setKey('');
+  };
+  return (
+    <div className="fs-accordion">
+      {entries.entries.map((entry, i) => (
+        <details key={i} className="fs-section-item" open={startsOpen(p, i)}>
+          <summary>
+            <span className="fs-summary-label">{entry.name ?? entry.label}</span>
+            <span className="fs-summary-actions">
+              <HeadingButton label={`Remove ${entry.name ?? entry.label}`} disabled={p.disabled} onPress={() => entries.remove(entry.key)}>
+                ✕
+              </HeadingButton>
+            </span>
+          </summary>
+          <div className="fs-section-body">
+            <KeyInput value={entry.label} disabled={p.disabled} rename={(typed) => entries.rename(entry.key, typed)} />
+            {entry.render()}
+          </div>
+        </details>
+      ))}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input
+          className="fs-input"
+          placeholder="New key"
+          value={key}
+          disabled={p.disabled}
+          onChange={(e) => setKey(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            add();
+          }}
+        />
+        <button type="button" disabled={p.disabled || key === ''} onClick={add}>
+          {text(p.props.addLabel) ?? 'Add'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Variant(p: ControlProps) {
   const variant = variantOf(p);
   return (
@@ -620,6 +758,7 @@ function Variant(p: ControlProps) {
 const controlRenderers = defineRenderers({
   input: Input,
   textarea: (p) => <ParsedText p={p} parse={parserFor(p.form.format, p.field.decl.type)} multiline />,
+  autocomplete: Autocomplete,
   select: Select,
   radio: (p) => <Choices {...p} segmented={false} />,
   segmented: (p) => <Choices {...p} segmented />,
@@ -715,6 +854,7 @@ const controlRenderers = defineRenderers({
   },
   checks: Checks,
   list: List,
+  accordion: Accordion,
   entries: Entries,
   variant: Variant,
   fields: Fields,
@@ -769,6 +909,19 @@ export const htmlStyles = `
 [data-fieldspec] .fs-item[data-drop="before"] { box-shadow: 0 -2px 0 #3b82f6; }
 [data-fieldspec] .fs-item[data-drop="after"] { box-shadow: 0 2px 0 #3b82f6; }
 [data-fieldspec] .fs-key .fs-input { width: 100%; box-sizing: border-box; }
+[data-fieldspec] .fs-accordion { display: flex; flex-direction: column; gap: 8px; }
+[data-fieldspec] .fs-section-item { border: 1px solid color-mix(in srgb, currentColor 15%, transparent); border-radius: 8px; }
+[data-fieldspec] .fs-section-item > summary { display: flex; align-items: center; gap: 8px; padding: 6px 10px; cursor: pointer; list-style: none; }
+[data-fieldspec] .fs-section-item > summary::-webkit-details-marker { display: none; }
+[data-fieldspec] .fs-section-item > summary::before { content: "▸"; font-size: 0.75em; transition: transform 0.15s; }
+[data-fieldspec] .fs-section-item[open] > summary::before { transform: rotate(90deg); }
+[data-fieldspec] .fs-summary-label { flex: 1; min-width: 0; font-weight: 600; font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-fieldspec] .fs-summary-actions { display: flex; gap: 4px; }
+[data-fieldspec] .fs-summary-actions button { padding: 0 8px; }
+[data-fieldspec] .fs-section-body { display: flex; flex-direction: column; gap: 12px; padding: 4px 12px 12px; }
+/* The section's heading names the item, so the item's own frame and legend step back (the legend stays for screen readers). */
+[data-fieldspec] .fs-section-body > .fs-group { border: 0; padding: 0; }
+[data-fieldspec] .fs-section-body > .fs-group > legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 [data-fieldspec] .fs-warning { color: #b7791f; }
 [data-fieldspec] .fs-muted { opacity: 0.7; }
 :where([data-fieldspec] button) { font: inherit; padding: 4px 10px; border-radius: 6px; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); background: transparent; color: inherit; cursor: pointer; }

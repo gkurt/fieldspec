@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { DialKitView } from '#examples/renderers/dialkit.tsx';
 import { htmlRenderers } from '#examples/renderers/html.tsx';
 import { define, type Infer } from '#src/index.ts';
-import { FormView, useForm, useFormVersion } from '#src/react/index.tsx';
+import { FormView, useForm, useFormState } from '#src/react/index.tsx';
 
 export const cardSpec = define({
   fields: {
@@ -40,12 +40,13 @@ export const cardSpec = define({
 
 export const cardSource = `import "dialkit/styles.css";
 import { DialKitView } from "./renderers/dialkit"; // copied from fieldspec's examples/renderers
-import { useForm } from "fieldspec/react";
+import { useForm, useFormState } from "fieldspec/react";
 
 function Card() {
   const form = useForm(card); // values, conditions, checks: fieldspec
+  const { values } = useFormState(form);
   return <>
-    <Preview card={form.values} />
+    <Preview card={values} />
     <DialKitView form={form} title="Card" /> {/* drawn with DialKit's controls */}
   </>;
 }`;
@@ -54,12 +55,12 @@ type Card = Infer<typeof cardSpec>;
 
 export function DialKitDemo() {
   const form = useForm(cardSpec);
-  useFormVersion(form);
+  const { values } = useFormState(form);
   const theme = useSiteTheme();
   return (
     <div className="dial-demo">
       <div className="dial-preview">
-        <Preview card={form.values} />
+        <Preview card={values} />
       </div>
       <div className="dial-pair">
         <figure>

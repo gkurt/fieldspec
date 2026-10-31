@@ -146,6 +146,13 @@ export const CONTROL_ELEMENTS = [
     props: { field: fieldRef, placeholder, rows: { schema: { type: 'integer', minimum: 1 }, description: 'Visible lines.' } },
     kinds: ['string', 'json'],
   }),
+  defineElement({
+    name: 'autocomplete',
+    role: 'control',
+    description: "A text box offering the field's suggestions as it is typed; any other value is allowed too.",
+    props: { field: fieldRef, placeholder },
+    kinds: ['string'],
+  }),
   defineElement({ name: 'select', role: 'control', description: 'A drop-down of options.', props: { field: fieldRef }, kinds: ['enum'] }),
   defineElement({ name: 'radio', role: 'control', description: 'Options as radio buttons.', props: { field: fieldRef }, kinds: ['enum'] }),
   defineElement({
@@ -189,6 +196,17 @@ export const CONTROL_ELEMENTS = [
     description: 'Items one under another, added, removed and reordered.',
     props: { field: fieldRef, addLabel: text("The add button's label.") },
     kinds: ['array', 'set'],
+  }),
+  defineElement({
+    name: 'accordion',
+    role: 'control',
+    description: 'Items as sections that open and close, each headed by its name (see namedBy), added, removed and reordered.',
+    props: {
+      field: fieldRef,
+      addLabel: text("The add button's label."),
+      open: { schema: { enum: ['none', 'first', 'all'] }, description: 'Which sections start open. Default none.' },
+    },
+    kinds: ['array', 'record', 'map'],
   }),
   defineElement({
     name: 'entries',

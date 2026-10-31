@@ -78,6 +78,15 @@ differ from a built-in only by case.
   options and element props. `$computed` names a function from a table passed at runtime, so
   the spec stays JSON; `define(spec, { fns })` checks every name is implemented.
 - **Groups** gather fields for display without changing the value's shape.
+- **Naming items**: a list's, record's or map's items are called by their position (`#2`) or
+  key, unless `namedBy` says otherwise: a pointer into the item (`"name"`, `"contact/name"`, or
+  `""` for the item itself), or a text expression in the item's scope
+  (`{ "$template": "${first} ${last}" }`). The name is the item's label (an accordion's section
+  heading, say), and an empty one falls back to the position or key. The checker knows the
+  item's fields, with a "did you mean".
+- **Suggestions**: a string's `suggestions` are values offered as it is typed, any other still
+  allowed: a list of strings, or an expression giving one (`{ "$state": "/roles" }` offers what
+  another list holds). A string with suggestions draws as an `autocomplete`.
 
 ## Presets and definitions: `use`
 
@@ -142,8 +151,15 @@ control edits, so `"render": "slider"` on a string, or `"collapsed": "yes"`, is 
 
 **The catalog.** Layout: `stack`, `row`, `columns`, `collapsible`, `scroll`, `tabs`, `text`, `divider`,
 `field`, `group`, `rest`. Parts: `label`, `help`, `errors`, `control`. Controls: `input`,
-`textarea`, `select`, `radio`, `segmented`, `checkbox`, `switch`, `slider`, `date`, `color`,
-`file`, `checks`, `list`, `entries`, `variant`, `fields`. Every kind names its default control.
+`textarea`, `autocomplete`, `select`, `radio`, `segmented`, `checkbox`, `switch`, `slider`, `date`, `color`,
+`file`, `checks`, `list`, `accordion`, `entries`, `variant`, `fields`. Every kind names its default control.
+
+`accordion` draws a list's, record's or map's items as sections that open and close, each headed
+by its name (see `namedBy`); its `open` prop says which start open (`"none"`, `"first"`, `"all"`):
+
+```json
+"speakers": { "type": "array", "namedBy": "name", "render": { "type": "accordion", "props": { "open": "first" } }, "items": { … } }
+```
 
 `scroll` keeps its children in a box no taller than `maxHeight` (pixels or a CSS length such as
 `"18rem"`; default `20rem`) and scrolls past it:
@@ -167,6 +183,11 @@ import { htmlRenderers, htmlStyles } from "./renderers/html"; // copied from exa
 <style>{htmlStyles}</style>
 <FormView form={useForm(spec)} renderers={htmlRenderers} />
 ```
+
+Read the form in your own components with `useFormState(form)` (its `values`, `issues` and
+`json`, a new object on every change) or `useField(form, path)`. The form object itself stays
+the same as it changes, so a component that reads it directly misses updates under a memoizing
+compiler such as the React Compiler.
 
 A renderer table is keyed by element name; `defineRenderers({ input: MyInput })` types each
 built-in element's renderer by its role, and tables layer by spreading
@@ -197,8 +218,9 @@ each time, and React remounts the control, losing its focus and what is being ty
 
 What controls do comes with `fieldspec/react`, so a renderer set only draws:
 
-- `listOf(props)`: a list's items (each with its `render()`), `add`, `remove`, `move`, `canAdd`.
-- `entriesOf(props)`: a record's or map's entries; `add(typedKey)` and `rename(key, typed)`
+- `listOf(props)`: a list's items (each with its `label`, from `namedBy`, and its `render()`), `add`,
+  `remove`, `move`, `canAdd`.
+- `entriesOf(props)`: a record's or map's entries (each with its key and its `namedBy` name); `add(typedKey)` and `rename(key, typed)`
   return why a key is refused (taken, or unreadable as the map's key kind), and a rename keeps
   the entry's value and position.
 - `objectOf(props)`: whether an object is there, `add`, `remove`, `render()`. Offer an absent one

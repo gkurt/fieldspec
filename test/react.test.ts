@@ -177,4 +177,26 @@ describe('React controls', () => {
     expect(body().hidden).toBe(false);
     await act(() => root.unmount());
   });
+
+  test('useFormState is a new object on each change, and useField follows its field', async () => {
+    const form = createForm(spec, { values: { steps: ['a'] } });
+    const states: unknown[] = [];
+    const Probe = () => {
+      const state = ui.useFormState(form);
+      const field = ui.useField(form, '/steps/0');
+      states.push(state);
+      return React.createElement('output', null, `${(state.json as { steps: string[] }).steps.length} ${String(field?.value)}`);
+    };
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = client.createRoot(host);
+    await React.act(async () => root.render(React.createElement(Probe)));
+    expect(host.textContent).toBe('1 a');
+    await React.act(async () => form.set('/steps/0', 'b'));
+    expect(host.textContent).toBe('1 b');
+    await React.act(async () => form.addItem('/steps'));
+    expect(host.textContent).toBe('2 b');
+    expect(new Set(states).size).toBe(3);
+    await React.act(async () => root.unmount());
+  });
 });

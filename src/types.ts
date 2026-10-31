@@ -155,6 +155,8 @@ export interface StringField extends FieldBase {
   readonly maxLength?: number;
   readonly pattern?: string;
   readonly format?: 'email' | 'uri' | 'uuid' | 'hostname' | 'ipv4' | 'color' | (string & {});
+  /** Values to offer as it is typed, any other still allowed: a list of strings, or an expression giving one. */
+  readonly suggestions?: Expr;
 }
 
 export interface NumberField extends FieldBase {
@@ -226,6 +228,12 @@ export interface ArrayField<F = FieldDecl> extends FieldBase {
   readonly items: F;
   readonly minItems?: number;
   readonly maxItems?: number;
+  /**
+   * What names each item where its position (or key) would: a pointer into the item (`"name"`,
+   * or `""` for the item itself), or a text expression evaluated in the item's scope. Shown as
+   * the item's label.
+   */
+  readonly namedBy?: Text;
 }
 
 export interface SetField<F = FieldDecl> extends FieldBase {
@@ -240,12 +248,24 @@ export interface RecordField<F = FieldDecl> extends FieldBase {
   readonly values: F;
   /** A regular expression every key must match. */
   readonly keyPattern?: string;
+  /**
+   * What names each item where its position (or key) would: a pointer into the item (`"name"`,
+   * or `""` for the item itself), or a text expression evaluated in the item's scope. Shown as
+   * the item's label.
+   */
+  readonly namedBy?: Text;
 }
 
 export interface MapField<F = FieldDecl> extends FieldBase {
   readonly type: 'map';
   readonly keys: F;
   readonly values: F;
+  /**
+   * What names each item where its position (or key) would: a pointer into the item (`"name"`,
+   * or `""` for the item itself), or a text expression evaluated in the item's scope. Shown as
+   * the item's label.
+   */
+  readonly namedBy?: Text;
 }
 
 export interface ObjectField<F = FieldDecl> extends FieldBase {

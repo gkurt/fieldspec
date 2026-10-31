@@ -9,8 +9,8 @@ import type { Infer } from './infer.ts';
 import { optionsOf } from './kinds.ts';
 import { layout, type LayoutNode } from './layout.ts';
 import { applyPatch, type PatchOp } from './patch.ts';
-import { getAt, joinPointer, parsePointer, setAt, splitPointer } from './pointer.ts';
-import type { Condition, EnumField, Expr, FieldDecl, GroupDecl, Issue, Json, Resolved, Result, Spec, Text } from './types.ts';
+import { getAt, joinPointer, parsePointer, resolvePointer, setAt, splitPointer } from './pointer.ts';
+import type { Condition, EnumField, Expr, FieldDecl, GroupDecl, Issue, Json, Resolved, Result, Spec, StringField, Text } from './types.ts';
 import { declAt, decode, decodeField, encode, initialValue, resolve, validate } from './values.ts';
 
 export interface FieldOption {
@@ -35,6 +35,8 @@ export interface FieldState {
   readonly placeholder?: string;
   /** For enums: the options, evaluated, hidden ones left out. */
   readonly options?: readonly FieldOption[];
+  /** For strings with `suggestions`: the values to offer, evaluated. */
+  readonly suggestions?: readonly string[];
   readonly issues: readonly Issue[];
   /** Whether to show the issues yet: after the field is touched or the form submitted. */
   readonly showIssues: boolean;
@@ -133,6 +135,13 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
       return true;
     }
   };
+  const safeEvaluate = (expr: Expr, scope: Scope): unknown => {
+    try {
+      return evaluate(expr, env(), scope);
+    } catch {
+      return undefined;
+    }
+  };
   const text = (t: Text | undefined, scope: Scope): string | undefined => {
     if (t === undefined) return undefined;
     try {
@@ -154,6 +163,18 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
     return true;
   };
 
+  /** An item's name, from its list's or record's `namedBy`: a pointer into the item, or text in its scope. */
+  const itemName = (container: FieldState | undefined, path: string, key: string): string | undefined => {
+    const namedBy =
+      container && ['array', 'record', 'map'].includes(container.decl.type) ? (container.decl as { namedBy?: Text }).namedBy : undefined;
+    if (namedBy === undefined) return undefined;
+    const name =
+      typeof namedBy === 'string'
+        ? textOf(getAt(values, resolvePointer(namedBy, path)))
+        : text(namedBy, { base: path, item: path, ...(container?.decl.type === 'array' && { index: Number(key) }) });
+    return name === undefined || name.trim() === '' ? undefined : name;
+  };
+
   const computeField = (path: string): FieldState | undefined => {
     const located = declAt(spec, values, path, format);
     if (!located) return undefined;
@@ -163,7 +184,11 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
     const ownVisible = safeTest(decl.visible, scope) && groupsVisible(groups, decl.group, scope);
     const visible = (parentState?.visible ?? true) && ownVisible;
     const enabled = (parentState?.enabled ?? true) && safeTest(decl.enabled, scope);
-    const label = text(decl.label, scope) ?? (/^\d+$/.test(key) ? `#${Number(key) + 1}` : humanize(key));
+    const label =
+      itemName(parentState, path, key) ?? text(decl.label, scope) ?? (/^\d+$/.test(key) ? `#${Number(key) + 1}` : humanize(key));
+    const given = decl.type === 'string' ? (decl as StringField).suggestions : undefined;
+    const suggested = given === undefined ? undefined : safeEvaluate(given, scope);
+    const suggestions = Array.isArray(suggested) ? [...new Set(suggested.filter((s): s is string => typeof s === 'string'))] : undefined;
     let fieldOptions: FieldOption[] | undefined;
     if (decl.type === 'enum') {
       fieldOptions = optionsOf(decl as EnumField, env(), scope)
@@ -197,6 +222,7 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
       hint: text(decl.hint, scope),
       placeholder: text(decl.placeholder, scope),
       ...(fieldOptions && { options: fieldOptions }),
+      ...(suggestions && { suggestions }),
       issues: own,
       showIssues: submitted || touched.has(path),
       mixed: isMixed(path),

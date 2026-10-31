@@ -144,9 +144,12 @@ const numberProps = {
 
 // ── Leaf kinds ───────────────────────────────────────────────────────────────────────────
 
-export const stringKind = defineKind<string, { minLength?: number; maxLength?: number; pattern?: string; format?: string }>()({
+export const stringKind = defineKind<
+  string,
+  { minLength?: number; maxLength?: number; pattern?: string; format?: string; suggestions?: unknown }
+>()({
   name: 'string',
-  control: 'input',
+  control: (decl) => (decl.suggestions === undefined ? 'input' : 'autocomplete'),
   description: 'Text.',
   props: {
     minLength: { schema: { type: 'integer', minimum: 0 }, description: 'Fewest characters.' },
@@ -155,6 +158,10 @@ export const stringKind = defineKind<string, { minLength?: number; maxLength?: n
     format: {
       schema: { type: 'string' },
       description: `A known shape: ${Object.keys(STRING_FORMATS).join(', ')}. Others are kept as hints.`,
+    },
+    suggestions: {
+      schema: { anyOf: [{ type: 'array', items: { type: 'string' } }, { $ref: '#/$defs/expr' }] },
+      description: 'Values offered as it is typed, others still allowed: strings, or an expression ($state, $computed) giving them.',
     },
   },
   example: { type: 'string', label: 'Display name', maxLength: 40 },
@@ -454,6 +461,11 @@ export const arrayKind = defineKind<unknown[]>()({
     items: { schema: field, description: 'The declaration every item follows.', required: true },
     minItems: { schema: { type: 'integer', minimum: 0 }, description: 'Fewest items.' },
     maxItems: { schema: { type: 'integer', minimum: 0 }, description: 'Most items.' },
+    namedBy: {
+      schema: { $ref: '#/$defs/text' },
+      description:
+        'What names each item in place of its position or key: a pointer into the item ("name"), or a text expression in its scope.',
+    },
   },
   example: { type: 'array', label: 'Tags', items: { type: 'string' } },
 });
@@ -477,6 +489,11 @@ export const recordKind = defineKind<Record<string, unknown>>()({
   props: {
     values: { schema: field, description: 'The declaration every value follows.', required: true },
     keyPattern: { schema: { type: 'string' }, description: 'A regular expression every key must match.' },
+    namedBy: {
+      schema: { $ref: '#/$defs/text' },
+      description:
+        'What names each item in place of its position or key: a pointer into the item ("name"), or a text expression in its scope.',
+    },
   },
   example: { type: 'record', label: 'Headers', values: { type: 'string' } },
 });
@@ -488,6 +505,11 @@ export const mapKind = defineKind<Map<unknown, unknown>>()({
   props: {
     keys: { schema: field, description: 'The declaration keys follow.', required: true },
     values: { schema: field, description: 'The declaration values follow.', required: true },
+    namedBy: {
+      schema: { $ref: '#/$defs/text' },
+      description:
+        'What names each item in place of its position or key: a pointer into the item ("name"), or a text expression in its scope.',
+    },
   },
 });
 

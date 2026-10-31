@@ -2,7 +2,7 @@
 import { Component, useMemo, useState, type ReactNode } from 'react';
 import { htmlRenderers } from '#examples/renderers/html.tsx';
 import { checkSpec, createForm, type Fault, type Form, type Spec } from '#src/index.ts';
-import { FormView, useFormVersion } from '#src/react/index.tsx';
+import { FormView, useFormState } from '#src/react/index.tsx';
 import { Json } from './Code.tsx';
 import { PLAYGROUND } from './specs.ts';
 
@@ -104,10 +104,10 @@ function Live({ form }: { form: Form }) {
 }
 
 function Values({ form }: { form: Form }) {
-  useFormVersion(form);
+  const { json, issues } = useFormState(form);
   return (
     <Json
-      value={{ values: form.json(), issues: form.issues.map((i) => `${i.path}: ${i.message}`) }}
+      value={{ values: json, issues: issues.map((i) => `${i.path}: ${i.message}`) }}
       label="form.json() and form.issues"
       className="pg-values"
     />

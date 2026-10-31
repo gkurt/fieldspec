@@ -175,6 +175,20 @@
             "format": {
               "type": "string",
               "description": "A known shape: email, uri, uuid, hostname, ipv4, color. Others are kept as hints."
+            },
+            "suggestions": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "$ref": "#/$defs/expr"
+                }
+              ],
+              "description": "Values offered as it is typed, others still allowed: strings, or an expression ($state, $computed) giving them."
             }
           },
           "required": [
@@ -1282,6 +1296,10 @@
               "type": "integer",
               "minimum": 0,
               "description": "Most items."
+            },
+            "namedBy": {
+              "$ref": "#/$defs/text",
+              "description": "What names each item in place of its position or key: a pointer into the item (\"name\"), or a text expression in its scope."
             }
           },
           "required": [
@@ -1482,6 +1500,10 @@
             "keyPattern": {
               "type": "string",
               "description": "A regular expression every key must match."
+            },
+            "namedBy": {
+              "$ref": "#/$defs/text",
+              "description": "What names each item in place of its position or key: a pointer into the item (\"name\"), or a text expression in its scope."
             }
           },
           "required": [
@@ -1579,6 +1601,10 @@
             "values": {
               "$ref": "#/$defs/field",
               "description": "The declaration values follow."
+            },
+            "namedBy": {
+              "$ref": "#/$defs/text",
+              "description": "What names each item in place of its position or key: a pointer into the item (\"name\"), or a text expression in its scope."
             }
           },
           "required": [
@@ -2051,6 +2077,7 @@
             "control",
             "input",
             "textarea",
+            "autocomplete",
             "select",
             "radio",
             "segmented",
@@ -2062,6 +2089,7 @@
             "file",
             "checks",
             "list",
+            "accordion",
             "entries",
             "variant",
             "fields"
@@ -2680,6 +2708,37 @@
             },
             {
               "type": "object",
+              "title": "autocomplete",
+              "description": "A text box offering the field's suggestions as it is typed; any other value is allowed too. Edits string fields.",
+              "properties": {
+                "type": {
+                  "const": "autocomplete"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    },
+                    "placeholder": {
+                      "$ref": "#/$defs/text",
+                      "description": "Shown while empty."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
               "title": "select",
               "description": "A drop-down of options. Edits enum fields.",
               "properties": {
@@ -2980,6 +3039,45 @@
                     "addLabel": {
                       "$ref": "#/$defs/text",
                       "description": "The add button's label."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "visible": {
+                  "$ref": "#/$defs/condition"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "title": "accordion",
+              "description": "Items as sections that open and close, each headed by its name (see namedBy), added, removed and reordered. Edits array, record, map fields.",
+              "properties": {
+                "type": {
+                  "const": "accordion"
+                },
+                "props": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "A field in scope, by key or relative pointer (`address/city`). Inside a field's own render: leave out."
+                    },
+                    "addLabel": {
+                      "$ref": "#/$defs/text",
+                      "description": "The add button's label."
+                    },
+                    "open": {
+                      "enum": [
+                        "none",
+                        "first",
+                        "all"
+                      ],
+                      "description": "Which sections start open. Default none."
                     }
                   },
                   "additionalProperties": false

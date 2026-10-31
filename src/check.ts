@@ -203,6 +203,16 @@ function checkDecl(c: Checker, decl: unknown, at: string, scope: Scope, self: re
   for (const prop of ['visible', 'enabled', 'required'] as const)
     if (decl[prop] !== undefined) checkCondition(c, decl[prop], `${at}/${prop}`, scope);
 
+  const suggestions = decl.suggestions;
+  if (Array.isArray(suggestions)) {
+    suggestions.forEach((s, i) => {
+      if (typeof s !== 'string') c.fault(`${at}/suggestions/${i}`, 'must be a string');
+    });
+  } else if (suggestions !== undefined) {
+    if (isDynamic(suggestions)) checkExpr(c, suggestions, `${at}/suggestions`, scope);
+    else c.fault(`${at}/suggestions`, 'must be a list of strings, or an expression ($state, $computed) giving one');
+  }
+
   // A definition's own `group` belongs to wherever it is placed, so only its uses are checked.
   if (decl.group !== undefined && scope.fields !== DEF_SITE) {
     if (typeof decl.group !== 'string') {
@@ -318,6 +328,7 @@ function checkInside(c: Checker, d: Resolved, type: string, at: string, scope: S
       if (items !== undefined) {
         const item: Scope = { ...scope, base: [...self, '*'], inItem: true };
         checkDecl(c, items, `${at}/items`, item, [...self, '*']);
+        if (type === 'array') checkNamedBy(c, (d as ArrayField).namedBy, `${at}/namedBy`, items, item);
         const real = isObject(items) ? deref(lookupOf(c), items) : undefined;
         if (type === 'set' && real && CONTAINER_KINDS.has(String(real.type)))
           c.fault(`${at}/items`, 'a set holds plain values; use an array for objects and lists', 'warning');
@@ -329,6 +340,7 @@ function checkInside(c: Checker, d: Resolved, type: string, at: string, scope: S
       const values = (d as RecordField).values;
       const item: Scope = { ...scope, base: [...self, '*'], inItem: true };
       if (values !== undefined) checkDecl(c, values, `${at}/values`, item, [...self, '*']);
+      checkNamedBy(c, (d as RecordField).namedBy, `${at}/namedBy`, values, item);
       if (type === 'map') {
         const keys = (d as MapField).keys;
         if (keys !== undefined) {
@@ -347,6 +359,39 @@ function checkInside(c: Checker, d: Resolved, type: string, at: string, scope: S
       }
       break;
     }
+  }
+}
+
+/** `namedBy`: a pointer into the item, which must name one of its fields, or text in the item's scope. */
+function checkNamedBy(c: Checker, namedBy: unknown, at: string, item: unknown, scope: Scope) {
+  if (namedBy === undefined || !isObject(item)) return;
+  let decl: Resolved | undefined = deref(lookupOf(c), item as unknown as FieldDecl);
+  if (typeof namedBy !== 'string') {
+    // Inside the item, relative pointers start from the item itself.
+    const fields = decl.type === 'object' ? (decl as ObjectField).fields : undefined;
+    const own = isObject(fields) ? { ...scope, fields, groups: (decl as ObjectField).groups } : scope;
+    return checkText(c, namedBy, at, own);
+  }
+  // `""` is the item itself; a pointer that leaves the item cannot be checked here.
+  if (namedBy === '' || namedBy.startsWith('/') || namedBy.startsWith('.')) return;
+  for (const segment of namedBy.split('/')) {
+    const fields: Record<string, unknown> =
+      decl?.type === 'object'
+        ? (decl as ObjectField).fields
+        : decl?.type === 'variant'
+          ? Object.assign({ [(decl as VariantField).key]: true }, ...Object.values((decl as VariantField).variants).map((v) => v.fields))
+          : {};
+    const next = fields[segment];
+    if (next === undefined) {
+      const names = Object.keys(fields);
+      return c.fault(
+        at,
+        names.length === 0
+          ? `"${namedBy}" names no field: a ${decl?.type ?? 'value'} item has none. Use "" for the item itself, or a text expression.`
+          : `no field "${segment}" in an item.${mean(segment, names)}`,
+      );
+    }
+    decl = isObject(next) ? deref(lookupOf(c), next as unknown as FieldDecl) : undefined;
   }
 }
 
