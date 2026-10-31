@@ -36,17 +36,11 @@
         "zod": "^4.6.7",
       },
       "peerDependencies": {
-        "@internationalized/date": ">=3.12",
-        "dialkit": ">=2",
-        "react": ">=18",
-        "react-aria-components": ">=1.22",
+        "react": ">=19",
         "zod": ">=4",
       },
       "optionalPeers": [
-        "@internationalized/date",
-        "dialkit",
         "react",
-        "react-aria-components",
         "zod",
       ],
     },

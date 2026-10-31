@@ -1,7 +1,12 @@
----
-packages:
-  'fieldspec': minor
----
+## fieldspec@0.1.0
+
+### Readable pattern messages
+
+A string that does not match its `pattern` says "This isn't a valid slug", named after the definition or preset the field uses, else its label or key; `patternMessage` replaces it. Custom kinds read the same name from `ctx.name`.
+
+### Constraints beside a definition's `$ref`
+
+In JSON Schema, what a field adds to its definition's constraints sits beside the `$ref`, so validators apply it, and a field that changes one is written out in full.
 
 ### First release
 
@@ -22,3 +27,19 @@ JSON Schema and Zod (`fieldspec/zod`) both ways, Standard Schema, and json-rende
 ### Rendering
 
 `fieldspec/react` draws a form with renderers you bring: a table or a function that picks one per element, each typed by its role. It ships no look of its own; `listOf`, `entriesOf`, `variantOf`, `objectOf`, `choicesOf` and `checksOf` carry what controls do, and the repository's `examples/renderers` are sets to copy (plain HTML, DialKit, React Aria).
+
+### Items named by `namedBy`
+
+A list's, record's or map's `namedBy` names its items by a field of theirs or a text expression, in place of their position or key.
+
+### Strings with `suggestions`
+
+A string's `suggestions`, a list or an expression, are offered as it is typed, and draw as the new `autocomplete` control.
+
+### The `accordion` control
+
+Draws a list's, record's or map's items as sections headed by their names.
+
+### `useFormState`
+
+Reads a form's values, issues and JSON as a new object on every change, so components stay current under the React Compiler; `useField` does too, and `FormView` opts out of compiling.
