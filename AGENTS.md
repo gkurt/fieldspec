@@ -48,7 +48,7 @@ Parent-directory imports go through the `#*` alias (`#src/form.ts`), siblings us
 - `src/patch.ts`, `src/pointer.ts` — JSON Patch over values; JSON Pointers.
 - `src/jsonschema.ts`, `src/zod.ts`, `src/standard.ts`, `src/jsonrender.ts` — interop.
 - `src/prompt.ts`, `src/schema.ts` — a system prompt and the JSON Schema of specs, for agents.
-- `src/version.ts` — `VERSION`, written by the Tegami config on each release (see below).
+- `src/version.ts` — `VERSION`, written by the Tegami config on each release, and `FORMAT_VERSION` (see below).
 - `src/react/index.tsx` — `fieldspec/react`: `FormView`, the renderer protocol, text parsing. No look of its own.
 - `src/react/controls.tsx` — what container and choice controls do: `listOf`, `entriesOf`, `variantOf`, `objectOf`, `choicesOf`, `checksOf`.
 - `test/` — `bun test` suites; `test/stress/` generates random specs and checks invariants.
@@ -79,7 +79,9 @@ Parent-directory imports go through the `#*` alias (`#src/form.ts`), siblings us
 - **Names**: built-in names are lowercase, user-defined ones capitalized.
 - **Versioning**: `VERSION` in `src/version.ts` and the `$id` of `schema/spec.json` carry the
   package version. Don't edit them by hand: a Tegami changelog entry bumps the version, and
-  `scripts/tegami.mts` rewrites both in the version PR.
+  `scripts/tegami.mts` rewrites both in the version PR. `FORMAT_VERSION`, the spec format's own
+  version (a spec's `fieldspec`), is edited by hand, and only when the grammar changes so that an
+  older spec would mean something else.
 
 ## Coding Conventions
 

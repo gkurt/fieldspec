@@ -14,7 +14,7 @@ Agents writing specs should get their rules from the library rather than from me
 
 ## Reference
 
-- [JSON Schema of specs](https://unpkg.com/fieldspec/schema/spec.json): the format's schema, versioned like the package; a spec names it in `$schema`.
+- [JSON Schema of specs](https://unpkg.com/fieldspec/schema/spec.json): the format's schema, versioned like the package; a spec names it in `$schema`, and may state the version of the spec format (1) in `fieldspec`.
 - [Changelog](https://github.com/gkurt/fieldspec/blob/main/CHANGELOG.md)
 - [Example renderers](https://github.com/gkurt/fieldspec/tree/main/examples/renderers): renderer sets to copy; `fieldspec/react` ships no look.
 

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import { design } from '#examples/design.ts';
 import pkg from '#package.json' with { type: 'json' };
-import { checkSpec, metaSchema, prompt, SCHEMA_URL, VERSION } from '#src/index.ts';
+import { checkSpec, FORMAT_VERSION, fromJSONSchema, metaSchema, prompt, SCHEMA_URL, toJSONSchema, VERSION } from '#src/index.ts';
 
 const ajv = new Ajv2020({ strict: false, allErrors: true });
 const core = ajv.compile(metaSchema());
@@ -117,6 +117,26 @@ describe('the published schema', () => {
   });
 
   test('the prompt tells agents to name it', () => {
-    expect(prompt()).toContain(`"$schema": "${SCHEMA_URL}"`);
+    expect(prompt()).toContain(`"$schema": "${SCHEMA_URL}", "fieldspec": ${FORMAT_VERSION}`);
+  });
+
+  test('a spec may state the version of the format it is written for', () => {
+    const stated = { ...valid, fieldspec: FORMAT_VERSION };
+    expect(checkSpec(stated)).toEqual([]);
+    expect(errorsOf(core, stated)).toEqual([]);
+    expect(errorsOf(core, { ...valid, fieldspec: FORMAT_VERSION + 1 }).length).toBeGreaterThan(0);
+    const back = fromJSONSchema(toJSONSchema(stated));
+    expect(back.fieldspec).toBe(FORMAT_VERSION);
+  });
+
+  test('the checker rejects a format version it does not read', () => {
+    expect(checkSpec({ fieldspec: FORMAT_VERSION + 1, fields: {} })).toEqual([
+      {
+        path: '/fieldspec',
+        message: `the spec is written for version ${FORMAT_VERSION + 1} of the spec format; this fieldspec reads version ${FORMAT_VERSION}`,
+        severity: 'error',
+      },
+    ]);
+    for (const bad of [0, 1.5, '1']) expect(checkSpec({ fieldspec: bad, fields: {} }).map((f) => f.path)).toEqual(['/fieldspec']);
   });
 });

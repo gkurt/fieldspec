@@ -388,6 +388,8 @@ export interface FunctionDecl {
 
 export interface Spec {
   readonly $schema?: string;
+  /** The version of the spec format the spec is written for, a whole number from 1; see `FORMAT_VERSION`. */
+  readonly fieldspec?: number;
   readonly title?: Text;
   readonly description?: Text;
   readonly fields: { readonly [key: string]: FieldDecl };

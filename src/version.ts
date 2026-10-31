@@ -5,6 +5,13 @@
 export const VERSION: string = '0.1.0';
 
 /**
+ * The version of the spec format this library reads, which a spec may state in `fieldspec`.
+ * Unlike {@link VERSION}, it changes only when the grammar does, so that a spec written for an
+ * earlier format would no longer mean the same thing. Edited by hand.
+ */
+export const FORMAT_VERSION = 1;
+
+/**
  * Where the JSON Schema of this version of the spec format is published: the file the
  * package ships, served by unpkg. Put it in a spec's `$schema` and editors validate and
  * complete it.

@@ -67,6 +67,7 @@ export function toJSONSchema(spec: Spec, options: ToJSONSchemaOptions = {}): Jso
   const io = options.io ?? 'output';
   const ctx: Out = { registry, io, lookup: { defs: spec.defs, presets: registry.presets }, comparing: new Set() };
   const out: JsonSchema = { $schema: DIALECT };
+  if (spec.fieldspec !== undefined) out['x-fieldspec'] = spec.fieldspec;
   if (typeof spec.title === 'string') out.title = spec.title;
   else if (spec.title !== undefined) out['x-title'] = spec.title;
   if (typeof spec.description === 'string') out.description = spec.description;
@@ -312,6 +313,7 @@ export function fromJSONSchema(schema: JsonSchema, options: FromJSONSchemaOption
   if (body.type !== 'object' && !body.properties) throw new Error('the root of the schema must be an object with properties');
   const { [VERSION_KEY]: _, ...properties } = (body.properties ?? {}) as Schema;
   const spec: Record<string, unknown> = { fields: fieldsFrom(ctx, body.properties ? { ...body, properties } : body) };
+  if (root['x-fieldspec'] !== undefined) spec.fieldspec = root['x-fieldspec'];
   if (typeof root.title === 'string') spec.title = root.title;
   if (root['x-title'] !== undefined) spec.title = root['x-title'];
   if (typeof root.description === 'string') spec.description = root.description;

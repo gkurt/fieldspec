@@ -24,7 +24,7 @@ import type {
   VariantField,
 } from './types.ts';
 import { checkField, decodeField, suggest } from './values.ts';
-import { SCHEMA_URL, SCHEMA_URL_PATTERN, VERSION } from './version.ts';
+import { FORMAT_VERSION, SCHEMA_URL, SCHEMA_URL_PATTERN, VERSION } from './version.ts';
 
 export interface CheckOptions {
   readonly registry?: Registry;
@@ -59,6 +59,7 @@ interface Checker {
 
 const ROOT_PROPS = [
   '$schema',
+  'fieldspec',
   'title',
   'description',
   'fields',
@@ -111,6 +112,9 @@ export function checkSpec(spec: unknown, options: CheckOptions = {}): Fault[] {
       );
     }
   }
+
+  checkFormat(c);
+
   if (!isObject(spec.fields)) {
     c.fault('/fields', 'required: an object of field declarations');
     return faults;
@@ -175,6 +179,14 @@ const MIGRATION_PROPS: { readonly [prop: string]: string } = {
   from: 'where the value comes from, a JSON Pointer into the values',
   value: 'the value, or an expression that gives it',
 };
+
+function checkFormat(c: Checker) {
+  const format = c.spec.fieldspec;
+  if (format === undefined || format === FORMAT_VERSION) return;
+  const valid = Number.isInteger(format) && format >= 1;
+  if (!valid) return c.fault('/fieldspec', `must be the version of the spec format: a whole number from 1 (this is ${FORMAT_VERSION})`);
+  c.fault('/fieldspec', `the spec is written for version ${format} of the spec format; this fieldspec reads version ${FORMAT_VERSION}`);
+}
 
 /** Where a migration's expressions are checked: over values of an earlier shape. */
 const PAST: Scope = { fields: {}, groups: undefined, base: [], inItem: true, floating: true, past: true };

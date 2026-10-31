@@ -1,5 +1,5 @@
 /** The specs the homepage draws. Each is a real spec, run by the library as you edit it. */
-import { define, SCHEMA_URL, type Spec } from '#src/index.ts';
+import { define, FORMAT_VERSION, SCHEMA_URL, type Spec } from '#src/index.ts';
 
 export const account = define({
   fields: {
@@ -221,6 +221,7 @@ export const menuSource = `"defs": {
 export const PLAYGROUND: Record<string, Spec> = {
   'Sign-up': {
     $schema: SCHEMA_URL,
+    fieldspec: FORMAT_VERSION,
     title: 'Sign up',
     fields: {
       email: { use: 'email', required: true },

@@ -91,5 +91,5 @@ export {
 } from './jsonrender.ts';
 export { prompt, type PromptOptions } from './prompt.ts';
 export { metaSchema, type MetaSchemaOptions } from './schema.ts';
-export { VERSION, SCHEMA_URL } from './version.ts';
+export { VERSION, FORMAT_VERSION, SCHEMA_URL } from './version.ts';
 export { getAt, setAt, parsePointer, formatPointer, joinPointer, resolvePointer } from './pointer.ts';

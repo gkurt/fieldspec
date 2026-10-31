@@ -5,7 +5,7 @@
 import { isBuiltinName } from './names.ts';
 import { PRESET_DESCRIPTIONS } from './presets.ts';
 import { BASE_PROPS, coreRegistry, type Registry } from './registry.ts';
-import { SCHEMA_URL } from './version.ts';
+import { FORMAT_VERSION, SCHEMA_URL } from './version.ts';
 
 export { metaSchema } from './schema.ts';
 import type { FunctionDecl } from './types.ts';
@@ -29,12 +29,12 @@ export function prompt(registry: Registry = coreRegistry, options: PromptOptions
     'A spec is one JSON object that describes a set of values (settings, a form, a config) and how a form for them is laid out. Write JSON only.',
     '',
     '```json',
-    '{ "$schema": "…", "title": "…", "fields": { "<key>": <field> }, "groups": { "<id>": <group> }, "defs": { "<Name>": <field> }, "layouts": { "<name>": <render> } }',
+    '{ "$schema": "…", "fieldspec": 1, "title": "…", "fields": { "<key>": <field> }, "groups": { "<id>": <group> }, "defs": { "<Name>": <field> }, "layouts": { "<name>": <render> } }',
     '```',
     '',
     "Only `fields` is required. Keys are lowerCamelCase. Field order is display order; a field's `order` (lower first, 0 when absent) moves it.",
     '',
-    `Start the spec with \`"$schema": "${SCHEMA_URL}"\`: it names the fieldspec version it is written for.`,
+    `Start the spec with \`"$schema": "${SCHEMA_URL}", "fieldspec": ${FORMAT_VERSION}\`: they name the fieldspec version and the version of the spec format it is written for.`,
     '',
     '## Every field may have',
     '',

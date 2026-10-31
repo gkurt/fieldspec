@@ -537,11 +537,13 @@ the package. It is versioned like the package and served at
 `https://unpkg.com/fieldspec@<version>/schema/spec.json` (`SCHEMA_URL`), so a spec can name it:
 
 ```json
-{ "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json", "fields": { … } }
+{ "$schema": "https://unpkg.com/fieldspec@0.1.0/schema/spec.json", "fieldspec": 1, "fields": { … } }
 ```
 
 Editors then validate and complete the spec, and the checker warns when a spec names another
-version. The published schema accepts any capitalized kind or element, so specs of extended
+version. `fieldspec`, also optional, is the version of the spec format itself (`FORMAT_VERSION`,
+1 today). It changes only when the grammar does, not with every release, and the checker rejects
+a spec written for a format it does not read. In JSON Schema it rides along as `x-fieldspec`. The published schema accepts any capitalized kind or element, so specs of extended
 registries validate too; `metaSchema(registry)` gives a registry's own, closed schema, naming exactly
 its kinds, elements and presets, for structured outputs. The schema checks shape; `checkSpec`
 checks meaning (references, conditions, defaults).

@@ -12,7 +12,7 @@ import { USER_NAME } from './names.ts';
  * The schema checks shape; `checkSpec` checks meaning (references, conditions, defaults).
  */
 import { BASE_PROPS, coreRegistry, type Registry } from './registry.ts';
-import { SCHEMA_URL, VERSION } from './version.ts';
+import { FORMAT_VERSION, SCHEMA_URL, VERSION } from './version.ts';
 
 const DIALECT = 'https://json-schema.org/draft/2020-12/schema';
 
@@ -145,6 +145,7 @@ export function metaSchema(registry: Registry = coreRegistry, options: MetaSchem
     type: 'object',
     properties: {
       $schema: { type: 'string', description: "This schema's URL, which names the version the spec is written for." },
+      fieldspec: { const: FORMAT_VERSION, description: 'The version of the spec format the spec is written for.' },
       title: { $ref: '#/$defs/text' },
       description: { $ref: '#/$defs/text' },
       fields: { type: 'object', description: 'The fields, in display order.', additionalProperties: { $ref: '#/$defs/field' } },

@@ -9,6 +9,10 @@
       "type": "string",
       "description": "This schema's URL, which names the version the spec is written for."
     },
+    "fieldspec": {
+      "const": 1,
+      "description": "The version of the spec format the spec is written for."
+    },
     "title": {
       "$ref": "#/$defs/text"
     },

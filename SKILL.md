@@ -21,8 +21,8 @@ The full reference is the package's `README.md`; the format's JSON Schema is
   go; warnings are worth reading.
 - Built-in names (kinds, elements, presets) are lowercase; names the application or spec
   defines are capitalized (`Address`, `GradientPicker`).
-- Start a spec with `"$schema": SCHEMA_URL`, so editors validate it and the checker knows its
-  version.
+- Start a spec with `"$schema": SCHEMA_URL, "fieldspec": FORMAT_VERSION`, so editors validate it
+  and the checker knows the fieldspec version and the spec format version it is written for.
 - Prefer, in order: a kind's own constraints (`min`, `pattern`, `options`), a preset (`use:
   "email"`), plain conditions (`{ "$state": "plan", "eq": "pro" }`), and only then code.
 - Pointers without a leading `/` are relative to the enclosing object; `../` climbs one level.
