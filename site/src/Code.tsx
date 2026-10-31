@@ -57,11 +57,20 @@ export function highlight(code: string): ReactNode[] {
   return out;
 }
 
-export function Code({ code, label, className }: { code: string; label?: string; className?: string }) {
+/** `numbered` adds a gutter of line numbers. */
+export function Code({ code, label, className, numbered }: { code: string; label?: string; className?: string; numbered?: boolean }) {
   return (
     <figure className={`code ${className ?? ''}`}>
       {label && <figcaption>{label}</figcaption>}
       <pre>
+        {numbered && (
+          <span className="gutter" aria-hidden="true">
+            {code
+              .split('\n')
+              .map((_, i) => i + 1)
+              .join('\n')}
+          </span>
+        )}
         <code>{highlight(code)}</code>
       </pre>
     </figure>
@@ -69,11 +78,11 @@ export function Code({ code, label, className }: { code: string; label?: string;
 }
 
 /** A value as pretty JSON, coloured. Maps, Sets, Dates and bigints are shown as JSON would carry them. */
-export function Json({ value, label, className }: { value: unknown; label?: string; className?: string }) {
+export function Json({ value, label, className, numbered }: { value: unknown; label?: string; className?: string; numbered?: boolean }) {
   const text = JSON.stringify(
     value,
     (_, v) => (v instanceof Map ? [...v] : v instanceof Set ? [...v] : typeof v === 'bigint' ? String(v) : v),
     2,
   );
-  return <Code code={text ?? 'undefined'} label={label} className={className} />;
+  return <Code code={text ?? 'undefined'} label={label} className={className} numbered={numbered} />;
 }
