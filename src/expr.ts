@@ -1,6 +1,6 @@
 /** Evaluating conditions and expressions against values. */
 import { getAt, resolvePointer } from './pointer.ts';
-import type { ComparisonOp, Condition, ConditionLeaf, Expr } from './types.ts';
+import type { ComparisonOp, Condition, ConditionLeaf, Expr, Resolved } from './types.ts';
 
 /** A value as text: nothing for none, and JSON for objects and lists, which have no text of their own. */
 export function textOf(value: unknown): string {
@@ -51,6 +51,12 @@ export const LANGUAGE_KEYS = ['$cel', '$js'] as const;
 export type LanguageKey = (typeof LANGUAGE_KEYS)[number];
 
 /**
+ * Each arg of a piece of code, by name: the declaration of the field it reads, when it is a
+ * `$state` that leads to one, so a typed language can give the variable that field's type.
+ */
+export type ArgDecls = { readonly [name: string]: Resolved | undefined };
+
+/**
  * Runs the code of one language for a registry: `fieldspec/cel` runs `$cel`, `fieldspec/js`
  * runs `$js`. Code reads only the `args` it is given, so what it depends on stays visible to
  * the checker.
@@ -59,10 +65,10 @@ export interface Language {
   readonly key: LanguageKey;
   /** What agents are told about writing it, in the prompt. */
   readonly description: string;
-  /** Why this code cannot run with arguments of these names (a syntax error, say), if it cannot. */
-  check(source: string, args: readonly string[]): string | undefined;
+  /** Why this code cannot run with these args (a syntax error, say), if it cannot. */
+  check(source: string, args: ArgDecls): string | undefined;
   /** Runs the code, synchronously, and gives its result. Throws when it fails. */
-  run(source: string, args: { readonly [name: string]: unknown }): unknown;
+  run(source: string, args: { readonly [name: string]: unknown }, decls?: ArgDecls): unknown;
 }
 
 export type Languages = { readonly [K in LanguageKey]?: Language };
@@ -73,6 +79,16 @@ export interface Env {
   readonly languages?: Languages;
   /** Overrides plain lookup, so defaults can be computed lazily. */
   readonly get?: (pointer: string) => unknown;
+  /** The declaration at a pointer into the values, for typing the args of code. */
+  readonly declAt?: (pointer: string) => Resolved | undefined;
+}
+
+/** The pointer an arg reads, when it is a plain `{ "$state": … }`: the args a typed language types. */
+export function stateOf(arg: unknown): string | undefined {
+  if (!arg || typeof arg !== 'object' || Array.isArray(arg)) return undefined;
+  const keys = Object.keys(arg);
+  const pointer = (arg as { $state?: unknown }).$state;
+  return keys.length === 1 && typeof pointer === 'string' ? pointer : undefined;
 }
 
 export const EXPR_KEYS = ['$state', '$item', '$index', '$computed', '$cond', '$template', ...LANGUAGE_KEYS] as const;
@@ -118,7 +134,7 @@ export function evaluate(expr: Expr | undefined, env: Env, scope: Scope = ROOT_S
     if (typeof e[key] !== 'string') continue;
     const language = env.languages?.[key];
     if (!language) throw new Error(`no engine runs ${key}: give the registry one`);
-    return language.run(e[key], argsOf(e, env, scope));
+    return language.run(e[key], argsOf(e, env, scope), declsOf(e, env, scope));
   }
   if ('$cond' in e)
     return test(e.$cond as Condition, env, scope) ? evaluate(e.$then as Expr, env, scope) : evaluate(e.$else as Expr, env, scope);
@@ -138,6 +154,15 @@ function argsOf(e: Record<string, unknown>, env: Env, scope: Scope): Record<stri
   const args: Record<string, unknown> = {};
   for (const [name, arg] of Object.entries((e.args as Record<string, Expr> | undefined) ?? {})) args[name] = evaluate(arg, env, scope);
   return args;
+}
+
+function declsOf(e: Record<string, unknown>, env: Env, scope: Scope): ArgDecls {
+  const decls: Record<string, Resolved | undefined> = {};
+  for (const [name, arg] of Object.entries((e.args as Record<string, Expr> | undefined) ?? {})) {
+    const pointer = stateOf(arg);
+    decls[name] = pointer === undefined ? undefined : env.declAt?.(resolvePointer(pointer, scope.base));
+  }
+  return decls;
 }
 
 export const OPERATORS: readonly ComparisonOp[] = ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'in'];

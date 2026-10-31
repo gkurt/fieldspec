@@ -248,6 +248,7 @@ export function resolve(spec: Spec, values: unknown, options?: ValueOptions): Re
   const pending: Pending[] = [];
   let root = fillFields(ctx, spec.fields, isPlainObject(values) ? values : {}, '', pending);
   computePending(
+    spec,
     ctx,
     pending,
     () => root,
@@ -262,6 +263,7 @@ export function initialValue(spec: Spec, decl: FieldDecl, root: unknown, at: str
   const pending: Pending[] = [];
   let tree = setAt(root, at, fillField(ctx, decl, undefined, at, pending));
   computePending(
+    spec,
     ctx,
     pending,
     () => tree,
@@ -404,7 +406,7 @@ function zeroOf(ctx: Ctx, decl: FieldDecl): unknown {
   }
 }
 
-function computePending(ctx: Ctx, pending: Pending[], get: () => unknown, set: (root: unknown) => void) {
+function computePending(spec: Spec, ctx: Ctx, pending: Pending[], get: () => unknown, set: (root: unknown) => void) {
   const state = new Map<string, 'busy' | 'done'>();
   const byPointer = new Map(pending.map((p) => [p.pointer, p]));
   const compute = (p: Pending) => {
@@ -414,6 +416,7 @@ function computePending(ctx: Ctx, pending: Pending[], get: () => unknown, set: (
       values: get(),
       fns: ctx.fns,
       languages: ctx.registry.languages,
+      declAt: (pointer) => declAt(spec, get(), pointer, ctx.registry)?.decl,
       get(pointer) {
         // A default reading another default not computed yet computes that one first.
         for (const [at, other] of byPointer) if ((pointer === at || pointer.startsWith(`${at}/`)) && !state.has(at)) compute(other);
@@ -450,7 +453,12 @@ function computePending(ctx: Ctx, pending: Pending[], get: () => unknown, set: (
 export function validate(spec: Spec, values: unknown, options?: ValueOptions): Issue[] {
   const ctx = ctxOf(spec, options);
   const issues: Issue[] = [];
-  const env: Env = { values, fns: ctx.fns, languages: ctx.registry.languages };
+  const env: Env = {
+    values,
+    fns: ctx.fns,
+    languages: ctx.registry.languages,
+    declAt: (pointer) => declAt(spec, values, pointer, ctx.registry)?.decl,
+  };
   if (!isPlainObject(values)) return [{ path: '', code: 'type', message: 'must be an object' }];
   checkFields(ctx, env, spec.fields, spec.groups, values, '', 'error', issues);
   return issues;

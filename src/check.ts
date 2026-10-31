@@ -4,7 +4,7 @@ import { deref, requiresItself, type Lookup } from './defs.ts';
  * phrased as the fix, because whoever wrote it (often an agent) fixes them all in one pass.
  */
 import type { ElementDef } from './elements.ts';
-import { EXPR_KEYS, isDynamic, LANGUAGE_KEYS, OPERATORS, type Functions, type LanguageKey } from './expr.ts';
+import { EXPR_KEYS, isDynamic, LANGUAGE_KEYS, OPERATORS, stateOf, type Functions, type LanguageKey } from './expr.ts';
 import { CONTAINER_KINDS, type AnyKind } from './kinds.ts';
 import { isBuiltinName, isUserName, toUserName } from './names.ts';
 import { escapeSegment, joinPointer, resolveSegments } from './pointer.ts';
@@ -891,10 +891,15 @@ function checkCode(c: Checker, key: LanguageKey, expr: Record<string, unknown>, 
   const language = c.registry.languages[key];
   if (!language)
     return c.fault(`${at}/${key}`, `needs an engine for ${key}: give the registry one (fieldspec/cel runs $cel, fieldspec/js runs $js)`);
-  const why = language.check(
-    source,
-    names.filter((name) => IDENTIFIER.test(name)),
-  );
+  const decls: Record<string, Resolved | undefined> = {};
+  for (const name of names) {
+    if (!IDENTIFIER.test(name)) continue;
+    const pointer = stateOf((expr.args as Record<string, unknown>)[name]);
+    // Inside a definition a relative pointer could read anything: the arg is left untyped.
+    const known = pointer !== undefined && !(scope.floating && !pointer.startsWith('/'));
+    decls[name] = known ? (resolveStatic(c, resolveSegments(pointer, scope.base)) as Resolved | undefined) : undefined;
+  }
+  const why = language.check(source, decls);
   if (why !== undefined) c.fault(`${at}/${key}`, why);
 }
 

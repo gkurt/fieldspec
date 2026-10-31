@@ -92,10 +92,10 @@ export function createJs(wasm: WebAssembly.Module, options: JsOptions = {}): JsL
       '`{ "$js": "<a JavaScript expression>", "args": { "x": <expr> } }` runs JavaScript in a sandbox, wherever an expression or the value a condition tests may go. ' +
       'Each arg is a variable of the code, and the code reads nothing else: pass what it needs as args (`{ "$state": … }`). Dates, bigints, maps and sets arrive as themselves. ' +
       'Prefer the expressions above, and use `$js` for what they cannot say: `{ "$js": "end >= start", "args": { "start": { "$state": "start" }, "end": { "$state": "end" } } }`.',
-    check(source, names) {
+    check(source, args) {
       try {
         open()
-          .evalCode(functionSource(source, [...names].sort()), 'spec.js', EvalFlags.STRICT | EvalFlags.COMPILE_ONLY)
+          .evalCode(functionSource(source, Object.keys(args).sort()), 'spec.js', EvalFlags.STRICT | EvalFlags.COMPILE_ONLY)
           .dispose();
         return undefined;
       } catch (error) {

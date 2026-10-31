@@ -254,7 +254,7 @@ For what the expressions above cannot say, a spec can carry code: an expression 
 ```json
 "checkOut": {
   "type": "date",
-  "default": { "$cel": "checkIn + duration(string(int(nights) * 24) + \"h\")", "args": { "checkIn": { "$state": "checkIn" }, "nights": { "$state": "nights" } } }
+  "default": { "$cel": "checkIn + duration(string(nights * 24) + \"h\")", "args": { "checkIn": { "$state": "checkIn" }, "nights": { "$state": "nights" } } }
 },
 "lateNote": { "type": "string", "visible": { "$cel": "checkOut.getDayOfWeek(\"UTC\") == 0", "args": { "checkOut": { "$state": "checkOut" } } } }
 ```
@@ -285,15 +285,18 @@ cannot loop forever or reach outside its arguments, so it needs no sandbox: `fie
 runs it in plain JavaScript with [`@marcbachmann/cel-js`](https://github.com/marcbachmann/cel-js),
 about 25 KB gzipped, synchronously and in microseconds.
 
-- Numbers are doubles, as in CEL over JSON, an `int` field's too, and CEL does no arithmetic
-  across double and int: write `price * 1.5` and `count + 1.0`, or make it an int first,
-  `int(count) * 24`. Comparisons mix them freely (`count > 2`). Whole results come back as
-  numbers, so they fill `number` and `int` fields.
-- Dates are timestamps (`end - start >= duration("24h")`, `start.getFullYear()`), maps are maps,
-  sets are lists, bigints are ints and bytes are bytes. A URL or a regular expression arrives as
-  its text, and an absent value as `null`.
+- An arg that reads a field (`{ "$state": … }`) has that field's type. An `int` or `bigint` is a
+  CEL int and a `number` a double, and CEL does no arithmetic across the two: `count + 1`,
+  `price * 1.5`, and `double(count)` or `int(price)` to mix them. Comparisons mix them freely
+  (`price > 2`). A `date` is a timestamp (`end - start >= duration("24h")`), a list or set of
+  strings a `list<string>`, a record of ints a `map<string, int>`, and so on.
+- An optional field may be absent, so its arg is `null` or the value, of any type (`dyn`), as is
+  an arg that is not a plain `$state`. Ints inside an object still arrive as ints.
+- A URL or a regular expression arrives as its text. Whole results come back as numbers, so they
+  fill `number` and `int` fields.
 - `checkSpec` type-checks each expression against its args: a syntax error, a variable that is
-  not an arg, or `"n: " + 1` is reported at its spot.
+  not an arg, or `price + 1` on a `number` is reported at its spot. Inside a definition, a
+  relative pointer could read anything, so its arg is checked as `dyn`.
 - `createCel({ environment })` starts from a cel-js `Environment` with functions of your own.
 
 ### JavaScript: `fieldspec/js`

@@ -53,20 +53,18 @@ describe('$cel', () => {
 
   test('an expression that fails is a condition issue, and a form treats it as holding', () => {
     const spec = registry.define({
-      fields: { a: { type: 'number' }, b: { type: 'string', visible: { $cel: 'a + 1', args: { a: { $state: 'a' } } } } },
+      fields: { a: { type: 'int' }, b: { type: 'string', visible: { $cel: '10 / a > 1', args: { a: { $state: 'a' } } } } },
     });
-    expect(validate(spec, { a: 1, b: '' })).toEqual([
-      { path: '/b', code: 'condition', message: 'EvaluationError: no such overload: dyn<double> + int' },
-    ]);
+    expect(validate(spec, { a: 0, b: '' })).toEqual([{ path: '/b', code: 'condition', message: 'EvaluationError: division by zero' }]);
     expect(createForm(spec).field('/b')?.visible).toBe(true);
   });
 
   test('an environment brings functions of its own', () => {
     const environment = new Environment().registerFunction('slug(string): string', (s: string) => s.toLowerCase().replaceAll(' ', '-'));
     const custom = createCel({ environment });
-    expect(custom.check('slug(title)', ['title'])).toBeUndefined();
+    expect(custom.check('slug(title)', { title: { type: 'string' } })).toBeUndefined();
     expect(custom.run('slug(title)', { title: 'Hello World' })).toBe('hello-world');
-    expect(cel.check('slug(title)', ['title'])).toBe("TypeError: found no matching overload for 'slug(dyn)'");
+    expect(cel.check('slug(title)', { title: undefined })).toBe("TypeError: found no matching overload for 'slug(dyn)'");
   });
 
   test('commonFields keeps a condition only where what its args read is shared', () => {
@@ -75,6 +73,73 @@ describe('$cel', () => {
     const b = registry.define({ fields: { x: { type: 'string', visible } } });
     expect(commonFields([a, a]).spec.fields.x).toEqual({ type: 'string', visible });
     expect(commonFields([a, b]).spec.fields.x).toEqual({ type: 'string' });
+  });
+});
+
+describe('typed args', () => {
+  const order = registry.define({
+    defs: {
+      Line: {
+        type: 'object',
+        fields: {
+          qty: { type: 'int', default: 1 },
+          total: { type: 'int', default: { $cel: 'qty * 2', args: { qty: { $state: 'qty' } } } },
+        },
+      },
+    },
+    fields: {
+      count: { type: 'int', default: 3 },
+      price: { type: 'number', default: 2.5 },
+      scores: { type: 'array', items: { type: 'int' }, default: [1, 2] },
+      stock: { type: 'record', values: { type: 'int' }, default: { a: 4 } },
+      box: { type: 'object', fields: { n: { type: 'int', default: 5 } } },
+      discount: { type: 'number', optional: true },
+      line: { use: 'Line' },
+      summary: {
+        type: 'string',
+        default: {
+          $cel: 'string(count + 1) + " " + string(int(price) * 2) + " " + string(scores.map(s, s * 2)[1]) + " " + string(stock["a"] + 1) + " " + string(box.n + 1) + " " + string(discount == null)',
+          args: {
+            count: { $state: 'count' },
+            price: { $state: 'price' },
+            scores: { $state: 'scores' },
+            stock: { $state: 'stock' },
+            box: { $state: 'box' },
+            discount: { $state: 'discount' },
+          },
+        },
+      },
+    },
+  });
+
+  test('an int field is a CEL int, wherever its values sit', () => {
+    const values = createForm(order).values;
+    expect(values.summary).toBe('4 4 4 5 6 true');
+    expect(values.line.total).toBe(2);
+    expect(checkSpec(order)).toEqual([]);
+  });
+
+  test('the checker catches arithmetic across double and int', () => {
+    const faults = checkSpec(
+      {
+        fields: {
+          price: { type: 'number' },
+          count: { type: 'int' },
+          tags: { type: 'set', items: { type: 'string' } },
+          discount: { type: 'number', optional: true },
+          a: { type: 'number', default: { $cel: 'price + 1', args: { price: { $state: 'price' } } } },
+          b: { type: 'number', default: { $cel: 'count + 1.5', args: { count: { $state: 'count' } } } },
+          c: { type: 'boolean', default: { $cel: 'tags.exists(t, t > 1)', args: { tags: { $state: 'tags' } } } },
+          d: { type: 'number', default: { $cel: 'discount + 1', args: { discount: { $state: 'discount' } } } },
+        },
+      },
+      { registry },
+    ).map((f) => `${f.path}: ${f.message}`);
+    expect(faults).toEqual([
+      '/fields/a/default/$cel: TypeError: no such overload: double + int',
+      '/fields/b/default/$cel: TypeError: no such overload: int + double',
+      '/fields/c/default/$cel: TypeError: no such overload: string > int',
+    ]);
   });
 });
 

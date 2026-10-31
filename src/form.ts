@@ -115,7 +115,12 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
   let version = 0;
   let submitted = false;
 
-  const env = (): Env => ({ values, fns, languages: registry.languages });
+  const env = (): Env => ({
+    values,
+    fns,
+    languages: registry.languages,
+    declAt: (pointer) => declAt(spec, values, pointer, registry)?.decl,
+  });
   const changed = () => {
     version++;
     issues = undefined;
