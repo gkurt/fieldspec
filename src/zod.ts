@@ -7,7 +7,7 @@ import { z } from "zod";
 import { formatOf, functionsOf, type Format } from "./format.ts";
 import type { Functions } from "./expr.ts";
 import type { Infer } from "./infer.ts";
-import { circular, deref, useName, type Lookup } from "./defs.ts";
+import { circular, deref, usedName, type Lookup } from "./defs.ts";
 import { BASE_PROPS } from "./format.ts";
 import { isBuiltinName } from "./names.ts";
 import { fromJSONSchema } from "./jsonschema.ts";
@@ -67,7 +67,7 @@ function objectOf(cx: Cx, fields: ObjectField["fields"], unknown: ObjectField["u
 }
 
 function fieldOf(cx: Cx, raw: FieldDecl): z.ZodType {
-  const name = useName(raw);
+  const name = usedName(raw);
   const target = name !== undefined && !isBuiltinName(name) ? cx.lookup.defs?.[name] : undefined;
   // A definition used as it is: one schema, referred to lazily, since it may be building when it uses itself.
   // Definitions that only name each other in a ring stand for nothing, and would be a lazy schema of itself.

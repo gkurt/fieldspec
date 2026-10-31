@@ -34,9 +34,10 @@ feature at a time, with a live form at every step.
 npm install fieldspec
 ```
 
-ES modules, with types. `fieldspec/react` needs `react` 18 or later, `fieldspec/zod` needs `zod` 4, and
-`fieldspec/dialkit` needs `dialkit` 2 (with `motion`); all are optional peer dependencies, so the
-core needs none of them.
+ES modules only, with types; from CommonJS, use `import()`. `fieldspec/react` needs `react` 18
+or later, `fieldspec/zod` needs `zod` 4, `fieldspec/dialkit` needs `dialkit` 2 (with `motion`),
+and `fieldspec/react-aria` needs `react-aria-components` 1.22 and `@internationalized/date` 3.12
+or later. All are optional peer dependencies, so the core needs none of them.
 
 ## Names
 
@@ -273,6 +274,15 @@ checks meaning (references, conditions, defaults).
   panel; `dialkitRenderers` (with `dialkitStyles`) go in your own `FormView` inside a
   `dialkit-root`. Import `dialkit/styles.css` once. DialKit's controls have no disabled state, so
   a disabled field's row is made `inert`.
+- `fieldspec/react-aria`: a form drawn with
+  [React Aria Components](https://react-spectrum.adobe.com/react-aria/): text and number fields
+  (with steppers), sliders, switches, checkboxes, selects, radio and toggle-button groups,
+  checkbox groups for sets, date pickers with a calendar, and colour fields with swatches. Each
+  control carries its own label, help and errors in React Aria's slots. Lists, records,
+  variants, objects and files keep fieldspec's own controls and frame.
+  `<FormView form={form} renderers={reactAriaRenderers} />`; React Aria is unstyled, and
+  `reactAriaStyles` (over `defaultStyles`) is a starting look, coloured by `--fs-accent`,
+  `--fs-bg`, `--fs-border`, `--fs-muted` and `--fs-danger`.
 - `prompt(format)` and `metaSchema(format)`: a system prompt and a JSON Schema for structured
   outputs, both generated from the format's kinds, elements and presets. The prompt tells
   agents to start specs with `$schema`.

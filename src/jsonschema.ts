@@ -5,7 +5,7 @@
  */
 import { coreFormat, formatOf, type Format } from "./format.ts";
 import { isDynamic } from "./expr.ts";
-import { circular, deref, useName, type Lookup } from "./defs.ts";
+import { circular, deref, usedName, type Lookup } from "./defs.ts";
 import { isBuiltinName, toUserName } from "./names.ts";
 import type { AnyKind, JsonSchema } from "./kinds.ts";
 import type {
@@ -115,7 +115,7 @@ function useSchema(ctx: Out, decl: FieldDecl, name: string): JsonSchema {
 }
 
 function fieldSchema(ctx: Out, decl: FieldDecl): JsonSchema {
-  const name = useName(decl);
+  const name = usedName(decl);
   if (name !== undefined) return useSchema(ctx, decl, name);
   const real = decl as Resolved;
   const s: JsonSchema = { ...shapeOf(ctx, real) };

@@ -4,7 +4,7 @@ export type { Infer, ValueOf, ValuesOf, KindValues, ComputedNames, FunctionsFor,
 export { defineKind, optionsOf, CORE_KINDS, type Kind, type AnyKind, type PropInfo, type JsonSchema, type LeafContext, type DeclContext } from "./kinds.ts";
 export { defineElement, CORE_ELEMENTS, LAYOUT_ELEMENTS, PART_ELEMENTS, CONTROL_ELEMENTS, type ElementDef, type ElementRole } from "./elements.ts";
 export { BUILTIN_PRESETS } from "./presets.ts";
-export { deref, lookUp, useName, type Lookup } from "./defs.ts";
+export { deref, lookUp, usedName, type Lookup } from "./defs.ts";
 export { isBuiltinName, isUserName, toUserName } from "./names.ts";
 export { evaluate, test, equal, isExpr, isDynamic, ROOT_SCOPE, type Env, type Fn, type FnContext, type Functions, type Scope } from "./expr.ts";
 export { decode, encode, resolve, validate, parse, parseOrThrow, declAt, fieldsOf, initialValue, isEmpty, type ValueOptions } from "./values.ts";

@@ -350,3 +350,10 @@ h3 { font-size: 1.02rem; font-weight: 650; }
 @media (max-width: 920px) { .dial-pair { grid-template-columns: minmax(0, 1fr); } }
 /* DialKit has no setting to turn versions off; with versions="menu" they are one menu, hidden here. */
 .dial-host .dialkit-preset-manager { display: none; }
+
+/* React Aria demo */
+.aria-demo { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.aria-demo figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+.aria-demo figcaption { font: 600 0.75rem var(--mono); color: var(--muted); }
+.aria-host, .fs-aria-popover { --fs-accent: var(--accent); --fs-bg: var(--card); --fs-border: var(--line); --fs-muted: var(--muted); --fs-danger: var(--bad); --fs-hover: var(--accent-soft); }
+@media (max-width: 920px) { .aria-demo { grid-template-columns: minmax(0, 1fr); } }

@@ -6,6 +6,7 @@ import { defaultStyles, FormView, useForm, useFormVersion } from "../../src/reac
 import { toZod } from "../../src/zod.ts";
 import { Canvas } from "./Canvas.tsx";
 import { cardSource, DialKitDemo } from "./DialKit.tsx";
+import { meetupSource, ReactAriaDemo } from "./ReactAria.tsx";
 import { Footer, Heading, Nav, REPO } from "./chrome.tsx";
 import { Code, Json } from "./Code.tsx";
 import { Playground } from "./Playground.tsx";
@@ -18,6 +19,7 @@ const LINKS = [
   ["#playground", "Playground", true],
   ["#interop", "Interop"],
   ["#dialkit", "DialKit"],
+  ["#react-aria", "React Aria"],
   ["models.html", "With AI models", true],
   ["#start", "Get started"],
 ] as const;
@@ -94,6 +96,16 @@ function App() {
           </Heading>
           <DialKitDemo />
           <Code code={cardSource} label="card.tsx" className="dial-code" />
+        </section>
+        <section className="section" id="react-aria">
+          <Heading kicker="With React Aria" title="Accessible controls, from the same spec">
+            <code>fieldspec/react-aria</code> draws a form with <a href="https://react-spectrum.adobe.com/react-aria/">React Aria Components</a>: number fields
+            with steppers, a date picker with a calendar, radio and toggle-button groups, checkbox groups, colour fields with swatches. Each control carries its
+            own label, help and errors, wired the way React Aria wires them. fieldspec keeps the values, conditions and checks; pick "Online" to see the city
+            give way to a stream link.
+          </Heading>
+          <ReactAriaDemo />
+          <Code code={meetupSource} label="meetup.tsx" className="dial-code" />
         </section>
         <Extend />
         <Sturdy />

@@ -6,7 +6,7 @@ import { evaluate, isDynamic, test, type Env, type Functions, type Scope } from 
 import { formatOf, functionsOf, type Format } from "./format.ts";
 import type { Infer } from "./infer.ts";
 import { CONTAINER_KINDS, isJson, type AnyKind } from "./kinds.ts";
-import { deref, requiresItself, useName, type Lookup } from "./defs.ts";
+import { deref, requiresItself, usedName, type Lookup } from "./defs.ts";
 import { child, getAt, joinPointer, setAt } from "./pointer.ts";
 import type {
   ArrayField,
@@ -285,7 +285,7 @@ function loopsBack(ctx: Ctx, name: string): boolean {
 }
 
 const along = (trail: Trail, decl: FieldDecl): Trail => {
-  const name = useName(decl);
+  const name = usedName(decl);
   return name === undefined ? trail : [...trail, name];
 };
 
@@ -314,7 +314,7 @@ function fillField(ctx: Ctx, raw: FieldDecl, value: unknown, at: string, pending
     } else if (decl.optional) {
       return undefined;
     } else {
-      const name = useName(raw);
+      const name = usedName(raw);
       if (name !== undefined && trail.includes(name) && loopsBack(ctx, name)) return undefined;
       value = zeroOf(ctx, decl);
       if (value === undefined) return undefined;

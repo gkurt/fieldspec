@@ -14,7 +14,7 @@
  * - Without any `render`, fields draw in declaration order, or by `order` where fields give
  *   one; a grouped field brings its group, drawn where its first field would be.
  */
-import { deref, useName, type Lookup } from "./defs.ts";
+import { deref, usedName, type Lookup } from "./defs.ts";
 import { PARTS, type ElementDef } from "./elements.ts";
 import { formatOf, type Format } from "./format.ts";
 import type {
@@ -274,7 +274,7 @@ function fieldNode(ctx: Ctx, raw: FieldDecl, ref: string, key: string, visible?:
     decl,
     control: chosen ? { type: chosen.type, props: chosen.props ?? {}, explicit: true } : { type: defaultControl(ctx.format, decl), props: {} },
     ...(visible !== undefined && { visible }),
-    ...(useName(raw) !== undefined && { use: useName(raw) }),
+    ...(usedName(raw) !== undefined && { use: usedName(raw) }),
   };
   const lazy = (prop: string, build: () => unknown) => {
     let built: unknown;

@@ -66,7 +66,7 @@ export function circular(lookup: Lookup, decl: FieldDecl): boolean {
 }
 
 /** The name a field's `use` gives, if it has one. */
-export function useName(decl: FieldDecl): string | undefined {
+export function usedName(decl: FieldDecl): string | undefined {
   return decl.type === undefined && typeof decl.use === "string" ? decl.use : undefined;
 }
 

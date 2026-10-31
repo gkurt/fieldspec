@@ -14,7 +14,8 @@
     "validation",
     "typescript",
     "json-render",
-    "dialkit"
+    "dialkit",
+    "react-aria"
   ],
   "homepage": "https://gkurt.com/fieldspec/",
   "repository": {
@@ -43,27 +44,19 @@
       "types": "./dist/dialkit.d.ts",
       "default": "./dist/dialkit.js"
     },
+    "./react-aria": {
+      "types": "./dist/react-aria.d.ts",
+      "default": "./dist/react-aria.js"
+    },
     "./schema.json": "./schema/spec.json",
     "./package.json": "./package.json"
-  },
-  "typesVersions": {
-    "*": {
-      "react": [
-        "./dist/react/index.d.ts"
-      ],
-      "zod": [
-        "./dist/zod.d.ts"
-      ],
-      "dialkit": [
-        "./dist/dialkit.d.ts"
-      ]
-    }
   },
   "scripts": {
     "test": "bun test",
     "stress": "bun test/stress/explore.ts && bun test/stress/fuzz.ts 0 1000",
     "typecheck": "tsc",
     "build": "bun scripts/build.ts",
+    "check:package": "publint && attw --pack . --profile esm-only --exclude-entrypoints ./schema.json",
     "prepack": "bun scripts/build.ts",
     "schema": "bun scripts/schema.ts",
     "demo": "vite demo --port 4192",
@@ -73,7 +66,9 @@
   "peerDependencies": {
     "react": ">=18",
     "zod": ">=4",
-    "dialkit": ">=2"
+    "dialkit": ">=2",
+    "react-aria-components": ">=1.22",
+    "@internationalized/date": ">=3.12"
   },
   "peerDependenciesMeta": {
     "react": {
@@ -84,11 +79,19 @@
     },
     "dialkit": {
       "optional": true
+    },
+    "react-aria-components": {
+      "optional": true
+    },
+    "@internationalized/date": {
+      "optional": true
     }
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
+    "@arethetypeswrong/cli": "^0.18.5",
     "@happy-dom/global-registrator": "21.0.4",
+    "@internationalized/date": "^3.12.4",
     "@json-render/core": "0.21.3",
     "@json-render/react": "0.21.3",
     "@json-render/shadcn": "0.21.3",
@@ -99,7 +102,9 @@
     "ajv": "8",
     "dialkit": "^2.1.0",
     "motion": "^14.9.0",
+    "publint": "^0.3.25",
     "react": "^19.3.1",
+    "react-aria-components": "^1.22.1",
     "react-dom": "^19.3.1",
     "typescript": "7.0.2",
     "vite": "^8.3.5",
@@ -110,6 +115,7 @@
     "src",
     "schema",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ]
 }

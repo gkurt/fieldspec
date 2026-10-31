@@ -5,7 +5,7 @@
  * for all of them. Where the specs' values differ the field is mixed: the form shows the first
  * value, and an edit writes back only what changed, to every spec that has the field.
  */
-import { deref, lookUp, useName, type Lookup } from "./defs.ts";
+import { deref, lookUp, usedName, type Lookup } from "./defs.ts";
 import { equal } from "./expr.ts";
 import { formatOf, type Format } from "./format.ts";
 import { isBuiltinName } from "./names.ts";
@@ -159,7 +159,7 @@ function merge(cx: Cx, decls: readonly FieldDecl[], idx: readonly number[], at: 
     if (uses) return keep(cx, idx, uses), first;
   }
 
-  const names = decls.map(useName);
+  const names = decls.map(usedName);
   const expanding = names.every((n) => n !== undefined) ? names.join(" & ") : undefined;
   if (expanding !== undefined && cx.expanding.includes(expanding)) {
     throw new Conflict(`differs inside the recursive definition ${names[0]}`);
@@ -394,7 +394,7 @@ function prune(lookup: Lookup, root: Resolved, decl: FieldDecl, groups: Groups |
     if (out[key] !== undefined && !refsOf(out[key]).every((ref) => declared(lookup, root, resolveSegments(ref, scope)))) delete out[key];
   }
   if (typeof out.group === "string" && !(out.group in (groups ?? {}))) delete out.group;
-  if (useName(decl) !== undefined) return out as FieldDecl;
+  if (usedName(decl) !== undefined) return out as FieldDecl;
   const item = (key: string, segment: string) => {
     if (isObject(out[key])) out[key] = prune(lookup, root, out[key] as FieldDecl, undefined, [...at, segment]);
   };
