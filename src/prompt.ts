@@ -1,10 +1,10 @@
-import { BASE_PROPS, coreFormat, type Format } from './format.ts';
 /**
- * For agents: a system prompt generated from the format's own kinds, elements and presets, so
+ * For agents: a system prompt generated from the registry's own kinds, elements and presets, so
  * what an agent is told cannot drift from what is checked. Its JSON Schema is in schema.ts.
  */
 import { isBuiltinName } from './names.ts';
 import { PRESET_DESCRIPTIONS } from './presets.ts';
+import { BASE_PROPS, coreRegistry, type Registry } from './registry.ts';
 import { SCHEMA_URL } from './version.ts';
 
 export { metaSchema } from './schema.ts';
@@ -19,8 +19,8 @@ export interface PromptOptions {
 
 const json = (value: unknown) => JSON.stringify(value);
 
-/** A system prompt that teaches an agent to write specs of this format. */
-export function prompt(format: Format = coreFormat, options: PromptOptions = {}): string {
+/** A system prompt that teaches an agent to write specs of this registry. */
+export function prompt(registry: Registry = coreRegistry, options: PromptOptions = {}): string {
   const lines: string[] = [];
   const out = (...l: string[]) => lines.push(...l);
   out(
@@ -34,7 +34,7 @@ export function prompt(format: Format = coreFormat, options: PromptOptions = {})
     '',
     "Only `fields` is required. Keys are lowerCamelCase. Field order is display order; a field's `order` (lower first, 0 when absent) moves it.",
     '',
-    `Start the spec with \`"$schema": "${SCHEMA_URL}"\`: it names the version of the format it is written in.`,
+    `Start the spec with \`"$schema": "${SCHEMA_URL}"\`: it names the fieldspec version it is written for.`,
     '',
     '## Every field may have',
     '',
@@ -47,7 +47,7 @@ export function prompt(format: Format = coreFormat, options: PromptOptions = {})
     '## Kinds (`type`)',
     '',
   );
-  for (const kind of format.kinds.values()) {
+  for (const kind of registry.kinds.values()) {
     out(`### ${kind.name}${kind.base ? ` (refines ${kind.base})` : ''}`, '', kind.description);
     const props = Object.entries(kind.props ?? {});
     if (props.length > 0) {
@@ -93,7 +93,7 @@ export function prompt(format: Format = coreFormat, options: PromptOptions = {})
     'Presets:',
     '',
   );
-  for (const [name, preset] of Object.entries(format.presets)) {
+  for (const [name, preset] of Object.entries(registry.presets)) {
     const about = isBuiltinName(name)
       ? PRESET_DESCRIPTIONS[name as keyof typeof PRESET_DESCRIPTIONS]
       : (preset.description as string | undefined);
@@ -118,7 +118,7 @@ export function prompt(format: Format = coreFormat, options: PromptOptions = {})
   );
   for (const role of ['layout', 'part', 'control'] as const) {
     out(`${role === 'layout' ? 'Layout' : role === 'part' ? 'Field parts' : 'Controls'}:`, '');
-    for (const el of format.elements.values()) {
+    for (const el of registry.elements.values()) {
       if (el.role !== role) continue;
       const props = Object.entries(el.props ?? {})
         .filter(([n]) => n !== 'field')

@@ -5,10 +5,10 @@ import { deref, requiresItself, type Lookup } from './defs.ts';
  */
 import type { ElementDef } from './elements.ts';
 import { EXPR_KEYS, isDynamic, OPERATORS, type Functions } from './expr.ts';
-import { BASE_PROPS, formatOf, functionsOf, type Format, type Rule } from './format.ts';
 import { CONTAINER_KINDS, type AnyKind } from './kinds.ts';
 import { isBuiltinName, isUserName, toUserName } from './names.ts';
 import { escapeSegment, joinPointer, resolveSegments } from './pointer.ts';
+import { BASE_PROPS, registryOf, functionsOf, type Registry, type Rule } from './registry.ts';
 import type {
   ArrayField,
   Fault,
@@ -26,7 +26,7 @@ import { checkField, decodeField, suggest } from './values.ts';
 import { SCHEMA_URL, SCHEMA_URL_PATTERN, VERSION } from './version.ts';
 
 export interface CheckOptions {
-  readonly format?: Format;
+  readonly registry?: Registry;
   /** When given, every `$computed` name must be implemented here. */
   readonly fns?: Functions;
   readonly rules?: readonly Rule[];
@@ -48,7 +48,7 @@ interface Scope {
 
 interface Checker {
   readonly spec: Spec;
-  readonly format: Format;
+  readonly registry: Registry;
   readonly faults: Fault[];
   readonly computed: Map<string, string>;
   fault(path: string, message: string, severity?: Fault['severity']): void;
@@ -58,7 +58,7 @@ const ROOT_PROPS = ['$schema', 'title', 'description', 'fields', 'groups', 'defs
 const GROUP_PROPS = ['label', 'description', 'render', 'visible', 'group'];
 const ELEMENT_KEYS = ['type', 'props', 'children', 'visible'];
 
-const lookupOf = (c: Checker): Lookup => ({ defs: c.spec.defs, presets: c.format.presets });
+const lookupOf = (c: Checker): Lookup => ({ defs: c.spec.defs, presets: c.registry.presets });
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
@@ -73,10 +73,10 @@ export function checkSpec(spec: unknown, options: CheckOptions = {}): Fault[] {
   const faults: Fault[] = [];
   if (!isObject(spec)) return [{ path: '', message: 'must be an object with `fields`', severity: 'error' }];
   const s = spec as unknown as Spec;
-  const format = options.format ?? formatOf(s);
+  const registry = options.registry ?? registryOf(s);
   const c: Checker = {
     spec: s,
-    format,
+    registry,
     faults,
     computed: new Map(),
     fault: (path, message, severity = 'error') => faults.push({ path, message, severity }),
@@ -117,7 +117,7 @@ export function checkSpec(spec: unknown, options: CheckOptions = {}): Fault[] {
   }
   checkFunctions(c, options.fns ?? functionsOf(s));
   const report = (path: string, message: string, severity?: Fault['severity']) => c.fault(path, message, severity);
-  for (const rule of [...format.rules, ...(options.rules ?? [])]) rule(s, report);
+  for (const rule of [...registry.rules, ...(options.rules ?? [])]) rule(s, report);
   return faults;
 }
 
@@ -176,10 +176,10 @@ function checkDecl(c: Checker, decl: unknown, at: string, scope: Scope, self: re
   }
   const type = resolved.type;
   if (typeof type !== 'string')
-    return c.fault(`${at}/type`, `required: one of ${listOf(c.format.kinds.keys())}, or \`use\` with a preset or definition`);
+    return c.fault(`${at}/type`, `required: one of ${listOf(c.registry.kinds.keys())}, or \`use\` with a preset or definition`);
 
-  const chain = kindChain(c.format, type);
-  if (chain.length === 0) return c.fault(`${at}/type`, unknownName('kind', type, c.format.kinds.keys()));
+  const chain = kindChain(c.registry, type);
+  if (chain.length === 0) return c.fault(`${at}/type`, unknownName('kind', type, c.registry.kinds.keys()));
   const d = resolved as unknown as Resolved;
 
   const allowed = new Set(Object.keys(BASE_PROPS));
@@ -252,9 +252,9 @@ function checkUse(c: Checker, name: unknown, at: string): boolean {
     c.fault(at, 'must be the name of a preset or definition');
     return false;
   }
-  const builtins = Object.keys(c.format.presets).filter(isBuiltinName);
+  const builtins = Object.keys(c.registry.presets).filter(isBuiltinName);
   if (isBuiltinName(name)) {
-    if (c.format.presets[name]) return true;
+    if (c.registry.presets[name]) return true;
     c.fault(
       at,
       `"${name}" is not a built-in preset.${mean(name, builtins)} Built-ins: ${listOf(builtins)}. Your own presets and definitions are capitalized.`,
@@ -262,10 +262,10 @@ function checkUse(c: Checker, name: unknown, at: string): boolean {
     return false;
   }
   const inDefs = !!c.spec.defs?.[name];
-  const inPresets = !!c.format.presets[name];
-  if (inDefs && inPresets) c.fault(at, `"${name}" is both a definition here and a preset of the format; rename the definition`);
+  const inPresets = !!c.registry.presets[name];
+  if (inDefs && inPresets) c.fault(at, `"${name}" is both a definition here and a preset of the registry; rename the definition`);
   if (inDefs || inPresets) return true;
-  const known = [...Object.keys(c.spec.defs ?? {}), ...Object.keys(c.format.presets)];
+  const known = [...Object.keys(c.spec.defs ?? {}), ...Object.keys(c.registry.presets)];
   c.fault(
     at,
     `no definition or preset named "${name}".${mean(name, known)}${isUserName(name) ? '' : ' Your own names start with an uppercase letter.'}`,
@@ -278,8 +278,8 @@ function unknownName(what: string, name: string, known: Iterable<string>): strin
   const near = mean(name, [...known]);
   const a = /^[aeiou]/.test(what) ? 'an' : 'a';
   if (isBuiltinName(name))
-    return `"${name}" is not a built-in ${what}.${near} Built-ins are lowercase; ${what}s your format adds are capitalized.`;
-  if (isUserName(name)) return `"${name}" is not ${a} ${what} this format adds.${near}`;
+    return `"${name}" is not a built-in ${what}.${near} Built-ins are lowercase; ${what}s your registry adds are capitalized.`;
+  if (isUserName(name)) return `"${name}" is not ${a} ${what} this registry adds.${near}`;
   return `"${name}" is not ${a} ${what}.${near} Built-in names are lowercase; your own are capitalized.`;
 }
 
@@ -395,13 +395,13 @@ function checkNamedBy(c: Checker, namedBy: unknown, at: string, item: unknown, s
   }
 }
 
-function kindChain(format: Format, type: string): AnyKind[] {
+function kindChain(registry: Registry, type: string): AnyKind[] {
   const chain: AnyKind[] = [];
   const seen = new Set<string>();
   let name: string | undefined = type;
   while (name !== undefined && !seen.has(name)) {
     seen.add(name);
-    const kind = format.kinds.get(name);
+    const kind = registry.kinds.get(name);
     if (!kind) break;
     chain.unshift(kind);
     name = kind.base;
@@ -413,7 +413,7 @@ function kindChain(format: Format, type: string): AnyKind[] {
 function checkLiteral(c: Checker, decl: FieldDecl, value: unknown, at: string, severity: Fault['severity'] = 'error') {
   // Dynamic options cannot be known until the values are.
   if (decl.type === 'enum' && !Array.isArray(decl.options)) return;
-  const ctx = { format: c.format, fns: undefined, defs: c.spec.defs };
+  const ctx = { registry: c.registry, fns: undefined, defs: c.spec.defs };
   const issues: { path: string; message: string; code: string }[] = [];
   const scrubbed: FieldDecl = { ...decl, required: undefined, visible: undefined };
   try {
@@ -505,7 +505,7 @@ const newView = (): View => ({ placed: new Map(), groups: new Map(), rest: false
 function checkFieldRender(c: Checker, node: unknown, at: string, scope: Scope, decl: Resolved, self: readonly string[]) {
   if (decl.type === 'object') {
     const name = typeof node === 'string' ? node : isObject(node) ? node.type : undefined;
-    if (typeof name === 'string' && c.format.elements.get(name)?.role === 'control')
+    if (typeof name === 'string' && c.registry.elements.get(name)?.role === 'control')
       return checkNode(c, node, at, { scope, self: decl, view: newView() });
 
     const o = decl as ObjectField;
@@ -519,9 +519,9 @@ function checkFieldRender(c: Checker, node: unknown, at: string, scope: Scope, d
 /** A group's `render`: a container, which its fields fill. */
 function checkGroupRender(c: Checker, node: unknown, at: string, scope: Scope, members: Members) {
   const name = typeof node === 'string' ? node : isObject(node) ? node.type : undefined;
-  const def = typeof name === 'string' ? c.format.elements.get(name) : undefined;
+  const def = typeof name === 'string' ? c.registry.elements.get(name) : undefined;
   if (def && (def.role !== 'layout' || !def.children)) {
-    const containers = [...c.format.elements.values()].filter((e) => e.role === 'layout' && e.children).map((e) => e.name);
+    const containers = [...c.registry.elements.values()].filter((e) => e.role === 'layout' && e.children).map((e) => e.name);
     c.fault(isObject(node) ? `${at}/type` : at, `a group's render is a container its fields go in: ${listOf(containers)}`);
     return;
   }
@@ -542,8 +542,8 @@ function checkNode(c: Checker, node: unknown, at: string, site: Site): void {
   }
   const type = node.type;
   if (typeof type !== 'string') return c.fault(`${at}/type`, 'required: an element name');
-  const def = c.format.elements.get(type);
-  if (!def) return c.fault(`${at}/type`, unknownName('element', type, c.format.elements.keys()));
+  const def = c.registry.elements.get(type);
+  if (!def) return c.fault(`${at}/type`, unknownName('element', type, c.registry.elements.keys()));
   for (const key of Object.keys(node))
     if (!ELEMENT_KEYS.includes(key)) c.fault(`${at}/${escapeSegment(key)}`, 'is not a property of an element; settings go under `props`');
 
@@ -605,7 +605,7 @@ function checkNode(c: Checker, node: unknown, at: string, site: Site): void {
 /** A control must be able to edit the field it draws. */
 function checkFits(c: Checker, def: ElementDef, decl: Resolved, at: string) {
   if (!def.kinds) return;
-  const chain = kindChain(c.format, decl.type).map((k) => k.name);
+  const chain = kindChain(c.registry, decl.type).map((k) => k.name);
   if (!chain.some((k) => def.kinds!.includes(k)))
     c.fault(at, `${def.name} edits ${def.kinds.join(', ')} fields; this is a ${decl.type} field`);
 }
@@ -740,7 +740,7 @@ function checkDefs(c: Checker, defs: { readonly [name: string]: FieldDecl }) {
     const at = `/defs/${escapeSegment(name)}`;
     if (!isUserName(name))
       c.fault(at, `a definition's name starts with an uppercase letter, as all names you define do: "${toUserName(name)}"`);
-    const builtin = Object.keys(c.format.presets).find((p) => isBuiltinName(p) && p.toLowerCase() === name.toLowerCase());
+    const builtin = Object.keys(c.registry.presets).find((p) => isBuiltinName(p) && p.toLowerCase() === name.toLowerCase());
     if (builtin) c.fault(at, `differs from the built-in preset "${builtin}" only by case, which reads as a mistake`, 'warning');
     checkDecl(c, decl, at, floating, [name]);
     const loop = requiresItself(c.spec.defs ?? {}, name);

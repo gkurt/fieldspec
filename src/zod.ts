@@ -6,12 +6,12 @@
 import * as z from 'zod/v4';
 import { circular, deref, usedName, type Lookup } from './defs.ts';
 import type { Functions } from './expr.ts';
-import { formatOf, functionsOf, type Format } from './format.ts';
-import { BASE_PROPS } from './format.ts';
 import type { Infer } from './infer.ts';
 import { fromJSONSchema } from './jsonschema.ts';
 import { isBuiltinName } from './names.ts';
 import { parsePointer } from './pointer.ts';
+import { registryOf, functionsOf, type Registry } from './registry.ts';
+import { BASE_PROPS } from './registry.ts';
 import type {
   ArrayField,
   BigIntField,
@@ -30,19 +30,19 @@ import type {
 import { validate } from './values.ts';
 
 export interface ToZodOptions {
-  readonly format?: Format;
+  readonly registry?: Registry;
   readonly fns?: Functions;
   /** Run the spec's full validation (conditions, dynamic options, extension kinds) too. Default true. */
   readonly refine?: boolean;
 }
 
 export function toZod<S extends Spec>(spec: S, options: ToZodOptions = {}): z.ZodType<Infer<S>> {
-  const format = options.format ?? formatOf(spec);
+  const registry = options.registry ?? registryOf(spec);
   const fns = options.fns ?? functionsOf(spec);
-  const shape = objectOf({ lookup: { defs: spec.defs, presets: format.presets }, built: new Map() }, spec.fields, 'error');
+  const shape = objectOf({ lookup: { defs: spec.defs, presets: registry.presets }, built: new Map() }, spec.fields, 'error');
   if (options.refine === false) return shape as unknown as z.ZodType<Infer<S>>;
   return shape.superRefine((values, ctx) => {
-    for (const issue of validate(spec, values, { format, fns }))
+    for (const issue of validate(spec, values, { registry, fns }))
       ctx.addIssue({ code: 'custom', message: issue.message, path: parsePointer(issue.path) });
   }) as unknown as z.ZodType<Infer<S>>;
 }
@@ -159,6 +159,6 @@ function fieldOf(cx: Cx, raw: FieldDecl): z.ZodType {
 }
 
 /** A spec from a Zod object schema. Its meta (`.describe`, `.meta({ title })`) carries over. */
-export function fromZod(schema: z.ZodType, options?: { format?: Format }): Spec {
+export function fromZod(schema: z.ZodType, options?: { registry?: Registry }): Spec {
   return fromJSONSchema(z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }), options);
 }

@@ -79,7 +79,7 @@ describe('the published schema', () => {
     expect(checkSpec(valid).filter((f) => f.severity === 'error')).toEqual([]);
   });
 
-  test('is open to capitalized kinds and elements, so extended formats validate too', () => {
+  test('is open to capitalized kinds and elements, so extended registries validate too', () => {
     const extended = { fields: { ramp: { type: 'Gradient', render: { type: 'GradientPicker', props: { angle: false } } } } };
     expect(errorsOf(core, extended)).toEqual([]);
   });
@@ -99,7 +99,7 @@ describe('the published schema', () => {
       expect(errorsOf(core, bad).length).toBeGreaterThan(0);
   });
 
-  test("a format's own schema is closed to names it does not have", () => {
+  test("a registry's own schema is closed to names it does not have", () => {
     expect(errorsOf(closed, { fields: { ramp: { type: 'Gradient', render: 'GradientPicker' }, tint: { use: 'Swatch' } } })).toEqual([]);
     expect(errorsOf(closed, { fields: { x: { type: 'Mystery' } } }).length).toBeGreaterThan(0);
     expect((metaSchema(design) as { $id?: string }).$id).toBeUndefined();

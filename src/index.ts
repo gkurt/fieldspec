@@ -1,16 +1,16 @@
 export type * from './types.ts';
 export {
-  coreFormat,
-  createFormat,
+  coreRegistry,
+  createRegistry,
   define,
-  formatOf,
+  registryOf,
   functionsOf,
   BASE_PROPS,
-  type Format,
-  type FormatOptions,
+  type Registry,
+  type RegistryOptions,
   type Presets,
   type Rule,
-} from './format.ts';
+} from './registry.ts';
 export type { Infer, ValueOf, ValuesOf, KindValues, ComputedNames, FunctionsFor, Defined, Vocabulary } from './infer.ts';
 export {
   defineKind,

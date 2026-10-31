@@ -1,17 +1,17 @@
 import { circular, deref, usedName, type Lookup } from './defs.ts';
 import { isDynamic } from './expr.ts';
+import type { AnyKind, JsonSchema } from './kinds.ts';
+import { isBuiltinName, toUserName } from './names.ts';
 /**
  * JSON Schema (draft 2020-12), both ways. Out: the JSON form of the values, with everything
  * JSON Schema has no word for kept under `x-` keywords, so a spec survives the round trip.
  * In: best effort for schemas from anywhere (Zod, OpenAPI, hand-written).
  */
-import { coreFormat, formatOf, type Format } from './format.ts';
-import type { AnyKind, JsonSchema } from './kinds.ts';
-import { isBuiltinName, toUserName } from './names.ts';
+import { coreRegistry, registryOf, type Registry } from './registry.ts';
 import type { Resolved, ArrayField, EnumField, FieldDecl, Json, MapField, ObjectField, RecordField, Spec, VariantField } from './types.ts';
 
 export interface ToJSONSchemaOptions {
-  readonly format?: Format;
+  readonly registry?: Registry;
   /**
    * `input`: what `parse` accepts, so fields that take a default or a zero are not required.
    * `output` (default): what it returns, so every non-optional field is.
@@ -47,11 +47,11 @@ const BASE_KEYS = new Set([
   'use',
 ]);
 
-function kindChain(format: Format, type: string): AnyKind[] {
+function kindChain(registry: Registry, type: string): AnyKind[] {
   const chain: AnyKind[] = [];
   let name: string | undefined = type;
   while (name !== undefined && !chain.some((k) => k.name === name)) {
-    const kind = format.kinds.get(name);
+    const kind = registry.kinds.get(name);
     if (!kind) break;
     chain.unshift(kind);
     name = kind.base;
@@ -60,9 +60,9 @@ function kindChain(format: Format, type: string): AnyKind[] {
 }
 
 export function toJSONSchema(spec: Spec, options: ToJSONSchemaOptions = {}): JsonSchema {
-  const format = options.format ?? formatOf(spec);
+  const registry = options.registry ?? registryOf(spec);
   const io = options.io ?? 'output';
-  const ctx: Out = { format, io, lookup: { defs: spec.defs, presets: format.presets } };
+  const ctx: Out = { registry, io, lookup: { defs: spec.defs, presets: registry.presets } };
   const out: JsonSchema = { $schema: DIALECT };
   if (typeof spec.title === 'string') out.title = spec.title;
   else if (spec.title !== undefined) out['x-title'] = spec.title;
@@ -76,7 +76,7 @@ export function toJSONSchema(spec: Spec, options: ToJSONSchemaOptions = {}): Jso
 }
 
 interface Out {
-  readonly format: Format;
+  readonly registry: Registry;
   readonly io: 'input' | 'output';
   readonly lookup: Lookup;
 }
@@ -88,7 +88,7 @@ function objectSchema(ctx: Out, fields: ObjectField['fields'], unknown: ObjectFi
     properties[key] = fieldSchema(ctx, decl);
     const real = deref(ctx.lookup, decl);
     if (real.optional) continue;
-    if (ctx.io === 'output' || (real.default === undefined && !hasZero(ctx.format, real))) required.push(key);
+    if (ctx.io === 'output' || (real.default === undefined && !hasZero(ctx.registry, real))) required.push(key);
   }
   return {
     type: 'object',
@@ -98,9 +98,9 @@ function objectSchema(ctx: Out, fields: ObjectField['fields'], unknown: ObjectFi
   };
 }
 
-function hasZero(format: Format, decl: Resolved): boolean {
+function hasZero(registry: Registry, decl: Resolved): boolean {
   if (['object', 'variant', 'array', 'set', 'record', 'map'].includes(decl.type)) return true;
-  return kindChain(format, decl.type).some((k) => k.zero && k.zero(decl) !== undefined);
+  return kindChain(registry, decl.type).some((k) => k.zero && k.zero(decl) !== undefined);
 }
 
 const pointerName = (name: string) => name.replace(/~/g, '~0').replace(/\//g, '~1');
@@ -156,7 +156,7 @@ function annotate(s: JsonSchema, decl: Resolved) {
 }
 
 function shapeOf(ctx: Out, decl: Resolved): JsonSchema {
-  const { format } = ctx;
+  const { registry } = ctx;
   const child = (d: FieldDecl) => fieldSchema(ctx, d);
   switch (decl.type) {
     case 'object': {
@@ -208,7 +208,7 @@ function shapeOf(ctx: Out, decl: Resolved): JsonSchema {
       return { type: 'array', items: { type: 'array', prefixItems: [child(m.keys), child(m.values)], minItems: 2, maxItems: 2 } };
     }
   }
-  const chain = kindChain(format, decl.type);
+  const chain = kindChain(registry, decl.type);
   const own = chain[chain.length - 1];
   let shape: JsonSchema = {};
   for (const kind of chain) if (kind.jsonSchema) shape = { ...shape, ...kind.jsonSchema(decl, { child }) };
@@ -239,7 +239,7 @@ function shapeOf(ctx: Out, decl: Resolved): JsonSchema {
 // ── From JSON Schema ─────────────────────────────────────────────────────────────────────
 
 export interface FromJSONSchemaOptions {
-  readonly format?: Format;
+  readonly registry?: Registry;
 }
 
 // oxlint-disable-next-line typescript/no-explicit-any -- any JSON Schema a caller hands in, read structurally and checked as it is read.
@@ -247,9 +247,9 @@ type Schema = Record<string, any>;
 
 /** A spec from a JSON Schema whose root is an object. Unknown shapes become `json` fields. */
 export function fromJSONSchema(schema: JsonSchema, options: FromJSONSchemaOptions = {}): Spec {
-  const format = options.format ?? coreFormat;
+  const registry = options.registry ?? coreRegistry;
   const root = schema;
-  const ctx: FromCtx = { root, format, depth: 0, defs: {}, names: new Map() };
+  const ctx: FromCtx = { root, registry, depth: 0, defs: {}, names: new Map() };
   const body = derefSchema(ctx, root);
   if (body.type !== 'object' && !body.properties) throw new Error('the root of the schema must be an object with properties');
   const spec: Record<string, unknown> = { fields: fieldsFrom(ctx, body) };
@@ -265,7 +265,7 @@ export function fromJSONSchema(schema: JsonSchema, options: FromJSONSchemaOption
 
 interface FromCtx {
   readonly root: Schema;
-  readonly format: Format;
+  readonly registry: Registry;
   depth: number;
   /** Definitions met through `$ref`, converted once each, so recursion stays recursion. */
   readonly defs: Record<string, FieldDecl>;
@@ -417,7 +417,7 @@ function shapeFrom(ctx: FromCtx, s: Schema): Record<string, unknown> {
     case 'string': {
       if (s.format === 'date' || s.format === 'date-time') return { type: 'date', ...(s.format === 'date-time' && { time: true }) };
       const decl: Record<string, unknown> = { type: 'string' };
-      copy(s, decl, ['minLength', 'maxLength', 'format']);
+      copy(s, decl, ['minLength', 'maxLength', 'registry']);
       if (typeof s.pattern === 'string') decl.pattern = unwrap(s.pattern);
       return decl;
     }

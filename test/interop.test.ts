@@ -4,7 +4,7 @@ import { design, type GradientValue } from '#examples/design.ts';
 import {
   checkSpec,
   createForm,
-  createFormat,
+  createRegistry,
   layout,
   walk,
   define,
@@ -270,14 +270,14 @@ describe('extension kinds', () => {
   test("the kind's own control is the default, and controls must fit the kind", () => {
     const tree = layout(panel);
     expect([...walk(tree)].find((n) => n.field === 'ramp')?.control?.type).toBe('GradientPicker');
-    const messages = checkSpec({ fields: { ramp: { type: 'Gradient', render: 'slider' } } }, { format: design }).map(
+    const messages = checkSpec({ fields: { ramp: { type: 'Gradient', render: 'slider' } } }, { registry: design }).map(
       (f) => `${f.path}: ${f.message}`,
     );
     expect(messages).toContain('/fields/ramp/render: slider edits number, int fields; this is a Gradient field');
   });
 
-  test('format rules apply', () => {
-    const messages = checkSpec({ fields: { Bad: { use: 'Swatch', default: 'red' } } }, { format: design }).map(
+  test('registry rules apply', () => {
+    const messages = checkSpec({ fields: { Bad: { use: 'Swatch', default: 'red' } } }, { registry: design }).map(
       (f) => `${f.path}: ${f.message}`,
     );
     expect(messages).toContain('/fields/Bad/default: must be a valid color');
@@ -285,7 +285,7 @@ describe('extension kinds', () => {
   });
 
   test('names the application adds must be capitalized', () => {
-    expect(() => createFormat({ presets: { money: { type: 'bigint' } } })).toThrow(
+    expect(() => createRegistry({ presets: { money: { type: 'bigint' } } })).toThrow(
       'A preset "money" must start with an uppercase letter (e.g. "Money")',
     );
   });

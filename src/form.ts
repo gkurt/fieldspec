@@ -4,12 +4,12 @@
  * Renderers for any framework subscribe to it and draw a {@link LayoutNode} tree with it.
  */
 import { evaluate, test, textOf, type Env, type Functions, type Scope } from './expr.ts';
-import { formatOf, functionsOf, type Format } from './format.ts';
 import type { Infer } from './infer.ts';
 import { optionsOf } from './kinds.ts';
 import { layout, type LayoutNode } from './layout.ts';
 import { applyPatch, type PatchOp } from './patch.ts';
 import { getAt, joinPointer, parsePointer, resolvePointer, setAt, splitPointer } from './pointer.ts';
+import { registryOf, functionsOf, type Registry } from './registry.ts';
 import type { Condition, EnumField, Expr, FieldDecl, GroupDecl, Issue, Json, Resolved, Result, Spec, StringField, Text } from './types.ts';
 import { declAt, decode, decodeField, encode, initialValue, resolve, validate } from './values.ts';
 
@@ -48,7 +48,7 @@ export interface FieldState {
 
 export interface FormOptions {
   readonly values?: unknown;
-  readonly format?: Format;
+  readonly registry?: Registry;
   readonly fns?: Functions;
   /**
    * Pointers whose value differs between the things the form edits at once, as
@@ -59,7 +59,7 @@ export interface FormOptions {
 
 export interface Form<V = unknown> {
   readonly spec: Spec;
-  readonly format: Format;
+  readonly registry: Registry;
   readonly values: V;
   readonly issues: readonly Issue[];
   /** Bumps on every change; cheap to compare. */
@@ -98,9 +98,9 @@ export function humanize(key: string): string {
 }
 
 export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): Form<Infer<S>> {
-  const format = options.format ?? formatOf(spec);
+  const registry = options.registry ?? registryOf(spec);
   const fns = options.fns ?? functionsOf(spec);
-  const vo = { format, fns, defs: spec.defs };
+  const vo = { registry, fns, defs: spec.defs };
   const listeners = new Set<() => void>();
   const touched = new Set<string>();
   const mixed = new Set(options.mixed);
@@ -176,7 +176,7 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
   };
 
   const computeField = (path: string): FieldState | undefined => {
-    const located = declAt(spec, values, path, format);
+    const located = declAt(spec, values, path, registry);
     if (!located) return undefined;
     const { decl, scope, groups } = located;
     const [parent, key] = splitPointer(path);
@@ -233,10 +233,10 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
   const decodeAt = (path: string, value: unknown): unknown => {
     const [parent, last] = splitPointer(path);
     const target = last === '-' ? joinPointer(parent, 0) : path;
-    let located = declAt(spec, values, target, format);
+    let located = declAt(spec, values, target, registry);
     if (!located && last === '-') {
       // An empty list has no item 0 yet; its items declaration is what we want.
-      const list = declAt(spec, values, parent, format);
+      const list = declAt(spec, values, parent, registry);
       if (list && 'items' in list.decl) return decodeField(vo, list.decl.items as FieldDecl, value);
     }
     return located ? decodeField(vo, located.decl, value) : value;
@@ -244,7 +244,7 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
 
   const form: Form<Infer<S>> = {
     spec,
-    format,
+    registry,
     get values() {
       return values as Infer<S>;
     },
@@ -286,7 +286,7 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
     },
     addItem(path, value) {
       const list = getAt(values, path);
-      const located = declAt(spec, values, path, format);
+      const located = declAt(spec, values, path, registry);
       if (!located) return;
       const decl = located.decl;
       if (decl.type === 'set') {

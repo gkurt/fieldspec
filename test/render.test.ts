@@ -199,7 +199,7 @@ describe('render', () => {
     const messages = checkSpec({ fields: { a: { type: 'string', render: 'Slider' }, b: { type: 'string', render: 'sliderr' } } }).map(
       (f) => `${f.path}: ${f.message}`,
     );
-    expect(messages).toContain('/fields/a/render/type: "Slider" is not an element this format adds. Did you mean "slider"?');
+    expect(messages).toContain('/fields/a/render/type: "Slider" is not an element this registry adds. Did you mean "slider"?');
     expect(messages).toContainEqual(
       expect.stringContaining('/fields/b/render/type: "sliderr" is not a built-in element. Did you mean "slider"?'),
     );

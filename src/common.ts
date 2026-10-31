@@ -7,9 +7,9 @@
  */
 import { deref, lookUp, usedName, type Lookup } from './defs.ts';
 import { equal } from './expr.ts';
-import { formatOf, type Format } from './format.ts';
 import { isBuiltinName } from './names.ts';
 import { formatPointer, getAt, joinPointer, resolveSegments, setAt } from './pointer.ts';
+import { registryOf, type Registry } from './registry.ts';
 import type { FieldDecl, FunctionDecl, GroupDecl, Resolved, Spec, Variant } from './types.ts';
 import { resolve } from './values.ts';
 
@@ -18,7 +18,7 @@ export interface CommonOptions {
   readonly values?: readonly unknown[];
   /** `"all"` (the default): the fields every spec has. `"some"`: the fields any spec has; an edit reaches only the specs that have the field. */
   readonly match?: 'all' | 'some';
-  readonly format?: Format;
+  readonly registry?: Registry;
 }
 
 /** A field left out, at a JSON Pointer into the values, and why. */
@@ -94,8 +94,8 @@ const a = (kind: string) => `${/^(?:[aeio]|u(?!r|s))/i.test(kind) ? 'an' : 'a'} 
 
 /** The fields `specs` have in common, as one spec, with their values summarized when given. */
 export function commonFields(list: readonly Spec[], options: CommonOptions = {}): Common {
-  const format = options.format ?? (list[0] ? formatOf(list[0]) : undefined);
-  const presets = format?.presets;
+  const registry = options.registry ?? (list[0] ? registryOf(list[0]) : undefined);
+  const presets = registry?.presets;
   const cx: Cx = { lookups: list.map((s) => ({ defs: s.defs, presets })), dropped: [], defs: new Map(), expanding: [] };
   const some = options.match === 'some';
 
@@ -140,7 +140,7 @@ export function commonFields(list: readonly Spec[], options: CommonOptions = {})
   };
 
   // Each spec's own defaults and zeros fill its values first, so they compare as a form shows them.
-  const given = (options.values ?? []).map((v, i) => resolve(list[i]!, v, { format }));
+  const given = (options.values ?? []).map((v, i) => resolve(list[i]!, v, { registry }));
   const mixed: string[] = [];
   const values: Record<string, unknown> = {};
   for (const [key, decl] of Object.entries(spec.fields)) {

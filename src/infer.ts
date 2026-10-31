@@ -6,14 +6,14 @@ import type { Json, OptionValue } from './types.ts';
 
 type Simplify<T> = { [K in keyof T]: T[K] } & {};
 
-/** Kind name → value type, for the extension kinds a format adds. */
+/** Kind name → value type, for the extension kinds a registry adds. */
 export type KindValues<Ks extends readonly AnyKind[]> = {
   [K in Ks[number] as K['name']]: NonNullable<K['__value']>;
 };
 
 /**
  * What names mean while reading a spec: extension kinds' value types, the spec's `defs`, and
- * the format's presets.
+ * the registry's presets.
  */
 export interface Vocabulary {
   readonly kinds: {};

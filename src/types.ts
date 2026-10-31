@@ -291,7 +291,7 @@ export interface VariantField<F = FieldDecl> extends FieldBase {
 }
 
 /**
- * A field built on a named declaration: a built-in preset (`percent`), a preset the format adds
+ * A field built on a named declaration: a built-in preset (`percent`), a preset the registry adds
  * (`Money`), or a definition in the spec's `defs` (`Address`). Its own properties override the
  * base's; it takes its kind from the base, so it has no `type`. A definition may use itself,
  * through an array, set, record, map or optional field.

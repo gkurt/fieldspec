@@ -65,7 +65,7 @@ function Notes({ field }: { field: FieldState }) {
 
 function DialText(p: ControlProps) {
   const field = p.field;
-  const { draft, error, placeholder, change } = useParsedText(p, parserFor(p.form.format, field.decl.type));
+  const { draft, error, placeholder, change } = useParsedText(p, parserFor(p.form.registry, field.decl.type));
   return (
     <Row disabled={p.disabled}>
       <div onBlur={p.touch}>
@@ -161,7 +161,7 @@ const DIAL_RENDERERS = new Set<ElementRenderer>([DialInput, DialText, DialSlider
  */
 function DialField(p: FieldProps) {
   const field = p.field;
-  const control = p.node.control?.type ?? defaultControl(p.form.format, field.decl);
+  const control = p.node.control?.type ?? defaultControl(p.form.registry, field.decl);
   const drawer = useRenderer({
     element: control,
     role: 'control',

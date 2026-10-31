@@ -13,7 +13,7 @@ import type { EnumField, FieldDecl, VariantField } from '#src/types.ts';
 import { initialValue } from '#src/values.ts';
 import type { ControlProps } from './index.tsx';
 
-const declOf = (p: ControlProps, decl: FieldDecl) => deref({ defs: p.form.spec.defs, presets: p.form.format.presets }, decl);
+const declOf = (p: ControlProps, decl: FieldDecl) => deref({ defs: p.form.spec.defs, presets: p.form.registry.presets }, decl);
 
 export interface ListItem {
   readonly index: number;
@@ -115,7 +115,9 @@ export function entriesOf(p: ControlProps): EntriesControl {
       const read = readKey(typed);
       if ('error' in read) return read.error;
       const at = joinPointer(field.path, String(read.key));
-      const initial = initialValue(p.form.spec, (field.decl as { values: FieldDecl }).values, p.form.values, at, { format: p.form.format });
+      const initial = initialValue(p.form.spec, (field.decl as { values: FieldDecl }).values, p.form.values, at, {
+        registry: p.form.registry,
+      });
       if (!isMap) {
         p.form.set(at, initial ?? '');
         return undefined;
@@ -162,7 +164,7 @@ export function objectOf(p: ControlProps): ObjectControl {
     present,
     optional: field.decl.optional === true,
     add: () =>
-      p.set(initialValue(p.form.spec, { ...field.decl, optional: false }, p.form.values, field.path, { format: p.form.format }) ?? {}),
+      p.set(initialValue(p.form.spec, { ...field.decl, optional: false }, p.form.values, field.path, { registry: p.form.registry }) ?? {}),
     remove: () => p.set(undefined),
     render: () => (present && inner ? p.render(inner, field.path) : null),
   };

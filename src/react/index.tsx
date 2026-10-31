@@ -15,10 +15,10 @@ import { createContext, createElement, Fragment, use, useId, useMemo, useState, 
 import type { ElementRole } from '#src/elements.ts';
 import { textOf, type Scope } from '#src/expr.ts';
 import { createForm, type FieldState, type Form, type FormOptions } from '#src/form.ts';
-import type { Format } from '#src/format.ts';
 import type { Infer } from '#src/infer.ts';
 import { defaultControl, type LayoutNode } from '#src/layout.ts';
 import { resolvePointer } from '#src/pointer.ts';
+import type { Registry } from '#src/registry.ts';
 import type { Expr, Issue, Json } from '#src/types.ts';
 
 // ── Hooks ────────────────────────────────────────────────────────────────────────────────
@@ -229,7 +229,7 @@ const ControlOnly = ({ control }: FieldProps) => control();
  */
 function fromTable(table: Renderers, { element, role, field, form }: RenderRequest): ElementRenderer {
   if (role === 'control') {
-    const fallback = field ? defaultControl(form.format, field.decl) : 'input';
+    const fallback = field ? defaultControl(form.registry, field.decl) : 'input';
     return table[element] ?? table[fallback] ?? table.input ?? Nothing;
   }
   if (role === 'part') return table[element] ?? Nothing;
@@ -304,7 +304,7 @@ function Node({ node, scope }: { node: LayoutNode; scope: Scope }): ReactNode {
   const anchor = scope.base;
   const props: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(node.props)) props[k] = form.evaluate(v, scope);
-  const role = form.format.elements.get(node.type)?.role;
+  const role = form.registry.elements.get(node.type)?.role;
 
   if (node.type === 'field') {
     const field = form.field(resolvePointer(node.field ?? '', anchor));
@@ -362,7 +362,7 @@ function Control(p: {
 }) {
   const { elementProps, field, fieldNode } = p;
   const { form, pick, idPrefix } = useDraw();
-  const name = p.element ?? defaultControl(form.format, field.decl);
+  const name = p.element ?? defaultControl(form.registry, field.decl);
   const node = fieldNode ?? { type: name, key: field.path, props: {}, children: [] };
   const props: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(elementProps ?? {})) props[k] = form.evaluate(v, field.scope);
@@ -430,8 +430,8 @@ const PARSERS: Record<string, Parse> = {
 };
 
 /** The parser for a field, following its kind's base chain. */
-export function parserFor(format: Format, type: string): Parse {
-  for (let name: string | undefined = type, i = 0; name !== undefined && i < 8; name = format.kinds.get(name)?.base, i++)
+export function parserFor(registry: Registry, type: string): Parse {
+  for (let name: string | undefined = type, i = 0; name !== undefined && i < 8; name = registry.kinds.get(name)?.base, i++)
     if (PARSERS[name]) return PARSERS[name]!;
 
   return PARSERS.string!;

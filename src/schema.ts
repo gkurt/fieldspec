@@ -1,23 +1,23 @@
+import type { JsonSchema, PropInfo } from './kinds.ts';
+import { USER_NAME } from './names.ts';
 /**
- * The JSON Schema of the spec format, generated from a format's kinds, elements and presets so
- * it cannot drift from what the checker accepts. The core format's is published with the
+ * The JSON Schema of specs, generated from a registry's kinds, elements and presets so
+ * it cannot drift from what the checker accepts. The core registry's is published with the
  * package (`schema/spec.json`, versioned like it) and is open: it also accepts any capitalized
- * kind or element, so specs of every extended format validate against it. A format's own
+ * kind or element, so specs of every extended registry validate against it. A registry's own
  * schema is closed, naming exactly its vocabulary; give that one to structured outputs.
  *
  * The schema checks shape; `checkSpec` checks meaning (references, conditions, defaults).
  */
-import { BASE_PROPS, coreFormat, type Format } from './format.ts';
-import type { JsonSchema, PropInfo } from './kinds.ts';
-import { USER_NAME } from './names.ts';
+import { BASE_PROPS, coreRegistry, type Registry } from './registry.ts';
 import { SCHEMA_URL, VERSION } from './version.ts';
 
 const DIALECT = 'https://json-schema.org/draft/2020-12/schema';
 
 export interface MetaSchemaOptions {
-  /** The schema's `$id`. The core format's defaults to {@link SCHEMA_URL}. */
+  /** The schema's `$id`. The core registry's defaults to {@link SCHEMA_URL}. */
   readonly id?: string;
-  /** Accept capitalized kinds and elements the format does not list. Default: for the core format only. */
+  /** Accept capitalized kinds and elements the registry does not list. Default: for the core registry only. */
   readonly open?: boolean;
 }
 
@@ -25,17 +25,17 @@ function propsSchema(props: { readonly [prop: string]: PropInfo }): Record<strin
   return Object.fromEntries(Object.entries(props).map(([name, info]) => [name, { ...info.schema, description: info.description }]));
 }
 
-/** A JSON Schema every valid spec of this format satisfies. */
-export function metaSchema(format: Format = coreFormat, options: MetaSchemaOptions = {}): JsonSchema {
-  const open = options.open ?? format === coreFormat;
-  const id = options.id ?? (format === coreFormat ? SCHEMA_URL : undefined);
+/** A JSON Schema every valid spec of this registry satisfies. */
+export function metaSchema(registry: Registry = coreRegistry, options: MetaSchemaOptions = {}): JsonSchema {
+  const open = options.open ?? registry === coreRegistry;
+  const id = options.id ?? (registry === coreRegistry ? SCHEMA_URL : undefined);
   const userName = { type: 'string', pattern: USER_NAME.source };
   const { type: _type, use: useProp, ...base } = BASE_PROPS;
 
-  const kinds: unknown[] = [...format.kinds.values()].map((kind) => {
+  const kinds: unknown[] = [...registry.kinds.values()].map((kind) => {
     const own: Record<string, PropInfo> = {};
     const seen = new Set<string>();
-    for (let k: typeof kind | undefined = kind; k && !seen.has(k.name); k = k.base ? format.kinds.get(k.base) : undefined) {
+    for (let k: typeof kind | undefined = kind; k && !seen.has(k.name); k = k.base ? registry.kinds.get(k.base) : undefined) {
       seen.add(k.name);
       Object.assign(own, k.props ?? {});
     }
@@ -66,13 +66,13 @@ export function metaSchema(format: Format = coreFormat, options: MetaSchemaOptio
     kinds.push({
       type: 'object',
       title: 'extension kind',
-      description: 'A kind an extended format adds. Its name is capitalized.',
+      description: 'A kind an extended registry adds. Its name is capitalized.',
       properties: { type: { ...userName, description: 'The kind.' }, ...propsSchema(base) },
       required: ['type'],
     });
   }
 
-  const elements: unknown[] = [...format.elements.values()].map((el) => ({
+  const elements: unknown[] = [...registry.elements.values()].map((el) => ({
     type: 'object',
     title: el.name,
     description: `${el.description}${el.kinds ? ` Edits ${el.kinds.join(', ')} fields.` : ''}`,
@@ -89,7 +89,7 @@ export function metaSchema(format: Format = coreFormat, options: MetaSchemaOptio
     elements.push({
       type: 'object',
       title: 'extension element',
-      description: 'An element an extended format adds. Its name is capitalized.',
+      description: 'An element an extended registry adds. Its name is capitalized.',
       properties: {
         type: userName,
         props: { type: 'object', additionalProperties: { $ref: '#/$defs/expr' } },
@@ -127,7 +127,7 @@ export function metaSchema(format: Format = coreFormat, options: MetaSchemaOptio
     required: [key],
     additionalProperties: false,
   });
-  const elementNames = [{ enum: [...format.elements.keys()] }, ...(open ? [userName] : [])];
+  const elementNames = [{ enum: [...registry.elements.keys()] }, ...(open ? [userName] : [])];
 
   return {
     $schema: DIALECT,

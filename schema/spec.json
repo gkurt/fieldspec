@@ -1947,7 +1947,7 @@
         {
           "type": "object",
           "title": "extension kind",
-          "description": "A kind an extended format adds. Its name is capitalized.",
+          "description": "A kind an extended registry adds. Its name is capitalized.",
           "properties": {
             "type": {
               "type": "string",
@@ -3175,7 +3175,7 @@
             {
               "type": "object",
               "title": "extension element",
-              "description": "An element an extended format adds. Its name is capitalized.",
+              "description": "An element an extended registry adds. Its name is capitalized.",
               "properties": {
                 "type": {
                   "type": "string",

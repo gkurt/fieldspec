@@ -4,10 +4,10 @@ import { deref, requiresItself, usedName, type Lookup } from './defs.ts';
  * callers want: JSON (or already-decoded values) in, typed values or issues with paths out.
  */
 import { evaluate, isDynamic, test, type Env, type Functions, type Scope } from './expr.ts';
-import { formatOf, functionsOf, type Format } from './format.ts';
 import type { Infer } from './infer.ts';
 import { CONTAINER_KINDS, isJson, type AnyKind } from './kinds.ts';
 import { child, getAt, joinPointer, setAt } from './pointer.ts';
+import { registryOf, functionsOf, type Registry } from './registry.ts';
 import type {
   ArrayField,
   Condition,
@@ -26,22 +26,22 @@ import type {
 } from './types.ts';
 
 export interface ValueOptions {
-  readonly format?: Format;
+  readonly registry?: Registry;
   readonly fns?: Functions;
 }
 
 /** What walking values needs besides the values: the vocabulary, the functions, the definitions. */
 export interface ValueCtx {
-  readonly format: Format;
+  readonly registry: Registry;
   readonly fns: Functions | undefined;
   readonly defs?: Spec['defs'];
 }
 type Ctx = ValueCtx;
 
-const lk = (ctx: Ctx): Lookup => ({ defs: ctx.defs, presets: ctx.format.presets });
+const lk = (ctx: Ctx): Lookup => ({ defs: ctx.defs, presets: ctx.registry.presets });
 
 export function ctxOf(spec: Spec, options: ValueOptions = {}): Ctx {
-  return { format: options.format ?? formatOf(spec), fns: options.fns ?? functionsOf(spec), defs: spec.defs };
+  return { registry: options.registry ?? registryOf(spec), fns: options.fns ?? functionsOf(spec), defs: spec.defs };
 }
 
 /** How deep defaults are filled. Only a definition that requires itself goes this deep, and the checker reports one. */
@@ -55,13 +55,13 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value) && Object.getPrototypeOf(value) === Object.prototype;
 
 /** The kind and the kinds it refines, most basic first. */
-function kindChain(format: Format, type: string): AnyKind[] {
+function kindChain(registry: Registry, type: string): AnyKind[] {
   const chain: AnyKind[] = [];
   const seen = new Set<string>();
   let name: string | undefined = type;
   while (name !== undefined && !seen.has(name)) {
     seen.add(name);
-    const kind = format.kinds.get(name);
+    const kind = registry.kinds.get(name);
     if (!kind) break;
     chain.unshift(kind);
     name = kind.base;
@@ -171,7 +171,7 @@ export function decodeField(ctx: Ctx, decl: FieldDecl, json: unknown): unknown {
     }
     default: {
       let value: unknown = json;
-      for (const kind of kindChain(ctx.format, decl.type)) if (kind.decode) value = kind.decode(value, decl);
+      for (const kind of kindChain(ctx.registry, decl.type)) if (kind.decode) value = kind.decode(value, decl);
       return value;
     }
   }
@@ -226,7 +226,7 @@ export function encodeField(ctx: Ctx, decl: FieldDecl, value: unknown): unknown 
       return [...value].map(([k, v]) => [encodeField(ctx, m.keys, k), encodeField(ctx, m.values, v)]);
     }
     default: {
-      const chain = kindChain(ctx.format, decl.type);
+      const chain = kindChain(ctx.registry, decl.type);
       for (let i = chain.length - 1; i >= 0; i--) {
         const kind = chain[i]!;
         if (kind.encode) return kind.encode(value, decl);
@@ -394,7 +394,7 @@ function zeroOf(ctx: Ctx, decl: FieldDecl): unknown {
     case 'map':
       return new Map();
     default: {
-      const chain = kindChain(ctx.format, decl.type);
+      const chain = kindChain(ctx.registry, decl.type);
       for (let i = chain.length - 1; i >= 0; i--) {
         const kind = chain[i]!;
         if (kind.zero) return kind.zero(decl);
@@ -571,8 +571,8 @@ export function checkField(ctx: Ctx, env: Env, decl: FieldDecl, value: unknown, 
       return;
     }
     default: {
-      const chain = kindChain(ctx.format, decl.type);
-      if (chain.length === 0) return issue('kind', `has a kind this format does not know: "${decl.type}"`);
+      const chain = kindChain(ctx.registry, decl.type);
+      if (chain.length === 0) return issue('kind', `has a kind this registry does not know: "${decl.type}"`);
       for (const kind of chain) {
         if (CONTAINER_KINDS.has(kind.name)) continue;
         let failed = false;
@@ -619,8 +619,8 @@ export interface Located {
 }
 
 /** The declaration at a pointer into the values, following variants by their current value. */
-export function declAt(spec: Spec, values: unknown, pointer: string, format: Format = formatOf(spec)): Located | undefined {
-  const lookup: Lookup = { defs: spec.defs, presets: format.presets };
+export function declAt(spec: Spec, values: unknown, pointer: string, registry: Registry = registryOf(spec)): Located | undefined {
+  const lookup: Lookup = { defs: spec.defs, presets: registry.presets };
   if (pointer === '') return undefined;
   const segments = pointer
     .slice(1)

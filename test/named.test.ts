@@ -79,8 +79,8 @@ describe('suggestions', () => {
     expect(form.field('/people/0/role')?.suggestions).toEqual(['Engineer', 'Designer']);
     form.set('/roles', ['Engineer', 'Writer', 42]);
     expect(form.field('/people/0/role')?.suggestions).toEqual(['Engineer', 'Writer']);
-    expect(defaultControl(form.format, { type: 'string', suggestions: [] })).toBe('autocomplete');
-    expect(defaultControl(form.format, { type: 'string' })).toBe('input');
+    expect(defaultControl(form.registry, { type: 'string', suggestions: [] })).toBe('autocomplete');
+    expect(defaultControl(form.registry, { type: 'string' })).toBe('input');
   });
 
   test('the checker wants strings or an expression', () => {

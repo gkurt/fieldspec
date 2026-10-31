@@ -51,7 +51,7 @@ Everything a spec refers to by name (kinds, elements, presets, definitions) foll
 | Definitions |                                   | `Address`, `Entry` |
 
 So a built-in added later never collides with yours, and a spec's capitalized names are exactly
-what it needs beyond the library. A namespace prefix works too: `Acme.Money`. `createFormat`
+what it needs beyond the library. A namespace prefix works too: `Acme.Money`. `createRegistry`
 rejects lowercase names; the checker rejects lowercase definitions and warns on names that
 differ from a built-in only by case.
 
@@ -99,7 +99,7 @@ override the base's:
 
 `percent` is `{ "type": "number", "min": 0, "max": 1, "step": 0.05, "render": { "type": "slider", "props": { "format": "percent" } } }`.
 The built-in presets are `percent`, `email`, `password`, `multiline`, `port` and `color`. A
-format adds its own with `createFormat({ presets: { Money: … } })`.
+registry adds its own with `createRegistry({ presets: { Money: … } })`.
 
 A spec's own `defs` work the same way, which is also how it reuses and recurses:
 
@@ -120,7 +120,7 @@ A spec's own `defs` work the same way, which is also how it reuses and recurses:
 }
 ```
 
-Lowercase names look up built-in presets; capitalized ones look up `defs`, then the format's
+Lowercase names look up built-in presets; capitalized ones look up `defs`, then the registry's
 presets. A definition may use itself through an array, set, record, map or optional field;
 the checker rejects one whose value could never end, and warns of definitions whose smallest
 value is huge because they use one another several times over (each use repeats its definition
@@ -229,15 +229,20 @@ What controls do comes with `fieldspec/react`, so a renderer set only draws:
 - `variantOf(props)`: the current variant, the options, `choose`, `render()`.
 - `choicesOf(props)`: an enum's options and the chosen one, by position; `checksOf(props)`: a
   set of enum values as checkboxes.
-- `useParsedText(props, parserFor(form.format, kind))`: a text control's typing rules: what is
+- `useParsedText(props, parserFor(form.registry, kind))`: a text control's typing rules: what is
   typed stays until it parses, and a value set from elsewhere replaces it.
 
 ## Extending
 
+A registry is the vocabulary specs are written in: kinds (what `type` names), elements (what
+`render` names), presets and lint rules. `define` uses the core registry; `createRegistry` adds
+yours to it, and a spec defined through it (`design.define(spec)`) is checked, parsed, converted,
+described to agents and drawn with exactly that vocabulary.
+
 ```ts
 const Gradient = defineKind<GradientValue>()({ name: "Gradient", control: "GradientPicker", check, … });
 const GradientPicker = defineElement({ name: "GradientPicker", role: "control", kinds: ["Gradient"], … });
-const design = createFormat({
+const design = createRegistry({
   kinds: [Gradient],
   elements: [GradientPicker],
   presets: { Swatch: { use: "color", render: { type: "color", props: { swatches: ["#3b82f6"] } } } },
@@ -275,9 +280,9 @@ const [newTitle, newCard] = common.apply(form.values);
 - `match: "some"` keeps fields only some specs have; `common.sources` says which, and edits
   reach only those.
 
-## The format's JSON Schema
+## The JSON Schema of specs
 
-`schema/spec.json` is the JSON Schema of the spec format, generated from the core format's
+`schema/spec.json` is the JSON Schema of the spec format, generated from the core registry's
 kinds, elements and presets (`bun run schema`; a test fails when it is stale) and shipped with
 the package. It is versioned like the package and served at
 `https://unpkg.com/fieldspec@<version>/schema/spec.json` (`SCHEMA_URL`), so a spec can name it:
@@ -288,7 +293,7 @@ the package. It is versioned like the package and served at
 
 Editors then validate and complete the spec, and the checker warns when a spec names another
 version. The published schema accepts any capitalized kind or element, so specs of extended
-formats validate too; `metaSchema(format)` gives a format's own, closed schema, naming exactly
+registries validate too; `metaSchema(registry)` gives a registry's own, closed schema, naming exactly
 its kinds, elements and presets, for structured outputs. The schema checks shape; `checkSpec`
 checks meaning (references, conditions, defaults).
 
@@ -313,8 +318,8 @@ checks meaning (references, conditions, defaults).
   removes its items with the `removeItem` action: declare `JSON_RENDER_ACTIONS` in your catalog
   and pass `jsonRenderActions(store)` as handlers. A `scroll` box is a `Stack` with Tailwind
   classes (`overflow-y-auto max-h-[18rem]`), so Tailwind must see the class.
-- `prompt(format)` and `metaSchema(format)`: a system prompt and a JSON Schema for structured
-  outputs, both generated from the format's kinds, elements and presets. The prompt tells
+- `prompt(registry)` and `metaSchema(registry)`: a system prompt and a JSON Schema for structured
+  outputs, both generated from the registry's kinds, elements and presets. The prompt tells
   agents to start specs with `$schema`.
 
 ## Status

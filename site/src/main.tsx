@@ -171,7 +171,7 @@ const OUTPUTS: readonly [string, string, string][] = [
   ['Zod', 'toZod(spec)', "A Zod schema refined with the spec's own conditional rules. fromZod goes back."],
   ['Standard Schema', 'spec["~standard"]', 'Every defined spec validates wherever Standard Schema is accepted.'],
   ['json-render', 'toJsonRender(spec)', "The whole form for json-render's shadcn components, bound to its state."],
-  ['Agents', 'prompt(format)', 'A system prompt and a meta-schema for structured output, from the format itself.'],
+  ['Agents', 'prompt(registry)', 'A system prompt and a meta-schema for structured output, from the registry itself.'],
 ];
 
 function Outputs() {
@@ -328,7 +328,7 @@ const GradientPicker = defineElement({
   name: "GradientPicker", role: "control", kinds: ["Gradient"],
 });
 
-const design = createFormat({
+const design = createRegistry({
   kinds: [Gradient],
   elements: [GradientPicker],
   presets: { Swatch: { use: "color", render: "color" } },
@@ -343,7 +343,7 @@ function Extend() {
     <section className="section feature flip" id="extend">
       <div className="feature-copy">
         <Heading kicker="Extending" title="Your kinds, your controls, one naming rule">
-          Add kinds, elements and presets to a format; types, checks, JSON Schema and the agent prompt pick them up. Built-in names are
+          Add kinds, elements and presets to a registry; types, checks, JSON Schema and the agent prompt pick them up. Built-in names are
           lowercase and yours are capitalized, so a built-in added later never collides with yours.
         </Heading>
         <table className="names">

@@ -15,9 +15,9 @@
 import { deref, type Lookup } from './defs.ts';
 import { textOf } from './expr.ts';
 import { createForm, humanize } from './form.ts';
-import { formatOf, type Format } from './format.ts';
 import { defaultControl, type LayoutNode } from './layout.ts';
 import { getAt, resolvePointer } from './pointer.ts';
+import { registryOf, type Registry } from './registry.ts';
 import type {
   ArrayField,
   Condition,
@@ -101,7 +101,7 @@ export interface ToJsonRenderOptions {
   /** Where the output keeps its own state, such as the open tab. Default `/ui`. */
   readonly uiStatePath?: string;
   readonly values?: unknown;
-  readonly format?: Format;
+  readonly registry?: Registry;
   /** The catalog component each element becomes, where yours differ from `@json-render/shadcn`'s. */
   readonly components?: Partial<Record<string, string>>;
   /** How many levels deep a definition that contains itself is drawn. Default 3. */
@@ -117,7 +117,7 @@ export interface ToJsonRenderOptions {
 export interface JsonRenderStateOptions {
   /** Where the values live in json-render's state. Default `/form`. */
   readonly statePath?: string;
-  readonly format?: Format;
+  readonly registry?: Registry;
 }
 
 /** The component each element becomes. Their props follow `@json-render/shadcn`'s catalog. */
@@ -189,9 +189,9 @@ interface Cx {
 
 /** A whole form as a json-render spec, with its values in `state`. */
 export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): FlatSpec {
-  const format = options.format ?? formatOf(spec);
-  const lookup: Lookup = { defs: spec.defs, presets: format.presets };
-  const form = createForm(spec, { values: options.values, format });
+  const registry = options.registry ?? registryOf(spec);
+  const lookup: Lookup = { defs: spec.defs, presets: registry.presets };
+  const form = createForm(spec, { values: options.values, registry });
   const base = options.statePath ?? '/form';
   const ui = options.uiStatePath ?? '/ui';
   const depth = options.depth ?? 3;
@@ -327,7 +327,7 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
         break;
       }
       default: {
-        if (format.elements.has(element) && !components[element])
+        if (registry.elements.has(element) && !components[element])
           return note(`${textOf(label ?? name)}: no json-render component draws "${element}"`);
         // An application's own control: its props pass through, with the value bound.
         const props: Props = { ...(label !== undefined && { label }), value };
@@ -343,7 +343,7 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
 
   /** A list, set, record or map: its items repeated over state, each with a remove button, and an add button. */
   const collection = (node: LayoutNode, decl: Resolved, path: string, anchor: string, label: unknown, cx: Cx): string => {
-    const element = node.control?.type ?? defaultControl(format, decl);
+    const element = node.control?.type ?? defaultControl(registry, decl);
     if (element === 'checks') return control(decl, element, node.control?.props ?? {}, path, anchor, label, cx);
     const list = refOf(path, cx);
     if (!list) return note(`${textOf(label ?? path)}: a list inside an outer list's item is out of json-render's reach here`);
@@ -353,7 +353,7 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
     const content: string[] = [];
     if (entries) {
       const keyDecl = decl.type === 'map' ? deref(lookup, (decl as MapField).keys) : ({ type: 'string' } as Resolved);
-      content.push(control(keyDecl, defaultControl(format, keyDecl), {}, `${item}/key`, item, 'Key', inner));
+      content.push(control(keyDecl, defaultControl(registry, keyDecl), {}, `${item}/key`, item, 'Key', inner));
     }
     if (node.item) content.push(field(node.item, entries ? `${item}/value` : item, inner, entries ? 'Value' : undefined));
     const remove =
@@ -367,7 +367,7 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
     const statePath = 'state' in list ? list.state : { $item: list.item };
     const repeated = el('stack', { direction: 'vertical', gap: 'md' }, [row], { repeat: { statePath } });
     const itemDecl = entries ? (decl as RecordField | MapField).values : (decl as ArrayField).items;
-    const fresh = stateOf(format, lookup, deref(lookup, itemDecl), initialJson(itemDecl));
+    const fresh = stateOf(registry, lookup, deref(lookup, itemDecl), initialJson(itemDecl));
     const push = {
       action: 'pushState',
       params: {
@@ -376,7 +376,7 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
           ? {
               key:
                 decl.type === 'map'
-                  ? stateOf(format, lookup, deref(lookup, (decl as MapField).keys), initialJson((decl as MapField).keys))
+                  ? stateOf(registry, lookup, deref(lookup, (decl as MapField).keys), initialJson((decl as MapField).keys))
                   : '',
               value: fresh,
             }
@@ -390,10 +390,10 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
     ];
     return el('stack', { direction: 'vertical', gap: 'sm' }, children);
   };
-  const valueCx = ctxOf(spec, { format });
+  const valueCx = ctxOf(spec, { registry });
   /** A new item's value, as JSON. */
   const initialJson = (decl: FieldDecl): Json => {
-    const value = initialValue(spec, decl, form.values, '', { format });
+    const value = initialValue(spec, decl, form.values, '', { registry });
     return value === undefined ? null : (encodeField(valueCx, decl, value) as Json);
   };
 
@@ -517,10 +517,10 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
         break;
       case 'control':
         if (!self) return note("a control part outside a field's own layout");
-        key = control(self.decl, defaultControl(format, self.decl), props, self.path, anchor, undefined, cx);
+        key = control(self.decl, defaultControl(registry, self.decl), props, self.path, anchor, undefined, cx);
         break;
       default: {
-        const role = format.elements.get(node.type)?.role;
+        const role = registry.elements.get(node.type)?.role;
         if (role === 'control' && self) {
           key = control(self.decl, node.type, props, self.path, anchor, undefined, cx);
           break;
@@ -536,7 +536,7 @@ export function toJsonRender(spec: Spec, options: ToJsonRenderOptions = {}): Fla
 
   const root = emit(form.layout(options.view), '', { repeats: [], uses: new Map() });
   const state: Record<string, unknown> = {};
-  setState(state, base, stateOfSpec(spec, form.json(), format));
+  setState(state, base, stateOfSpec(spec, form.json(), registry));
   if (Object.keys(uiState).length > 0) setState(state, ui, uiState);
   return { root, elements, state };
 }
@@ -562,19 +562,19 @@ function setState(state: Record<string, unknown>, pointer: string, value: unknow
 const isObject = (v: unknown): v is Props => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** Whether a set of enum values is edited with `checks`, which keeps it as one comma-separated string. */
-function asChecks(format: Format, decl: Resolved): boolean {
+function asChecks(registry: Registry, decl: Resolved): boolean {
   const render =
     typeof decl.render === 'string'
       ? decl.render
       : isObject(decl.render) && typeof decl.render.type === 'string'
         ? decl.render.type
         : undefined;
-  const chosen = render && format.elements.get(render)?.role === 'control' ? render : defaultControl(format, decl);
+  const chosen = render && registry.elements.get(render)?.role === 'control' ? render : defaultControl(registry, decl);
   return decl.type === 'set' && chosen === 'checks';
 }
 
-function stateOf(format: Format, lookup: Lookup, decl: Resolved, json: unknown): unknown {
-  const at = (d: FieldDecl, v: unknown) => stateOf(format, lookup, deref(lookup, d), v);
+function stateOf(registry: Registry, lookup: Lookup, decl: Resolved, json: unknown): unknown {
+  const at = (d: FieldDecl, v: unknown) => stateOf(registry, lookup, deref(lookup, d), v);
   switch (decl.type) {
     case 'enum':
       return json === undefined || json === null || typeof json === 'string' ? json : textOf(json);
@@ -599,7 +599,7 @@ function stateOf(format: Format, lookup: Lookup, decl: Resolved, json: unknown):
     // value of the wrong shape, which fails validation anyway, shows as empty.
     case 'array':
     case 'set':
-      if (asChecks(format, decl)) return Array.isArray(json) ? json.map(String).join(',') : json === undefined ? json : '';
+      if (asChecks(registry, decl)) return Array.isArray(json) ? json.map(String).join(',') : json === undefined ? json : '';
       if (!Array.isArray(json)) return json === undefined ? json : [];
       return json.map((item) => at((decl as ArrayField).items, item));
     case 'record':
@@ -615,8 +615,8 @@ function stateOf(format: Format, lookup: Lookup, decl: Resolved, json: unknown):
   }
 }
 
-function jsonOf(format: Format, lookup: Lookup, decl: Resolved, state: unknown): unknown {
-  const at = (d: FieldDecl, v: unknown) => jsonOf(format, lookup, deref(lookup, d), v);
+function jsonOf(registry: Registry, lookup: Lookup, decl: Resolved, state: unknown): unknown {
+  const at = (d: FieldDecl, v: unknown) => jsonOf(registry, lookup, deref(lookup, d), v);
   switch (decl.type) {
     case 'enum': {
       const options = (decl as EnumField).options;
@@ -654,7 +654,7 @@ function jsonOf(format: Format, lookup: Lookup, decl: Resolved, state: unknown):
     case 'array':
     case 'set': {
       const items = (decl as ArrayField).items;
-      if (typeof state === 'string' && asChecks(format, decl)) {
+      if (typeof state === 'string' && asChecks(registry, decl)) {
         return state
           .split(',')
           .filter(Boolean)
@@ -679,22 +679,22 @@ function rootDecl(spec: Spec): Resolved {
   return { type: 'object', fields: spec.fields };
 }
 
-function stateOfSpec(spec: Spec, json: unknown, format: Format): unknown {
-  return stateOf(format, { defs: spec.defs, presets: format.presets }, rootDecl(spec), json);
+function stateOfSpec(spec: Spec, json: unknown, registry: Registry): unknown {
+  return stateOf(registry, { defs: spec.defs, presets: registry.presets }, rootDecl(spec), json);
 }
 
 /** Values as json-render's state holds them (see the module's notes), to put at `statePath`. */
 export function toJsonRenderState(spec: Spec, values: unknown, options: Omit<JsonRenderStateOptions, 'statePath'> = {}): unknown {
-  const format = options.format ?? formatOf(spec);
-  return stateOfSpec(spec, createForm(spec, { values, format }).json(), format);
+  const registry = options.registry ?? registryOf(spec);
+  return stateOfSpec(spec, createForm(spec, { values, registry }).json(), registry);
 }
 
 /** The values in json-render's state, decoded: what to `parse`, or give a form. */
 export function fromJsonRenderState(spec: Spec, state: unknown, options: JsonRenderStateOptions = {}): unknown {
-  const format = options.format ?? formatOf(spec);
+  const registry = options.registry ?? registryOf(spec);
   const at = options.statePath ?? '/form';
-  const json = jsonOf(format, { defs: spec.defs, presets: format.presets }, rootDecl(spec), getAt(state, at));
-  return decode(spec, json, { format });
+  const json = jsonOf(registry, { defs: spec.defs, presets: registry.presets }, rootDecl(spec), getAt(state, at));
+  return decode(spec, json, { registry });
 }
 
-export { formatOf };
+export { registryOf };

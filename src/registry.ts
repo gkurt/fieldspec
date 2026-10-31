@@ -1,6 +1,6 @@
 /**
- * A format: the vocabulary specs are written in. Kinds, elements and presets, plus lint rules.
- * The core format holds the built-ins (all lowercase); an application extends it with its own
+ * A registry: the vocabulary specs are written in. Kinds, elements and presets, plus lint rules.
+ * The core registry holds the built-ins (all lowercase); an application extends it with its own
  * (all capitalized), and every spec defined through it is checked, parsed, rendered and
  * described for agents with exactly that vocabulary.
  */
@@ -12,28 +12,28 @@ import { assertUserName } from './names.ts';
 import { BUILTIN_PRESETS } from './presets.ts';
 import type { Fault, FieldDecl, Spec } from './types.ts';
 
-/** A lint over a whole spec, for policy a format wants beyond what kinds check. */
+/** A lint over a whole spec, for policy a registry wants beyond what kinds check. */
 export type Rule = (spec: Spec, report: (path: string, message: string, severity?: Fault['severity']) => void) => void;
 
 export type Presets = { readonly [name: string]: FieldDecl };
 
-export interface Format<KV = {}, P = typeof BUILTIN_PRESETS> {
+export interface Registry<KV = {}, P = typeof BUILTIN_PRESETS> {
   readonly kinds: ReadonlyMap<string, AnyKind>;
   readonly elements: ReadonlyMap<string, ElementDef>;
   readonly presets: Presets;
   readonly rules: readonly Rule[];
   /**
-   * Type a spec and bind it to this format, and optionally to its function table. The spec is
+   * Type a spec and bind it to this registry, and optionally to its function table. The spec is
    * returned as it is, with a non-enumerable `~standard` so Standard Schema consumers take it.
    */
   define<const S extends Spec>(spec: S, options?: { fns?: FunctionsFor<S> }): Defined<S, KV, P>;
-  /** A format with more kinds, elements, presets or rules. Their names must be capitalized. */
+  /** A registry with more kinds, elements, presets or rules. Their names must be capitalized. */
   extend<const Ks extends readonly AnyKind[] = [], const Ps extends Presets = {}>(
-    options: FormatOptions<Ks, Ps>,
-  ): Format<KV & KindValues<Ks>, P & Ps>;
+    options: RegistryOptions<Ks, Ps>,
+  ): Registry<KV & KindValues<Ks>, P & Ps>;
 }
 
-export interface FormatOptions<Ks extends readonly AnyKind[], Ps extends Presets = {}> {
+export interface RegistryOptions<Ks extends readonly AnyKind[], Ps extends Presets = {}> {
   readonly kinds?: Ks;
   readonly elements?: readonly ElementDef[];
   /** Named declarations fields can `use`, e.g. `Money: { type: "bigint", min: "0", … }`. */
@@ -73,12 +73,12 @@ export const BASE_PROPS: { readonly [prop: string]: PropInfo } = {
   meta: { schema: { type: 'object' }, description: 'Free-form data for the application.' },
 };
 
-const FORMAT = Symbol.for('fieldspec.format');
+const REGISTRY = Symbol.for('fieldspec.registry');
 const FUNCTIONS = Symbol.for('fieldspec.functions');
 
-/** The format a spec was defined through, or the core format. */
-export function formatOf(spec: Spec): Format {
-  return (spec as unknown as Record<symbol, Format>)[FORMAT] ?? coreFormat;
+/** The registry a spec was defined through, or the core registry. */
+export function registryOf(spec: Spec): Registry {
+  return (spec as unknown as Record<symbol, Registry>)[REGISTRY] ?? coreRegistry;
 }
 
 /** The function table a spec was defined with. */
@@ -92,14 +92,19 @@ export function onDefine(fn: (spec: Spec) => void) {
   attachStandard = fn;
 }
 
-function build<KV, P>(kinds: readonly AnyKind[], elements: readonly ElementDef[], presets: Presets, rules: readonly Rule[]): Format<KV, P> {
-  const format: Format<KV, P> = {
+function build<KV, P>(
+  kinds: readonly AnyKind[],
+  elements: readonly ElementDef[],
+  presets: Presets,
+  rules: readonly Rule[],
+): Registry<KV, P> {
+  const registry: Registry<KV, P> = {
     kinds: new Map(kinds.map((k) => [k.name, k])),
     elements: new Map(elements.map((e) => [e.name, e])),
     presets,
     rules,
     define(spec, options) {
-      Object.defineProperty(spec, FORMAT, { value: format, enumerable: false, configurable: true });
+      Object.defineProperty(spec, REGISTRY, { value: registry, enumerable: false, configurable: true });
       Object.defineProperty(spec, FUNCTIONS, { value: options?.fns, enumerable: false, configurable: true });
       attachStandard?.(spec);
       return spec;
@@ -116,17 +121,17 @@ function build<KV, P>(kinds: readonly AnyKind[], elements: readonly ElementDef[]
       );
     },
   };
-  return format;
+  return registry;
 }
 
-export const coreFormat: Format = build(CORE_KINDS, CORE_ELEMENTS, BUILTIN_PRESETS, []);
+export const coreRegistry: Registry = build(CORE_KINDS, CORE_ELEMENTS, BUILTIN_PRESETS, []);
 
-/** A format with the core vocabulary plus these. Their names must be capitalized. */
-export function createFormat<const Ks extends readonly AnyKind[] = [], const Ps extends Presets = {}>(
-  options: FormatOptions<Ks, Ps> = {},
-): Format<KindValues<Ks>, typeof BUILTIN_PRESETS & Ps> {
-  return coreFormat.extend(options);
+/** A registry with the core vocabulary plus these. Their names must be capitalized. */
+export function createRegistry<const Ks extends readonly AnyKind[] = [], const Ps extends Presets = {}>(
+  options: RegistryOptions<Ks, Ps> = {},
+): Registry<KindValues<Ks>, typeof BUILTIN_PRESETS & Ps> {
+  return coreRegistry.extend(options);
 }
 
-/** Define a spec with the core format. */
-export const define: Format['define'] = (spec, options) => coreFormat.define(spec, options);
+/** Define a spec with the core registry. */
+export const define: Registry['define'] = (spec, options) => coreRegistry.define(spec, options);

@@ -1,13 +1,13 @@
 import type { Functions } from './expr.ts';
+import type { Infer } from './infer.ts';
+import { toJSONSchema } from './jsonschema.ts';
+import { parsePointer } from './pointer.ts';
 /**
  * Standard Schema (https://standardschema.dev): every defined spec carries `~standard`, so
  * libraries that accept Zod, Valibot or ArkType schemas (tRPC, Hono, form libraries, the AI
  * SDK) accept a spec too. Includes the Standard JSON Schema extension.
  */
-import { formatOf, functionsOf, onDefine, type Format } from './format.ts';
-import type { Infer } from './infer.ts';
-import { toJSONSchema } from './jsonschema.ts';
-import { parsePointer } from './pointer.ts';
+import { registryOf, functionsOf, onDefine, type Registry } from './registry.ts';
 import type { Spec } from './types.ts';
 import { parse } from './values.ts';
 
@@ -31,9 +31,9 @@ export type StandardResult<Output> =
 
 export function standardOf<S extends Spec>(
   spec: S,
-  options: { format?: Format; fns?: Functions } = {},
+  options: { registry?: Registry; fns?: Functions } = {},
 ): StandardSchemaV1<unknown, Infer<S>>['~standard'] {
-  const vo = { format: options.format ?? formatOf(spec), fns: options.fns ?? functionsOf(spec) };
+  const vo = { registry: options.registry ?? registryOf(spec), fns: options.fns ?? functionsOf(spec) };
   return {
     version: 1,
     vendor: 'fieldspec',
@@ -48,14 +48,17 @@ export function standardOf<S extends Spec>(
       };
     },
     jsonSchema: {
-      input: () => toJSONSchema(spec, { format: vo.format, io: 'input' }),
-      output: () => toJSONSchema(spec, { format: vo.format, io: 'output' }),
+      input: () => toJSONSchema(spec, { registry: vo.registry, io: 'input' }),
+      output: () => toJSONSchema(spec, { registry: vo.registry, io: 'output' }),
     },
   };
 }
 
-/** A Standard Schema for a spec that was not defined through a format (one read from JSON, say). */
-export function toStandard<S extends Spec>(spec: S, options?: { format?: Format; fns?: Functions }): StandardSchemaV1<unknown, Infer<S>> {
+/** A Standard Schema for a spec that was not defined through a registry (one read from JSON, say). */
+export function toStandard<S extends Spec>(
+  spec: S,
+  options?: { registry?: Registry; fns?: Functions },
+): StandardSchemaV1<unknown, Infer<S>> {
   return { '~standard': standardOf(spec, options) };
 }
 

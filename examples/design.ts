@@ -1,9 +1,9 @@
 /**
- * An extension format for design tools: a `Gradient` kind with a structured value and its own
+ * An extension registry for design tools: a `Gradient` kind with a structured value and its own
  * `GradientPicker` control, a `Swatch` preset, and a lint rule for compact settings panels.
  * Everything here is capitalized: lowercase names belong to the library.
  */
-import { createFormat, defineElement, defineKind, type Rule } from '#src/index.ts';
+import { createRegistry, defineElement, defineKind, type Rule } from '#src/index.ts';
 
 export interface GradientValue {
   from: string;
@@ -76,4 +76,4 @@ export function compactPanel(maxFields = 24): Rule {
   };
 }
 
-export const design = createFormat({ kinds: [Gradient], elements: [GradientPicker], presets, rules: [compactPanel()] });
+export const design = createRegistry({ kinds: [Gradient], elements: [GradientPicker], presets, rules: [compactPanel()] });

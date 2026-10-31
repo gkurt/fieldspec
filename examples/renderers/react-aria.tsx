@@ -109,7 +109,7 @@ function Notes({ field, extra }: { field: FieldState; extra?: string | undefined
 /** Text, and any kind typed as text: what is typed stays until it parses. */
 function AriaText(p: ControlProps & { multiline?: boolean }) {
   const f = p.field;
-  const { draft, error, placeholder, change } = useParsedText(p, parserFor(p.form.format, f.decl.type));
+  const { draft, error, placeholder, change } = useParsedText(p, parserFor(p.form.registry, f.decl.type));
   const format = (f.decl as { format?: string }).format;
   const type = p.props.secret ? 'password' : format === 'email' ? 'email' : format === 'uri' || f.decl.type === 'url' ? 'url' : 'text';
   return (
@@ -357,7 +357,7 @@ function AriaSegmented(p: ControlProps) {
 }
 
 const itemsOf = (p: Pick<ControlProps, 'form' | 'field'>) =>
-  deref({ defs: p.form.spec.defs, presets: p.form.format.presets }, (p.field.decl as { items: FieldDecl }).items);
+  deref({ defs: p.form.spec.defs, presets: p.form.registry.presets }, (p.field.decl as { items: FieldDecl }).items);
 
 /** A set of options, as checkboxes; other sets are lists. */
 function AriaChecks(p: ControlProps) {
@@ -453,7 +453,7 @@ const colorOf = (v: unknown) => {
 /** A text box offering the field's suggestions, filtered as it is typed; any other value is allowed. */
 function AriaAutocomplete(p: ControlProps) {
   const f = p.field;
-  const { draft, error, placeholder, change } = useParsedText(p, parserFor(p.form.format, f.decl.type));
+  const { draft, error, placeholder, change } = useParsedText(p, parserFor(p.form.registry, f.decl.type));
   const items = (f.suggestions ?? []).map((s) => ({ id: s }));
   return (
     <ComboBox
@@ -558,7 +558,7 @@ function AriaTextarea(p: ControlProps) {
  */
 function AriaField(p: FieldProps) {
   const field = p.field;
-  const control = p.node.control?.type ?? defaultControl(p.form.format, field.decl);
+  const control = p.node.control?.type ?? defaultControl(p.form.registry, field.decl);
   const drawer = useRenderer({
     element: control,
     role: 'control',

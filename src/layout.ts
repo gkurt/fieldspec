@@ -16,7 +16,7 @@
  */
 import { deref, usedName, type Lookup } from './defs.ts';
 import { PARTS, type ElementDef } from './elements.ts';
-import { formatOf, type Format } from './format.ts';
+import { registryOf, type Registry } from './registry.ts';
 import type {
   ArrayField,
   Condition,
@@ -70,7 +70,7 @@ type Fields = { readonly [key: string]: FieldDecl };
 type Groups = { readonly [id: string]: GroupDecl } | undefined;
 
 interface Ctx {
-  readonly format: Format;
+  readonly registry: Registry;
   readonly lookup: Lookup;
 }
 
@@ -95,19 +95,19 @@ interface Placed {
 const REST = '\u0000rest';
 
 /** The tree for a spec, or for one of its named layouts. */
-export function layout(spec: Spec, view?: string, format: Format = formatOf(spec)): LayoutNode {
+export function layout(spec: Spec, view?: string, registry: Registry = registryOf(spec)): LayoutNode {
   const fragment = view === undefined ? undefined : spec.layouts?.[view];
   if (view !== undefined && fragment === undefined) throw new Error(`no layout named "${view}"`);
-  const ctx: Ctx = { format, lookup: { defs: spec.defs, presets: format.presets } };
+  const ctx: Ctx = { registry, lookup: { defs: spec.defs, presets: registry.presets } };
   return layoutScope(scopeOf(spec.fields, spec.groups, ctx), fragment, 'root');
 }
 
 /** The control element that edits a declaration unless its `render` names one. */
-export function defaultControl(format: Format, decl: Resolved): string {
+export function defaultControl(registry: Registry, decl: Resolved): string {
   const seen = new Set<string>();
   for (let name: string | undefined = decl.type; name !== undefined && !seen.has(name);) {
     seen.add(name);
-    const kind = format.kinds.get(name);
+    const kind = registry.kinds.get(name);
     const control = kind?.control;
     if (control !== undefined) return typeof control === 'string' ? control : control(decl);
     name = kind?.base;
@@ -121,11 +121,11 @@ function asElement(node: RenderNode): RenderElement | { field: string } | { grou
 }
 
 function roleOf(ctx: Ctx, type: string): ElementDef['role'] | undefined {
-  return ctx.format.elements.get(type)?.role;
+  return ctx.registry.elements.get(type)?.role;
 }
 
 function takesChildren(ctx: Ctx, type: string): boolean {
-  const def = ctx.format.elements.get(type);
+  const def = ctx.registry.elements.get(type);
   return def ? def.children === true : true;
 }
 
@@ -259,7 +259,7 @@ function drawGroup(scope: ScopeInfo, id: string, key: string, limit?: readonly s
   );
   const el = asElement(group.render ?? 'stack');
   const container: RenderElement = 'type' in el ? el : { type: 'stack', children: [el] };
-  const def = scope.ctx.format.elements.get(container.type);
+  const def = scope.ctx.registry.elements.get(container.type);
   const props: Record<string, Expr> = { ...container.props };
   if (def?.props?.title && props.title === undefined && group.label !== undefined) props.title = group.label as Expr;
   if (def?.props?.description && props.description === undefined && group.description !== undefined)
@@ -294,7 +294,7 @@ function fieldNode(ctx: Ctx, raw: FieldDecl, ref: string, key: string, visible?:
     decl,
     control: chosen
       ? { type: chosen.type, props: chosen.props ?? {}, explicit: true }
-      : { type: defaultControl(ctx.format, decl), props: {} },
+      : { type: defaultControl(ctx.registry, decl), props: {} },
     ...(visible !== undefined && { visible }),
     ...(usedName(raw) !== undefined && { use: usedName(raw) }),
   };

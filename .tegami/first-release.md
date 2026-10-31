@@ -9,7 +9,7 @@ One JSON document, a spec, says what a config's values are and, optionally, how 
 
 ### The format
 
-Kinds for text, numbers, booleans, enums, dates, colours, URLs, files, JSON and containers (objects, variants, lists, sets, records, maps); presets and definitions, including ones that contain themselves; conditions and text as serializable expressions over the form's state; groups, layouts and a `render` on any field or group. Formats are extensible with your own kinds, elements and presets, and `checkSpec` reports each fault at its spot, phrased as the fix.
+Kinds for text, numbers, booleans, enums, dates, colours, URLs, files, JSON and containers (objects, variants, lists, sets, records, maps); presets and definitions, including ones that contain themselves; conditions and text as serializable expressions over the form's state; groups, layouts and a `render` on any field or group. Registries extend the core with your own kinds, elements and presets, and `checkSpec` reports each fault at its spot, phrased as the fix.
 
 ### Types, values and forms
 
@@ -17,7 +17,7 @@ Kinds for text, numbers, booleans, enums, dates, colours, URLs, files, JSON and 
 
 ### Interop and agents
 
-JSON Schema and Zod (`fieldspec/zod`) both ways, Standard Schema, and json-render specs and state. `prompt(format)` and `metaSchema(format)` give agents a system prompt and a structured-output schema.
+JSON Schema and Zod (`fieldspec/zod`) both ways, Standard Schema, and json-render specs and state. `prompt(registry)` and `metaSchema(registry)` give agents a system prompt and a structured-output schema.
 
 ### Rendering
 

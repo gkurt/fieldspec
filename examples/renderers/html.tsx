@@ -285,7 +285,7 @@ function ParsedText({
 
 function Input(p: ControlProps) {
   const decl = p.field.decl;
-  const parse = parserFor(p.form.format, decl.type);
+  const parse = parserFor(p.form.registry, decl.type);
   const format = (decl as { format?: string }).format;
   const numeric = decl.type === 'number' || decl.type === 'int';
   const type = p.props.secret
@@ -468,7 +468,7 @@ function List(p: ControlProps) {
 function SetLines(p: ControlProps) {
   const { field } = p;
   const items = field.value instanceof Set ? [...field.value] : [];
-  const kind = deref({ defs: p.form.spec.defs, presets: p.form.format.presets }, (field.decl as { items: FieldDecl }).items).type;
+  const kind = deref({ defs: p.form.spec.defs, presets: p.form.registry.presets }, (field.decl as { items: FieldDecl }).items).type;
   const numeric = kind === 'int' || kind === 'number';
   return (
     <textarea
@@ -616,7 +616,7 @@ function Autocomplete(p: ControlProps) {
   const list = `${p.id}-suggestions`;
   return (
     <>
-      <ParsedText p={p} parse={parserFor(p.form.format, p.field.decl.type)} extra={{ list, autoComplete: 'off' }} />
+      <ParsedText p={p} parse={parserFor(p.form.registry, p.field.decl.type)} extra={{ list, autoComplete: 'off' }} />
       <datalist id={list}>
         {(p.field.suggestions ?? []).map((s) => (
           <option key={s} value={s} />
@@ -770,7 +770,7 @@ function Variant(p: ControlProps) {
 
 const controlRenderers = defineRenderers({
   input: Input,
-  textarea: (p) => <ParsedText p={p} parse={parserFor(p.form.format, p.field.decl.type)} multiline />,
+  textarea: (p) => <ParsedText p={p} parse={parserFor(p.form.registry, p.field.decl.type)} multiline />,
   autocomplete: Autocomplete,
   select: Select,
   radio: (p) => <Choices {...p} segmented={false} />,

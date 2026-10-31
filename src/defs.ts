@@ -1,10 +1,10 @@
+import { isBuiltinName } from './names.ts';
 /**
  * Following `use` to the declaration it names: a definition in the spec's `defs`, or a preset
- * of the format. Lowercase names are built-in presets; capitalized ones are the spec's
- * definitions, then the format's own presets.
+ * of the registry. Lowercase names are built-in presets; capitalized ones are the spec's
+ * definitions, then the registry's own presets.
  */
-import type { Presets } from './format.ts';
-import { isBuiltinName } from './names.ts';
+import type { Presets } from './registry.ts';
 import type { FieldDecl, ObjectField, Resolved, Spec, VariantField } from './types.ts';
 
 /** Where `use` names are looked up. */
