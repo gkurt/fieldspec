@@ -72,6 +72,9 @@ export function prompt(registry: Registry = coreRegistry, options: PromptOptions
     '- `{ "$state": "/path" }` reads a value. `{ "$template": "Hi ${/name}" }` interpolates.',
     '- `{ "$cond": <condition>, "$then": <expr>, "$else": <expr> }` chooses.',
     '- `{ "$computed": "name", "args": { "x": <expr> } }` calls a function the application provides. Call only functions listed below.',
+  );
+  for (const language of Object.values(registry.languages)) out(`- ${language.description}`);
+  out(
     '',
     '## Names',
     '',

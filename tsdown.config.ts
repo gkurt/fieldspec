@@ -1,11 +1,12 @@
 import { defineConfig } from 'tsdown';
 
-// One entry per export in package.json; peers (React, Zod) stay external.
+// One entry per export in package.json; peers (React, Zod, QuickJS) stay external.
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
     'react/index': 'src/react/index.tsx',
     zod: 'src/zod.ts',
+    js: 'src/js.ts',
   },
   format: 'esm',
   platform: 'neutral',

@@ -46,14 +46,35 @@ export interface Scope {
 
 export const ROOT_SCOPE: Scope = { base: '' };
 
+/** The keys that hold code in a language: `{ "$js": "start <= end", "args": { … } }`. */
+export const LANGUAGE_KEYS = ['$js'] as const;
+export type LanguageKey = (typeof LANGUAGE_KEYS)[number];
+
+/**
+ * Runs the code of one language for a registry: `fieldspec/js` runs `$js`. Code reads only the
+ * `args` it is given, so what it depends on stays visible to the checker.
+ */
+export interface Language {
+  readonly key: LanguageKey;
+  /** What agents are told about writing it, in the prompt. */
+  readonly description: string;
+  /** Why this code cannot run with arguments of these names (a syntax error, say), if it cannot. */
+  check(source: string, args: readonly string[]): string | undefined;
+  /** Runs the code, synchronously, and gives its result. Throws when it fails. */
+  run(source: string, args: { readonly [name: string]: unknown }): unknown;
+}
+
+export type Languages = { readonly [K in LanguageKey]?: Language };
+
 export interface Env {
   readonly values: unknown;
   readonly fns?: Functions;
+  readonly languages?: Languages;
   /** Overrides plain lookup, so defaults can be computed lazily. */
   readonly get?: (pointer: string) => unknown;
 }
 
-export const EXPR_KEYS = ['$state', '$item', '$index', '$computed', '$cond', '$template'] as const;
+export const EXPR_KEYS = ['$state', '$item', '$index', '$computed', '$cond', '$template', ...LANGUAGE_KEYS] as const;
 
 /** Whether a value is an expression object rather than a literal. */
 export function isExpr(value: unknown): boolean {
@@ -86,14 +107,17 @@ export function evaluate(expr: Expr | undefined, env: Env, scope: Scope = ROOT_S
   if (typeof e.$computed === 'string') {
     const fn = env.fns?.[e.$computed];
     if (!fn) throw new Error(`no function named "${e.$computed}" was supplied`);
-    const args: Record<string, unknown> = {};
-    for (const [name, arg] of Object.entries((e.args as Record<string, Expr> | undefined) ?? {})) args[name] = evaluate(arg, env, scope);
-
-    return fn(args, {
+    return fn(argsOf(e, env, scope), {
       values: env.values,
       get: (pointer) => read(env, resolvePointer(pointer, scope.base)),
       scope,
     });
+  }
+  for (const key of LANGUAGE_KEYS) {
+    if (typeof e[key] !== 'string') continue;
+    const language = env.languages?.[key];
+    if (!language) throw new Error(`no engine runs ${key}: give the registry one`);
+    return language.run(e[key], argsOf(e, env, scope));
   }
   if ('$cond' in e)
     return test(e.$cond as Condition, env, scope) ? evaluate(e.$then as Expr, env, scope) : evaluate(e.$else as Expr, env, scope);
@@ -107,6 +131,12 @@ export function evaluate(expr: Expr | undefined, env: Env, scope: Scope = ROOT_S
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(e)) out[key] = evaluate(value as Expr, env, scope);
   return out;
+}
+
+function argsOf(e: Record<string, unknown>, env: Env, scope: Scope): Record<string, unknown> {
+  const args: Record<string, unknown> = {};
+  for (const [name, arg] of Object.entries((e.args as Record<string, Expr> | undefined) ?? {})) args[name] = evaluate(arg, env, scope);
+  return args;
 }
 
 export const OPERATORS: readonly ComparisonOp[] = ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'in'];

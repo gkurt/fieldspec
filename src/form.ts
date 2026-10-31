@@ -115,7 +115,7 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
   let version = 0;
   let submitted = false;
 
-  const env = (): Env => ({ values, fns });
+  const env = (): Env => ({ values, fns, languages: registry.languages });
   const changed = () => {
     version++;
     issues = undefined;

@@ -4,7 +4,7 @@ import { deref, requiresItself, type Lookup } from './defs.ts';
  * phrased as the fix, because whoever wrote it (often an agent) fixes them all in one pass.
  */
 import type { ElementDef } from './elements.ts';
-import { EXPR_KEYS, isDynamic, OPERATORS, type Functions } from './expr.ts';
+import { EXPR_KEYS, isDynamic, LANGUAGE_KEYS, OPERATORS, type Functions, type LanguageKey } from './expr.ts';
 import { CONTAINER_KINDS, type AnyKind } from './kinds.ts';
 import { isBuiltinName, isUserName, toUserName } from './names.ts';
 import { escapeSegment, joinPointer, resolveSegments } from './pointer.ts';
@@ -815,7 +815,7 @@ function smallestSizes(spec: Spec): (name: string) => number {
 function checkText(c: Checker, text: unknown, at: string, scope: Scope) {
   if (typeof text === 'string') return;
   if (isObject(text) && EXPR_KEYS.some((k) => k in text)) return checkExpr(c, text, at, scope);
-  c.fault(at, 'must be a string or an expression ($template, $cond, $computed, $state)');
+  c.fault(at, 'must be a string or an expression ($template, $cond, $computed, $js, $state)');
 }
 
 function checkExpr(c: Checker, expr: unknown, at: string, scope: Scope) {
@@ -835,6 +835,7 @@ function checkExpr(c: Checker, expr: unknown, at: string, scope: Scope) {
     $computed: ['$computed', 'args'],
     $cond: ['$cond', '$then', '$else'],
     $template: ['$template'],
+    $js: ['$js', 'args'],
   };
   for (const k of Object.keys(expr))
     if (!allowed[key]!.includes(k)) c.fault(`${at}/${escapeSegment(k)}`, `is not part of a ${key} expression`);
@@ -849,11 +850,10 @@ function checkExpr(c: Checker, expr: unknown, at: string, scope: Scope) {
     case '$computed':
       if (typeof expr.$computed !== 'string') return c.fault(`${at}/$computed`, 'must be a function name');
       if (!c.computed.has(expr.$computed)) c.computed.set(expr.$computed, `${at}/$computed`);
-      if (expr.args !== undefined) {
-        if (!isObject(expr.args)) c.fault(`${at}/args`, 'must be an object of named arguments');
-        else for (const [k, v] of Object.entries(expr.args)) checkExpr(c, v, `${at}/args/${escapeSegment(k)}`, scope);
-      }
+      checkArgs(c, expr.args, at, scope);
       return;
+    case '$js':
+      return checkCode(c, key, expr, at, scope);
     case '$cond':
       checkCondition(c, expr.$cond, `${at}/$cond`, scope);
       if (!('$then' in expr) || !('$else' in expr)) c.fault(at, 'a $cond needs both $then and $else');
@@ -864,6 +864,35 @@ function checkExpr(c: Checker, expr: unknown, at: string, scope: Scope) {
       if (typeof expr.$template !== 'string') return c.fault(`${at}/$template`, 'must be a string');
       for (const m of expr.$template.matchAll(/\$\{([^}]*)\}/g)) checkPointer(c, m[1]!.trim(), `${at}/$template`, scope);
   }
+}
+
+/** The names of an expression's `args`, each checked. */
+function checkArgs(c: Checker, args: unknown, at: string, scope: Scope): string[] {
+  if (args === undefined) return [];
+  if (!isObject(args)) {
+    c.fault(`${at}/args`, 'must be an object of named arguments');
+    return [];
+  }
+  for (const [k, v] of Object.entries(args)) checkExpr(c, v, `${at}/args/${escapeSegment(k)}`, scope);
+  return Object.keys(args);
+}
+
+const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
+
+function checkCode(c: Checker, key: LanguageKey, expr: Record<string, unknown>, at: string, scope: Scope) {
+  const names = checkArgs(c, expr.args, at, scope);
+  for (const name of names)
+    if (!IDENTIFIER.test(name)) c.fault(`${at}/args/${escapeSegment(name)}`, 'names a variable of the code: letters, digits, _ and $');
+
+  const source = expr[key];
+  if (typeof source !== 'string') return c.fault(`${at}/${key}`, 'must be the code, as a string');
+  const language = c.registry.languages[key];
+  if (!language) return c.fault(`${at}/${key}`, `needs an engine for ${key}: give the registry one (fieldspec/js runs $js)`);
+  const why = language.check(
+    source,
+    names.filter((name) => IDENTIFIER.test(name)),
+  );
+  if (why !== undefined) c.fault(`${at}/${key}`, why);
 }
 
 function checkCondition(c: Checker, cond: unknown, at: string, scope: Scope) {
@@ -877,12 +906,12 @@ function checkCondition(c: Checker, cond: unknown, at: string, scope: Scope) {
     if (!Array.isArray(list)) return c.fault(`${at}/${key}`, 'must be an array of conditions');
     return list.forEach((x, i) => checkCondition(c, x, `${at}/${key}/${i}`, scope));
   }
-  const sources = ['$state', '$item', '$index', '$computed'].filter((k) => k in cond);
+  const sources = ['$state', '$item', '$index', '$computed', ...LANGUAGE_KEYS].filter((k) => k in cond);
   if (sources.length !== 1) {
     return c.fault(
       at,
       sources.length === 0
-        ? 'needs a value to test: $state, $item, $index or $computed'
+        ? 'needs a value to test: $state, $item, $index, $computed or $js'
         : `tests ${sources.join(' and ')}; a condition tests one value`,
     );
   }

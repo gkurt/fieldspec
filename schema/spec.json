@@ -3266,6 +3266,9 @@
             "$computed": {
               "type": "string"
             },
+            "$js": {
+              "type": "string"
+            },
             "args": {
               "type": "object",
               "additionalProperties": {
@@ -3316,6 +3319,11 @@
             {
               "required": [
                 "$computed"
+              ]
+            },
+            {
+              "required": [
+                "$js"
               ]
             }
           ],
@@ -3390,6 +3398,24 @@
           },
           "required": [
             "$computed"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "$js": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/expr"
+              }
+            }
+          },
+          "required": [
+            "$js"
           ],
           "additionalProperties": false
         },

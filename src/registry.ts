@@ -1,11 +1,12 @@
 /**
- * A registry: the vocabulary specs are written in. Kinds, elements and presets, plus lint rules.
+ * A registry: the vocabulary specs are written in. Kinds, elements and presets, lint rules, and
+ * the engines that run code (`$js`).
  * The core registry holds the built-ins (all lowercase); an application extends it with its own
  * (all capitalized), and every spec defined through it is checked, parsed, rendered and
  * described for agents with exactly that vocabulary.
  */
 import { CORE_ELEMENTS, type ElementDef } from './elements.ts';
-import type { Functions } from './expr.ts';
+import { LANGUAGE_KEYS, type Functions, type Language, type Languages } from './expr.ts';
 import type { Defined, FunctionsFor, KindValues } from './infer.ts';
 import { CORE_KINDS, type AnyKind, type PropInfo } from './kinds.ts';
 import { assertUserName } from './names.ts';
@@ -22,12 +23,14 @@ export interface Registry<KV = {}, P = typeof BUILTIN_PRESETS> {
   readonly elements: ReadonlyMap<string, ElementDef>;
   readonly presets: Presets;
   readonly rules: readonly Rule[];
+  /** The engines that run code, by key. The core registry has none. */
+  readonly languages: Languages;
   /**
    * Type a spec and bind it to this registry, and optionally to its function table. The spec is
    * returned as it is, with a non-enumerable `~standard` so Standard Schema consumers take it.
    */
   define<const S extends Spec>(spec: S, options?: { fns?: FunctionsFor<S> }): Defined<S, KV, P>;
-  /** A registry with more kinds, elements, presets or rules. Their names must be capitalized. */
+  /** A registry with more kinds, elements, presets, rules or languages. Their names must be capitalized. */
   extend<const Ks extends readonly AnyKind[] = [], const Ps extends Presets = {}>(
     options: RegistryOptions<Ks, Ps>,
   ): Registry<KV & KindValues<Ks>, P & Ps>;
@@ -39,6 +42,8 @@ export interface RegistryOptions<Ks extends readonly AnyKind[], Ps extends Prese
   /** Named declarations fields can `use`, e.g. `Money: { type: "bigint", min: "0", … }`. */
   readonly presets?: Ps;
   readonly rules?: readonly Rule[];
+  /** Engines that run code: `[await loadJs(wasm)]` from `fieldspec/js` runs `$js`. */
+  readonly languages?: readonly Language[];
 }
 
 /** What every field may say, whatever its kind. Drives the meta-schema, prompts and the checker. */
@@ -97,12 +102,14 @@ function build<KV, P>(
   elements: readonly ElementDef[],
   presets: Presets,
   rules: readonly Rule[],
+  languages: Languages,
 ): Registry<KV, P> {
   const registry: Registry<KV, P> = {
     kinds: new Map(kinds.map((k) => [k.name, k])),
     elements: new Map(elements.map((e) => [e.name, e])),
     presets,
     rules,
+    languages,
     define(spec, options) {
       Object.defineProperty(spec, REGISTRY, { value: registry, enumerable: false, configurable: true });
       Object.defineProperty(spec, FUNCTIONS, { value: options?.fns, enumerable: false, configurable: true });
@@ -113,18 +120,25 @@ function build<KV, P>(
       for (const k of options.kinds ?? []) assertUserName('A kind', k.name);
       for (const e of options.elements ?? []) assertUserName('An element', e.name);
       for (const name of Object.keys(options.presets ?? {})) assertUserName('A preset', name);
+      const more: { [key: string]: Language } = { ...languages };
+      for (const language of options.languages ?? []) {
+        if (!(LANGUAGE_KEYS as readonly string[]).includes(language.key))
+          throw new Error(`A language runs one of ${LANGUAGE_KEYS.join(', ')}, not "${language.key}"`);
+        more[language.key] = language;
+      }
       return build(
         [...kinds.filter((k) => !options.kinds?.some((n) => n.name === k.name)), ...(options.kinds ?? [])],
         [...elements.filter((e) => !options.elements?.some((n) => n.name === e.name)), ...(options.elements ?? [])],
         { ...presets, ...options.presets },
         [...rules, ...(options.rules ?? [])],
+        more,
       );
     },
   };
   return registry;
 }
 
-export const coreRegistry: Registry = build(CORE_KINDS, CORE_ELEMENTS, BUILTIN_PRESETS, []);
+export const coreRegistry: Registry = build(CORE_KINDS, CORE_ELEMENTS, BUILTIN_PRESETS, [], {});
 
 /** A registry with the core vocabulary plus these. Their names must be capitalized. */
 export function createRegistry<const Ks extends readonly AnyKind[] = [], const Ps extends Presets = {}>(

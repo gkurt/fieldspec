@@ -35,6 +35,15 @@ export interface ComputedRef {
   readonly args?: { readonly [name: string]: Expr };
 }
 
+/**
+ * A JavaScript expression, run sandboxed by the registry's engine (`fieldspec/js`). It reads only
+ * its `args`, each a variable: `{ "$js": "end >= start", "args": { "start": { "$state": "start" }, … } }`.
+ */
+export interface JsExpr {
+  readonly $js: string;
+  readonly args?: { readonly [name: string]: Expr };
+}
+
 export interface CondExpr {
   readonly $cond: Condition;
   readonly $then: Expr;
@@ -46,10 +55,10 @@ export interface TemplateExpr {
   readonly $template: string;
 }
 
-export type Expr = Json | StateRef | ItemRef | IndexRef | ComputedRef | CondExpr | TemplateExpr;
+export type Expr = Json | StateRef | ItemRef | IndexRef | ComputedRef | JsExpr | CondExpr | TemplateExpr;
 
 /** Text shown to people: a literal or an expression that yields one. */
-export type Text = string | TemplateExpr | CondExpr | ComputedRef | StateRef;
+export type Text = string | TemplateExpr | CondExpr | ComputedRef | JsExpr | StateRef;
 
 // ── Conditions (json-render's grammar, plus `in`) ─────────────────────────────────────────
 
@@ -68,7 +77,7 @@ export interface Comparison {
 }
 
 /** A value source, optionally compared. Without an operator, it is tested for truthiness. */
-export type ConditionLeaf = (StateRef | ItemRef | IndexRef | ComputedRef) & Comparison;
+export type ConditionLeaf = (StateRef | ItemRef | IndexRef | ComputedRef | JsExpr) & Comparison;
 
 /** `true`/`false`, a leaf, an array (all must hold), `$and`, or `$or`. */
 export type Condition =

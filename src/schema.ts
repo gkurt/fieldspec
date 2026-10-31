@@ -1,3 +1,4 @@
+import { LANGUAGE_KEYS } from './expr.ts';
 import type { JsonSchema, PropInfo } from './kinds.ts';
 import { USER_NAME } from './names.ts';
 /**
@@ -101,6 +102,9 @@ export function metaSchema(registry: Registry = coreRegistry, options: MetaSchem
     });
   }
 
+  // Code is part of the open schema, which extended registries share, and of a closed one that runs it.
+  const languages = LANGUAGE_KEYS.filter((key) => open || registry.languages[key] !== undefined);
+  const code = Object.fromEntries(languages.map((key) => [key, { type: 'string' }]));
   const leaf = {
     type: 'object',
     properties: {
@@ -108,6 +112,7 @@ export function metaSchema(registry: Registry = coreRegistry, options: MetaSchem
       $item: { type: 'string' },
       $index: { const: true },
       $computed: { type: 'string' },
+      ...code,
       args: { type: 'object', additionalProperties: { $ref: '#/$defs/expr' } },
       eq: { $ref: '#/$defs/expr' },
       neq: { $ref: '#/$defs/expr' },
@@ -118,7 +123,7 @@ export function metaSchema(registry: Registry = coreRegistry, options: MetaSchem
       in: { $ref: '#/$defs/expr' },
       not: { const: true },
     },
-    oneOf: [{ required: ['$state'] }, { required: ['$item'] }, { required: ['$index'] }, { required: ['$computed'] }],
+    oneOf: ['$state', '$item', '$index', '$computed', ...languages].map((key) => ({ required: [key] })),
     additionalProperties: false,
   };
   const only = (key: string, schema: unknown) => ({
@@ -204,6 +209,12 @@ export function metaSchema(registry: Registry = coreRegistry, options: MetaSchem
             required: ['$computed'],
             additionalProperties: false,
           },
+          ...languages.map((key) => ({
+            type: 'object',
+            properties: { [key]: { type: 'string' }, args: { type: 'object', additionalProperties: { $ref: '#/$defs/expr' } } },
+            required: [key],
+            additionalProperties: false,
+          })),
           {
             type: 'object',
             properties: { $cond: { $ref: '#/$defs/condition' }, $then: { $ref: '#/$defs/expr' }, $else: { $ref: '#/$defs/expr' } },

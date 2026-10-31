@@ -66,6 +66,14 @@
       },
       "source": "./src/zod.ts"
     },
+    "./js": {
+      "fieldspec@dev": "./src/js.ts",
+      "import": {
+        "types": "./dist/js.d.ts",
+        "default": "./dist/js.js"
+      },
+      "source": "./src/js.ts"
+    },
     "./schema.json": "./schema/spec.json",
     "./package.json": "./package.json"
   },
@@ -91,6 +99,7 @@
   "devDependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
     "@arethetypeswrong/cli": "^0.18.5",
+    "@gkurt/quickjs-wasi": "^0.3.0",
     "@happy-dom/global-registrator": "21.0.4",
     "@internationalized/date": "^3.12.4",
     "@json-render/core": "0.21.3",
@@ -120,10 +129,14 @@
     "zod": "^4.6.7"
   },
   "peerDependencies": {
+    "@gkurt/quickjs-wasi": "^0.3.0",
     "react": ">=19",
     "zod": ">=4"
   },
   "peerDependenciesMeta": {
+    "@gkurt/quickjs-wasi": {
+      "optional": true
+    },
     "react": {
       "optional": true
     },

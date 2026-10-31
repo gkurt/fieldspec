@@ -35,7 +35,22 @@ export {
 export { BUILTIN_PRESETS } from './presets.ts';
 export { deref, lookUp, usedName, type Lookup } from './defs.ts';
 export { isBuiltinName, isUserName, toUserName } from './names.ts';
-export { evaluate, equal, isExpr, isDynamic, ROOT_SCOPE, type Env, type Fn, type FnContext, type Functions, type Scope } from './expr.ts';
+export {
+  evaluate,
+  equal,
+  isExpr,
+  isDynamic,
+  LANGUAGE_KEYS,
+  ROOT_SCOPE,
+  type Env,
+  type Fn,
+  type FnContext,
+  type Functions,
+  type Language,
+  type LanguageKey,
+  type Languages,
+  type Scope,
+} from './expr.ts';
 export {
   decode,
   encode,

@@ -413,6 +413,7 @@ function computePending(ctx: Ctx, pending: Pending[], get: () => unknown, set: (
     const env: Env = {
       values: get(),
       fns: ctx.fns,
+      languages: ctx.registry.languages,
       get(pointer) {
         // A default reading another default not computed yet computes that one first.
         for (const [at, other] of byPointer) if ((pointer === at || pointer.startsWith(`${at}/`)) && !state.has(at)) compute(other);
@@ -449,7 +450,7 @@ function computePending(ctx: Ctx, pending: Pending[], get: () => unknown, set: (
 export function validate(spec: Spec, values: unknown, options?: ValueOptions): Issue[] {
   const ctx = ctxOf(spec, options);
   const issues: Issue[] = [];
-  const env: Env = { values, fns: ctx.fns };
+  const env: Env = { values, fns: ctx.fns, languages: ctx.registry.languages };
   if (!isPlainObject(values)) return [{ path: '', code: 'type', message: 'must be an object' }];
   checkFields(ctx, env, spec.fields, spec.groups, values, '', 'error', issues);
   return issues;

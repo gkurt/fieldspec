@@ -35,8 +35,8 @@ npm install fieldspec
 ```
 
 ES modules only, with types; from CommonJS, use `import()`. `fieldspec/react` needs `react` 19
-or later and `fieldspec/zod` needs `zod` 4. Both are optional peer dependencies, so the core
-needs neither.
+or later, `fieldspec/zod` needs `zod` 4 and `fieldspec/js` needs `@gkurt/quickjs-wasi` 0.3. All
+are optional peer dependencies, so the core needs none of them.
 
 ## Names
 
@@ -74,9 +74,10 @@ differ from a built-in only by case.
 - **Pointers**: `/a/b` is absolute. Without the slash a pointer is relative to the enclosing
   object (`"plan"` is a sibling), and each leading `../` climbs one level (an array index
   counts as one). `$item`/`$index` read the current array item.
-- **Expressions** (`$state`, `$template`, `$cond`, `$computed`) work in defaults, labels,
+- **Expressions** (`$state`, `$template`, `$cond`, `$computed`, `$js`) work in defaults, labels,
   options and element props. `$computed` names a function from a table passed at runtime, so
-  the spec stays JSON; `define(spec, { fns })` checks every name is implemented.
+  the spec stays JSON; `define(spec, { fns })` checks every name is implemented. `$js` is
+  JavaScript the spec carries itself (see Code).
 - **Groups** gather fields for display without changing the value's shape.
 - **Naming items**: a list's, record's or map's items are called by their position (`#2`) or
   key, unless `namedBy` says otherwise: a pointer into the item (`"name"`, `"contact/name"`, or
@@ -244,6 +245,54 @@ What controls do comes with `fieldspec/react`, so a renderer set only draws:
 - `useParsedText(props, parserFor(form.registry, kind))`: a text control's typing rules: what is
   typed stays until it parses, and a value set from elsewhere replaces it.
 
+## Code: `$js`
+
+For what the expressions above cannot say, a spec can carry JavaScript. `$js` is an expression,
+and `args` are its variables:
+
+```json
+"checkOut": {
+  "type": "date",
+  "default": { "$js": "new Date(checkIn.getTime() + nights * 864e5)", "args": { "checkIn": { "$state": "checkIn" }, "nights": { "$state": "nights" } } }
+},
+"lateNote": { "type": "string", "visible": { "$js": "checkOut.getUTCDay() === 0", "args": { "checkOut": { "$state": "checkOut" } } } }
+```
+
+It goes wherever an expression does, and is the value a condition tests (compared with `eq`,
+`gt`, … or for truthiness). The code reads only its `args`, so the checker, `commonFields` and
+the rest still see what a spec depends on. Dates, bigints, maps, sets, bytes and regular
+expressions arrive as themselves; a URL as its text.
+
+The core does not run it. `fieldspec/js` does, in [QuickJS](https://github.com/gkurt/quickjs)
+compiled to WebAssembly (`@gkurt/quickjs-wasi`, about 400 KB gzipped, loaded only by those who
+import it). Compile the engine once, then give the language to a registry:
+
+```ts
+import { createRegistry } from "fieldspec";
+import { loadJs } from "fieldspec/js";
+import wasmUrl from "@gkurt/quickjs-wasi/quickjs.wasm?url"; // Vite; in Node or Bun, pass the file's bytes
+
+const app = createRegistry({ languages: [await loadJs(fetch(wasmUrl))] });
+const spec = app.define({ … });
+```
+
+`loadJs` takes the engine compiled, as bytes, or as a response; `createJs(module)` does the same
+synchronously from a compiled module. Code then runs synchronously, in one VM per language:
+
+- Each run has a time limit (`timeout`, default 50 ms), and the VM a memory limit
+  (`memoryLimit`, 16 MiB) and a stack limit (`maxStackSize`, 256 KiB). Code that passes one
+  fails like any other: a condition reports an issue, and a form treats it as holding.
+- The VM's globals are frozen, so one expression cannot change what another sees. It has no
+  I/O: no network, files or timers.
+- Each piece of code is compiled once and kept. `checkSpec` compiles without running it, and
+  reports a syntax error at its spot.
+- Specs from sources that must not reach each other's code belong in registries with languages
+  of their own.
+
+A registry with no engine for `$js` rejects specs that use it, and its `prompt` and closed
+`metaSchema` do not mention `$js`, so agents write it only where it runs. The published schema
+accepts it, as it accepts any registry's kinds.
+
 ## Extending
 
 A registry is the vocabulary specs are written in: kinds (what `type` names), elements (what
@@ -339,10 +388,9 @@ checks meaning (references, conditions, defaults).
 
 Experimental. Not yet:
 
-- Sandboxed code for conditions (named functions only).
 - In json-render output: enum labels in `select` and `radio` (shadcn's take plain strings;
-  `segmented` keeps them), and conditions that read an outer list's item from inside an inner
-  list's (json-render reads only the innermost item).
+  `segmented` keeps them), conditions that read an outer list's item from inside an inner
+  list's (json-render reads only the innermost item), and `$js`, which json-render cannot run.
 - Fields whose value is always derived. Expression defaults fill absent values only.
 
 ```bash
