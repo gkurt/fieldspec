@@ -1,7 +1,7 @@
 import { StrictMode, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { checkSpec, formatFaults, prompt, SCHEMA_URL, toJSONSchema, toJsonRender } from "../../src/index.ts";
-import { defaultStyles, defineRenderers, FormView, useForm, useFormVersion, type ElementProps } from "../../src/react/index.tsx";
+import { defaultStyles, defineRenderers, FormView, useForm, useFormVersion, type ControlProps } from "../../src/react/index.tsx";
 import { design, type GradientValue } from "../../examples/design.ts";
 import { JsonTree, jsonTreeStyles } from "./JsonTree.tsx";
 import { Selection, selectionStyles } from "./Selection.tsx";
@@ -105,21 +105,21 @@ const spec = design.define(
 );
 
 /** The design pack's own control element, drawn by the app. */
-function GradientPicker({ field, disabled, set, props }: ElementProps) {
-  const g = field!.value as GradientValue;
+function GradientPicker({ field, disabled, set, props }: ControlProps) {
+  const g = field.value as GradientValue;
   return (
     <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
       <div style={{ width: 120, height: 28, borderRadius: 6, background: `linear-gradient(${g.angle}deg, ${g.from}, ${g.to})` }} />
-      <input type="color" aria-label="From" value={g.from} disabled={disabled} onChange={(e) => set!({ ...g, from: e.target.value })} />
-      <input type="color" aria-label="To" value={g.to} disabled={disabled} onChange={(e) => set!({ ...g, to: e.target.value })} />
+      <input type="color" aria-label="From" value={g.from} disabled={disabled} onChange={(e) => set({ ...g, from: e.target.value })} />
+      <input type="color" aria-label="To" value={g.to} disabled={disabled} onChange={(e) => set({ ...g, to: e.target.value })} />
       {props.angle !== false && (
-        <input type="range" aria-label="Angle" min={0} max={360} value={g.angle} disabled={disabled} onChange={(e) => set!({ ...g, angle: Number(e.target.value) })} />
+        <input type="range" aria-label="Angle" min={0} max={360} value={g.angle} disabled={disabled} onChange={(e) => set({ ...g, angle: Number(e.target.value) })} />
       )}
     </div>
   );
 }
 
-const renderers = defineRenderers(design, { GradientPicker });
+const renderers = defineRenderers({ GradientPicker });
 
 const TABS = ["Values", "Spec", "JSON Schema", "json-render", "Prompt"] as const;
 

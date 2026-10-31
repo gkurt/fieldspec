@@ -13,15 +13,18 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { defaultControl } from "./layout.ts";
 import {
   defaultRenderers,
+  defineRenderers,
   extendRenderers,
   FormView,
   parserFor,
   useParsedText,
   useRenderer,
-  type ElementProps,
+  type ControlProps,
   type ElementRenderer,
+  type FieldProps,
   type FieldState,
   type Form,
+  type LayoutProps,
   type Renderers,
   type ResolveRenderer,
 } from "./react/index.tsx";
@@ -57,8 +60,8 @@ function Notes({ field }: { field: FieldState }) {
   );
 }
 
-function DialText(p: ElementProps) {
-  const field = p.field!;
+function DialText(p: ControlProps) {
+  const field = p.field;
   const { draft, error, placeholder, change } = useParsedText(p, parserFor(p.form.format, field.decl.type));
   return (
     <Row disabled={p.disabled}>
@@ -70,78 +73,78 @@ function DialText(p: ElementProps) {
   );
 }
 
-function DialSlider({ field, disabled, set, touch, props }: ElementProps) {
-  const d = field!.decl as { min?: number; max?: number; step?: number; unit?: string };
-  const value = typeof field!.value === "number" ? field!.value : (d.min ?? 0);
+function DialSlider({ field, disabled, set, touch, props }: ControlProps) {
+  const d = field.decl as { min?: number; max?: number; step?: number; unit?: string };
+  const value = typeof field.value === "number" ? field.value : (d.min ?? 0);
   // A percent is edited from 0 to 100, as it is shown.
   const k = props.format === "percent" ? 100 : 1;
-  const step = d.step ?? (field!.decl.type === "int" ? 1 : undefined);
+  const step = d.step ?? (field.decl.type === "int" ? 1 : undefined);
   return (
     <Row disabled={disabled}>
       <div onPointerUp={touch}>
         <Slider
-          label={labelOf(field!)}
+          label={labelOf(field)}
           value={value * k}
           min={(d.min ?? 0) * k}
           max={(d.max ?? 100) * k}
           {...(step !== undefined && { step: step * k })}
           {...((k === 100 || d.unit) && { unit: k === 100 ? "%" : d.unit })}
-          onChange={(v) => set!(field!.decl.type === "int" ? Math.round(v) : v / k)}
+          onChange={(v) => set(field.decl.type === "int" ? Math.round(v) : v / k)}
         />
       </div>
     </Row>
   );
 }
 
-function DialToggle({ field, disabled, set, touch }: ElementProps) {
+function DialToggle({ field, disabled, set, touch }: ControlProps) {
   return (
     <Row disabled={disabled}>
       <Toggle
-        label={labelOf(field!)}
-        checked={!field!.mixed && field!.value === true}
+        label={labelOf(field)}
+        checked={!field.mixed && field.value === true}
         onChange={(v) => {
-          set!(v);
-          touch!();
+          set(v);
+          touch();
         }}
       />
     </Row>
   );
 }
 
-function DialSelect({ field, disabled, set, touch }: ElementProps) {
-  const options = field!.options ?? [];
-  const index = field!.mixed ? -1 : options.findIndex((o) => Object.is(o.value, field!.value));
+function DialSelect({ field, disabled, set, touch }: ControlProps) {
+  const options = field.options ?? [];
+  const index = field.mixed ? -1 : options.findIndex((o) => Object.is(o.value, field.value));
   return (
     <Row disabled={disabled}>
       <SelectControl
-        label={labelOf(field!)}
+        label={labelOf(field)}
         value={String(index)}
         options={options.map((o, i) => ({ value: String(i), label: o.label }))}
         onChange={(v) => {
-          set!(options[Number(v)]?.value);
-          touch!();
+          set(options[Number(v)]?.value);
+          touch();
         }}
       />
     </Row>
   );
 }
 
-function DialColor({ field, disabled, set, touch }: ElementProps) {
+function DialColor({ field, disabled, set, touch }: ControlProps) {
   return (
     <Row disabled={disabled}>
       <ColorControl
-        label={labelOf(field!)}
-        value={typeof field!.value === "string" && field!.value ? field!.value : "#000000"}
+        label={labelOf(field)}
+        value={typeof field.value === "string" && field.value ? field.value : "#000000"}
         onChange={(v) => {
-          set!(v);
-          touch!();
+          set(v);
+          touch();
         }}
       />
     </Row>
   );
 }
 
-function DialInput(p: ElementProps) {
+function DialInput(p: ControlProps) {
   return p.props.secret ? defaultRenderers.input!(p) : <DialText {...p} />;
 }
 
@@ -153,14 +156,14 @@ const DIAL_RENDERERS = new Set<ElementRenderer>([DialInput, DialText, DialSlider
  * issues. A container is a folder; any other control, fieldspec's or one laid over these
  * renderers, keeps fieldspec's frame.
  */
-function DialField(p: ElementProps) {
-  const field = p.field!;
+function DialField(p: FieldProps) {
+  const field = p.field;
   const control = p.node.control?.type ?? defaultControl(p.form.format, field.decl);
   const drawer = useRenderer({ element: control, role: "control", explicit: p.node.control?.explicit === true, node: p.node, field, form: p.form });
   if (CONTAINER_KINDS.has(field.decl.type)) {
     return (
       <Folder title={field.label}>
-        {p.control!()}
+        {p.control()}
         <Notes field={field} />
       </Folder>
     );
@@ -168,7 +171,7 @@ function DialField(p: ElementProps) {
   if (!DIAL_RENDERERS.has(drawer) || (control === "input" && p.node.control?.props?.secret)) return defaultRenderers.field!(p);
   return (
     <div className="fs-dial-field" data-invalid={field.showIssues && field.issues.length > 0 ? "" : undefined}>
-      {p.control!()}
+      {p.control()}
       <Notes field={field} />
     </div>
   );
@@ -176,7 +179,7 @@ function DialField(p: ElementProps) {
 
 /** A container with a title is a folder around the container without it. */
 function titled(element: string) {
-  return (p: ElementProps) => {
+  return (p: LayoutProps) => {
     const plain = defaultRenderers[element]!;
     if (p.props.title === undefined) return plain(p);
     return (
@@ -189,8 +192,7 @@ function titled(element: string) {
 }
 
 /** The default renderers, with DialKit's controls and folders laid over. */
-export const dialkitRenderers: Renderers = {
-  ...defaultRenderers,
+export const dialkitRenderers: Renderers = defineRenderers({
   field: DialField,
   stack: titled("stack"),
   row: titled("row"),
@@ -209,7 +211,7 @@ export const dialkitRenderers: Renderers = {
   radio: DialSelect,
   segmented: DialSelect,
   color: DialColor,
-};
+});
 
 /** How fieldspec's own pieces sit among DialKit's. */
 export const dialkitStyles = `

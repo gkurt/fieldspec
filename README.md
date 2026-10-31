@@ -154,8 +154,12 @@ control edits, so `"render": "slider"` on a string, or `"collapsed": "yes"`, is 
 ```
 
 `fieldspec/react` draws it with one renderer table keyed by element name: `FormView`,
-`useForm`, `useField`, and `defineRenderers(format, { GradientPicker })` to add or replace
-any element. A control with no renderer falls back to its kind's default control.
+`useForm`, `useField`, and `defineRenderers({ GradientPicker })` to add or replace
+any element. A control with no renderer falls back to its kind's default control. Each
+renderer gets its role's props: `ControlProps` (the field, `set`, `touch`, `disabled`, `id`),
+`FieldProps` (the field and its `control()`), `LayoutProps` (`children`) or `PartProps`.
+`defineRenderers` types a built-in element's renderer for you; for your own elements, say
+which, as in `function GradientPicker(p: ControlProps)`.
 
 Renderers can also be a function, called for each element about to be drawn with what it is
 (`element`, `role`, its `node` and `field`, and `explicit`: whether the spec names the

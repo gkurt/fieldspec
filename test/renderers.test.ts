@@ -2,7 +2,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import { createForm, define } from "../src/index.ts";
-import type { ElementProps, ElementRenderer, RenderRequest, Renderers, ResolveRenderer } from "../src/react/index.tsx";
+import type { ControlProps, ElementRenderer, LayoutProps, RenderRequest, Renderers, ResolveRenderer } from "../src/react/index.tsx";
 
 const spec = define({
   fields: {
@@ -33,9 +33,9 @@ describe("Renderer functions", () => {
     client = await import("react-dom/client");
     ui = await import("../src/react/index.tsx");
     const h = React.createElement;
-    Email = (p: ElementProps) => h("output", { className: "email", "data-element": p.node.control?.type }, String(p.field!.value ?? ""));
-    Chips = (p: ElementProps) => h("div", { className: "chips" }, ...(p.field!.options ?? []).map((o) => h("button", { key: o.label }, o.label)));
-    Boxed = (p: ElementProps) => h("section", { className: "boxed" }, p.children);
+    Email = (p: ControlProps) => h("output", { className: "email", "data-element": p.node.control?.type }, String(p.field.value ?? ""));
+    Chips = (p: ControlProps) => h("div", { className: "chips" }, ...(p.field.options ?? []).map((o) => h("button", { key: o.label }, o.label)));
+    Boxed = (p: LayoutProps) => h("section", { className: "boxed" }, p.children);
   });
   afterAll(() => GlobalRegistrator.unregister());
 
@@ -78,8 +78,8 @@ describe("Renderer functions", () => {
   });
 
   test("reaches layout elements, and lays over a table of its own", async () => {
-    const Plain: ElementRenderer = (p) => React.createElement("input", { className: "plain", value: String(p.field!.value ?? ""), readOnly: true });
-    const table: Renderers = ui.defineRenderers(createForm(spec).format, { input: Plain });
+    const Plain = (p: ControlProps) => React.createElement("input", { className: "plain", value: String(p.field.value ?? ""), readOnly: true });
+    const table: Renderers = ui.defineRenderers({ input: Plain });
     const { q, unmount } = await mount(ui.extendRenderers(table, (want) => (want.node.group === "box" ? Boxed : undefined)));
     // The group's row is replaced; its fields still draw, through the table beneath.
     expect(q("section.boxed")).toHaveLength(1);
@@ -102,3 +102,12 @@ describe("Renderer functions", () => {
     await unmount();
   });
 });
+
+// Types only: `defineRenderers` gives each built-in element's renderer its role's props.
+export const typed = (ui: typeof import("../src/react/index.tsx")) =>
+  ui.defineRenderers({
+    input: (p) => p.field.label + String(p.disabled), // ControlProps
+    field: (p) => p.control(), // FieldProps
+    stack: (p) => p.children, // LayoutProps
+    label: (p) => p.field?.label ?? null, // PartProps
+  });

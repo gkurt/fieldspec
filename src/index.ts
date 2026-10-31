@@ -6,7 +6,7 @@ export { defineElement, CORE_ELEMENTS, LAYOUT_ELEMENTS, PART_ELEMENTS, CONTROL_E
 export { BUILTIN_PRESETS } from "./presets.ts";
 export { deref, lookUp, usedName, type Lookup } from "./defs.ts";
 export { isBuiltinName, isUserName, toUserName } from "./names.ts";
-export { evaluate, test, equal, isExpr, isDynamic, ROOT_SCOPE, type Env, type Fn, type FnContext, type Functions, type Scope } from "./expr.ts";
+export { evaluate, equal, isExpr, isDynamic, ROOT_SCOPE, type Env, type Fn, type FnContext, type Functions, type Scope } from "./expr.ts";
 export { decode, encode, resolve, validate, parse, parseOrThrow, declAt, fieldsOf, initialValue, isEmpty, type ValueOptions } from "./values.ts";
 export { checkSpec, assertSpec, formatFaults, type CheckOptions } from "./check.ts";
 export { layout, walk, defaultControl, type LayoutNode } from "./layout.ts";

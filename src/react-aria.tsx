@@ -52,8 +52,8 @@ import {
 } from "react-aria-components";
 import { deref } from "./defs.ts";
 import { optionsOf } from "./kinds.ts";
-import { defaultControl } from "./layout.ts";
-import { defaultRenderers, parserFor, useParsedText, useRenderer, type ElementProps, type ElementRenderer, type FieldState, type Renderers } from "./react/index.tsx";
+import { defaultControl, type LayoutNode } from "./layout.ts";
+import { defaultRenderers, defineRenderers, parserFor, useParsedText, useRenderer, type ControlProps, type ElementRenderer, type FieldProps, type FieldState, type Renderers } from "./react/index.tsx";
 import type { EnumField, FieldDecl } from "./types.ts";
 
 const CONTAINER_KINDS = new Set(["object", "variant", "array", "set", "record", "map"]);
@@ -63,13 +63,13 @@ const CONTAINER_KINDS = new Set(["object", "variant", "array", "set", "record", 
 const invalid = (f: FieldState) => f.showIssues && f.issues.length > 0;
 
 /** The props React Aria's fields share: state, and errors shown only by fieldspec's rules. */
-function common(p: ElementProps) {
-  const f = p.field!;
+function common(p: ControlProps) {
+  const f = p.field;
   return { isDisabled: p.disabled === true, isRequired: f.required, isInvalid: invalid(f), validationBehavior: "aria" as const };
 }
 
 /** A field's label: an item's is for screen readers only, its key or position names it. */
-function FieldLabel({ field, node, as: As = Label }: { field: FieldState; node: ElementProps["node"]; as?: typeof Label }) {
+function FieldLabel({ field, node, as: As = Label }: { field: FieldState; node: LayoutNode; as?: typeof Label }) {
   return (
     <As className={node.field === "" ? "fs-label fs-sr-only" : "fs-label"}>
       {field.label}
@@ -96,8 +96,8 @@ function Notes({ field, extra }: { field: FieldState; extra?: string | undefined
 // ── Controls ─────────────────────────────────────────────────────────────────────────────
 
 /** Text, and any kind typed as text: what is typed stays until it parses. */
-function AriaText(p: ElementProps & { multiline?: boolean }) {
-  const f = p.field!;
+function AriaText(p: ControlProps & { multiline?: boolean }) {
+  const f = p.field;
   const { draft, error, placeholder, change } = useParsedText(p, parserFor(p.form.format, f.decl.type));
   const format = (f.decl as { format?: string }).format;
   const type = p.props.secret ? "password" : format === "email" ? "email" : format === "uri" || f.decl.type === "url" ? "url" : "text";
@@ -111,14 +111,14 @@ function AriaText(p: ElementProps & { multiline?: boolean }) {
 }
 
 /** A number, with steppers; an empty field is no value. */
-function AriaNumber(p: ElementProps) {
-  const f = p.field!;
+function AriaNumber(p: ControlProps) {
+  const f = p.field;
   const d = f.decl as { min?: number; max?: number; step?: number; unit?: string };
   return (
     <NumberField
       className="fs-aria-number"
       value={typeof f.value === "number" && !f.mixed ? f.value : Number.NaN}
-      onChange={(v) => p.set!(Number.isNaN(v) ? undefined : v)}
+      onChange={(v) => p.set(Number.isNaN(v) ? undefined : v)}
       onBlur={p.touch}
       {...(d.min !== undefined && { minValue: d.min })}
       {...(d.max !== undefined && { maxValue: d.max })}
@@ -137,13 +137,13 @@ function AriaNumber(p: ElementProps) {
   );
 }
 
-function AriaInput(p: ElementProps) {
-  const type = p.field!.decl.type;
+function AriaInput(p: ControlProps) {
+  const type = p.field.decl.type;
   return (type === "number" || type === "int") && !p.props.secret ? <AriaNumber {...p} /> : <AriaText {...p} />;
 }
 
-function AriaSlider(p: ElementProps) {
-  const f = p.field!;
+function AriaSlider(p: ControlProps) {
+  const f = p.field;
   const d = f.decl as { min?: number; max?: number; step?: number; unit?: string };
   const percent = p.props.format === "percent";
   const min = d.min ?? 0;
@@ -151,7 +151,7 @@ function AriaSlider(p: ElementProps) {
     <Slider
       className="fs-aria-slider"
       value={typeof f.value === "number" ? f.value : min}
-      onChange={(v) => p.set!(v)}
+      onChange={(v) => p.set(v)}
       onChangeEnd={p.touch}
       minValue={min}
       maxValue={d.max ?? 100}
@@ -186,16 +186,16 @@ function SliderNotes({ field }: { field: FieldState }) {
   );
 }
 
-function AriaCheckbox(p: ElementProps) {
-  const f = p.field!;
+function AriaCheckbox(p: ControlProps) {
+  const f = p.field;
   return (
     <Checkbox
       className="fs-aria-checkbox"
       isSelected={!f.mixed && f.value === true}
       isIndeterminate={f.mixed}
       onChange={(v) => {
-        p.set!(v);
-        p.touch!();
+        p.set(v);
+        p.touch();
       }}
       {...common(p)}
     >
@@ -205,15 +205,15 @@ function AriaCheckbox(p: ElementProps) {
   );
 }
 
-function AriaSwitch(p: ElementProps) {
-  const f = p.field!;
+function AriaSwitch(p: ControlProps) {
+  const f = p.field;
   return (
     <Switch
       className="fs-aria-switch"
       isSelected={!f.mixed && f.value === true}
       onChange={(v) => {
-        p.set!(v);
-        p.touch!();
+        p.set(v);
+        p.touch();
       }}
       isDisabled={p.disabled === true}
     >
@@ -233,16 +233,16 @@ function indexOf(f: FieldState) {
   return { options, key: i < 0 ? null : String(i) };
 }
 
-function AriaSelect(p: ElementProps) {
-  const f = p.field!;
+function AriaSelect(p: ControlProps) {
+  const f = p.field;
   const { options, key } = indexOf(f);
   return (
     <Select
       className="fs-aria-select"
       value={key}
       onChange={(k) => {
-        if (k !== null) p.set!(options[Number(k)]?.value);
-        p.touch!();
+        if (k !== null) p.set(options[Number(k)]?.value);
+        p.touch();
       }}
       placeholder={f.mixed ? "Mixed" : (f.placeholder ?? "Choose…")}
       {...common(p)}
@@ -266,16 +266,16 @@ function AriaSelect(p: ElementProps) {
   );
 }
 
-function AriaRadio(p: ElementProps) {
-  const f = p.field!;
+function AriaRadio(p: ControlProps) {
+  const f = p.field;
   const { options, key } = indexOf(f);
   return (
     <RadioGroup
       className="fs-aria-radios"
       value={key}
       onChange={(k) => {
-        p.set!(options[Number(k)]?.value);
-        p.touch!();
+        p.set(options[Number(k)]?.value);
+        p.touch();
       }}
       orientation="horizontal"
       {...common(p)}
@@ -295,8 +295,8 @@ function AriaRadio(p: ElementProps) {
 }
 
 /** One of a few, as a row of toggle buttons. The group has no label of its own: it is named by one. */
-function AriaSegmented(p: ElementProps) {
-  const f = p.field!;
+function AriaSegmented(p: ControlProps) {
+  const f = p.field;
   const { options, key } = indexOf(f);
   const labelId = `${p.id}-label`;
   return (
@@ -312,8 +312,8 @@ function AriaSegmented(p: ElementProps) {
         selectedKeys={key === null ? [] : [key]}
         onSelectionChange={(keys) => {
           const k = [...keys][0];
-          if (k !== undefined) p.set!(options[Number(k)]?.value);
-          p.touch!();
+          if (k !== undefined) p.set(options[Number(k)]?.value);
+          p.touch();
         }}
         isDisabled={p.disabled === true}
         className="fs-aria-toggles"
@@ -329,11 +329,11 @@ function AriaSegmented(p: ElementProps) {
   );
 }
 
-const itemsOf = (p: ElementProps) => deref({ defs: p.form.spec.defs, presets: p.form.format.presets }, (p.field!.decl as { items: FieldDecl }).items);
+const itemsOf = (p: Pick<ControlProps, "form" | "field">) => deref({ defs: p.form.spec.defs, presets: p.form.format.presets }, (p.field.decl as { items: FieldDecl }).items);
 
 /** A set of options, as checkboxes; other sets are lists. */
-function AriaChecks(p: ElementProps) {
-  const f = p.field!;
+function AriaChecks(p: ControlProps) {
+  const f = p.field;
   const items = itemsOf(p);
   if (items.type !== "enum") return defaultRenderers.list!(p);
   const options = optionsOf(items as EnumField, { values: p.form.values }, f.scope);
@@ -343,8 +343,8 @@ function AriaChecks(p: ElementProps) {
       className="fs-aria-checks"
       value={options.flatMap((o, i) => (set.has(o.value) ? [String(i)] : []))}
       onChange={(keys) => {
-        p.set!(new Set(keys.map((k) => options[Number(k)]!.value)));
-        p.touch!();
+        p.set(new Set(keys.map((k) => options[Number(k)]!.value)));
+        p.touch();
       }}
       {...common(p)}
     >
@@ -377,14 +377,14 @@ function fromCalendar(value: CalendarDate | CalendarDateTime | null, time: boole
   return time ? new Date(value.toString()) : new Date(`${value.toString().slice(0, 10)}T00:00:00Z`);
 }
 
-function AriaDate(p: ElementProps) {
-  const f = p.field!;
+function AriaDate(p: ControlProps) {
+  const f = p.field;
   const time = (f.decl as { time?: boolean }).time === true;
   return (
     <DatePicker
       className="fs-aria-date"
       value={f.mixed ? null : toCalendar(f.value, time)}
-      onChange={(v) => p.set!(fromCalendar(v, time))}
+      onChange={(v) => p.set(fromCalendar(v, time))}
       onBlur={p.touch}
       granularity={time ? "minute" : "day"}
       {...common(p)}
@@ -422,8 +422,8 @@ const colorOf = (v: unknown) => {
 };
 
 /** A colour typed as hex, with a swatch, and the field's swatches to pick from. */
-function AriaColor(p: ElementProps) {
-  const f = p.field!;
+function AriaColor(p: ControlProps) {
+  const f = p.field;
   const value = f.mixed ? null : colorOf(f.value);
   const swatches = Array.isArray(p.props.swatches) ? p.props.swatches.map(String).filter((c) => colorOf(c)) : [];
   return (
@@ -432,7 +432,7 @@ function AriaColor(p: ElementProps) {
         className="fs-aria-colorfield"
         value={value}
         onChange={(c) => {
-          if (c) p.set!(c.toString("hex"));
+          if (c) p.set(c.toString("hex"));
         }}
         onBlur={p.touch}
         {...common(p)}
@@ -450,8 +450,8 @@ function AriaColor(p: ElementProps) {
           className="fs-aria-swatches"
           {...(value && { value })}
           onChange={(c) => {
-            p.set!(c.toString("hex"));
-            p.touch!();
+            p.set(c.toString("hex"));
+            p.touch();
           }}
         >
           {swatches.map((c) => (
@@ -469,7 +469,7 @@ function AriaColor(p: ElementProps) {
 
 const ARIA_RENDERERS = new Set<ElementRenderer>([AriaInput, AriaTextarea, AriaSlider, AriaCheckbox, AriaSwitch, AriaSelect, AriaRadio, AriaSegmented, AriaChecks, AriaDate, AriaColor]);
 
-function AriaTextarea(p: ElementProps) {
+function AriaTextarea(p: ControlProps) {
   return <AriaText {...p} multiline />;
 }
 
@@ -477,22 +477,21 @@ function AriaTextarea(p: ElementProps) {
  * A field: React Aria's controls carry their own label, help and errors, so the field is only
  * their frame. Containers, and any control that is not React Aria's, keep fieldspec's frame.
  */
-function AriaField(p: ElementProps) {
-  const field = p.field!;
+function AriaField(p: FieldProps) {
+  const field = p.field;
   const control = p.node.control?.type ?? defaultControl(p.form.format, field.decl);
   const drawer = useRenderer({ element: control, role: "control", explicit: p.node.control?.explicit === true, node: p.node, field, form: p.form });
   const checks = drawer === AriaChecks && itemsOf(p).type === "enum";
   if ((CONTAINER_KINDS.has(field.decl.type) && !checks) || !ARIA_RENDERERS.has(drawer)) return defaultRenderers.field!(p);
   return (
     <div className="fs-field fs-aria-field" data-kind={field.decl.type} data-invalid={invalid(field) ? "" : undefined} data-mixed={field.mixed ? "" : undefined}>
-      {p.control!()}
+      {p.control()}
     </div>
   );
 }
 
 /** The default renderers, with React Aria's controls laid over. */
-export const reactAriaRenderers: Renderers = {
-  ...defaultRenderers,
+export const reactAriaRenderers: Renderers = defineRenderers({
   field: AriaField,
   input: AriaInput,
   textarea: AriaTextarea,
@@ -505,7 +504,7 @@ export const reactAriaRenderers: Renderers = {
   checks: AriaChecks,
   date: AriaDate,
   color: AriaColor,
-};
+});
 
 /**
  * A starting look for React Aria's controls, using its state attributes. Use with `defaultStyles`.

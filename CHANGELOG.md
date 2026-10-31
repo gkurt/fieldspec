@@ -38,8 +38,9 @@ structured outputs, generated from the format.
 
 - `fieldspec/react`: `FormView` draws a form with a renderer table keyed by element name, or a
   function that picks a renderer for each element from the field it draws (`ResolveRenderer`,
-  `extendRenderers`, `useRenderer`). Lists reorder by dragging or the keyboard; record keys are
-  renamed in place.
+  `extendRenderers`, `useRenderer`). Each renderer gets its role's props (`ControlProps`,
+  `FieldProps`, `LayoutProps`, `PartProps`), and `defineRenderers` types them. Lists reorder
+  by dragging or the keyboard; record keys are renamed in place.
 - `fieldspec/dialkit`: forms drawn with DialKit's controls and folders.
 - `fieldspec/react-aria`: forms drawn with React Aria Components.
 
