@@ -56,7 +56,10 @@ export interface Kind<Name extends string = string, Value = unknown, Decl = {}> 
   zero?(decl: Decl & FieldDecl): Value | undefined;
   check?(value: unknown, decl: Decl & FieldDecl, ctx: LeafContext): void;
   checkDecl?(decl: Decl & FieldDecl, ctx: DeclContext): void;
-  /** To JSON. Identity when absent. */
+  /**
+   * To JSON. Identity when absent. A form may hold a value of another type while it is being
+   * edited; leave one it cannot write as it is, as {@link decode} does.
+   */
   encode?(value: Value, decl: Decl & FieldDecl): Json;
   /** From JSON, leaving anything it cannot read as it is for {@link check} to report. */
   decode?(json: unknown, decl: Decl & FieldDecl): unknown;
@@ -367,7 +370,11 @@ export const dateKind = defineKind<Date, { min?: string; max?: string; time?: bo
       ctx.issue('max', `must be on or before ${decl.max}`, { max: decl.max });
   },
   checkDecl: (decl, ctx) => bounds(decl, ctx, (v) => Date.parse(String(v))),
-  encode: (value, decl) => (decl.time ? value.toISOString() : value.toISOString().slice(0, 10)),
+  encode(value, decl) {
+    if (!(value instanceof Date)) return value;
+    if (Number.isNaN(value.getTime())) return String(value);
+    return decl.time ? value.toISOString() : value.toISOString().slice(0, 10);
+  },
   decode: (json) => dateOf(json) ?? json,
   jsonSchema: (decl) => ({ type: 'string', format: decl.time ? 'date-time' : 'date' }),
 });
@@ -390,7 +397,7 @@ export const bigintKind = defineKind<bigint, { min?: string; max?: string }>()({
     for (const prop of ['min', 'max'] as const)
       if (decl[prop] !== undefined && !/^-?\d+$/.test(decl[prop])) ctx.fault(prop, 'must be a decimal integer string');
   },
-  encode: (value) => value.toString(),
+  encode: (value) => (typeof value === 'bigint' ? value.toString() : value),
   decode(json) {
     if (typeof json === 'string' && /^-?\d+$/.test(json)) return BigInt(json);
     if (typeof json === 'number' && Number.isInteger(json)) return BigInt(json);
@@ -415,7 +422,7 @@ export const urlKind = defineKind<URL, { protocols?: readonly string[] }>()({
     if (decl.protocols && !decl.protocols.includes(value.protocol))
       ctx.issue('protocol', `must use ${decl.protocols.join(' or ')}`, { protocols: decl.protocols });
   },
-  encode: (value) => value.href,
+  encode: (value) => (value instanceof URL ? value.href : value),
   decode: (json) => (typeof json === 'string' && URL.canParse(json) ? new URL(json) : json),
   jsonSchema: () => ({ type: 'string', format: 'uri' }),
 });
@@ -427,7 +434,7 @@ export const regexpKind = defineKind<RegExp>()({
   check: (value, _, ctx) => {
     if (!(value instanceof RegExp)) ctx.issue('type', 'must be a regular expression', { expected: 'regexp' });
   },
-  encode: (value) => String(value),
+  encode: (value) => (value instanceof RegExp ? String(value) : value),
   decode: (json) => regexpOf(json) ?? json,
   jsonSchema: () => ({ type: 'string', pattern: '^/.*/[dgimsuvy]*$' }),
 });
@@ -446,7 +453,7 @@ export const bytesKind = defineKind<Uint8Array, { maxBytes?: number; accept?: re
     if (decl.maxBytes !== undefined && value.length > decl.maxBytes)
       ctx.issue('maxBytes', `must be at most ${decl.maxBytes} bytes`, { maxBytes: decl.maxBytes });
   },
-  encode: (value) => toBase64(value),
+  encode: (value) => (value instanceof Uint8Array ? toBase64(value) : value),
   decode: (json) => (typeof json === 'string' ? (fromBase64(json) ?? json) : json),
   jsonSchema: () => ({ type: 'string', contentEncoding: 'base64' }),
 });

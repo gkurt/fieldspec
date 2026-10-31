@@ -13,13 +13,15 @@ import * as L from './lessons.ts';
 import './styles.css';
 
 interface Step {
-  readonly id: Exclude<keyof typeof L, 'TYPES' | 'german'>;
+  readonly id: Exclude<keyof typeof L, 'TYPES' | 'german' | 'STORED_V1'>;
   readonly title: string;
   readonly text: ReactNode;
   /** A layout to offer beside the default one. */
   readonly view?: string;
   /** A locale to offer beside the spec's own language. */
   readonly locale?: string;
+  /** Stored values the form opens, shown beside the text, and the version they were written for. */
+  readonly stored?: { readonly label: string; readonly json: unknown; readonly from: number };
 }
 
 /** Each step's spec, by the step's id. */
@@ -237,6 +239,10 @@ const STEPS: readonly Step[] = [
           <code>args</code>, typed by the fields they read, so the checker catches a mistake before anyone fills the form. The alert's
           target must suit its channel; the first one does not. A registry with <code>fieldspec/cel</code>'s language runs it.
         </p>
+        <p>
+          Past what CEL can say, <code>$js</code> runs a JavaScript expression the same way, sandboxed in QuickJS with a time and memory
+          limit, from <code>fieldspec/js</code>. It is heavier, so reach for CEL first.
+        </p>
       </>
     ),
   },
@@ -272,6 +278,26 @@ const STEPS: readonly Step[] = [
           Switch to Deutsch: <code>{'createForm(spec, { locale: "de" })'}</code> lays the table over the spec. The library's own messages,
           like <em>is required</em>, carry <code>params</code>, and a <code>messages</code> function says them in German. The checker
           reports a pointer that leads nowhere, and what a locale leaves as written.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: 'versions',
+    title: 'Versions',
+    stored: { label: 'stored by version 1', json: L.STORED_V1, from: 1 },
+    text: (
+      <>
+        <p>
+          Values outlive the spec that wrote them. <code>version</code> says which version of its values a spec describes, and{' '}
+          <code>migrations</code> bring older ones forward: for each version, JSON Patch operations over the stored JSON, where{' '}
+          <code>*</code> stands for every item and a <code>value</code> may be an expression. Version 1 called the replicas{' '}
+          <code>instances</code>, kept the CPU limit in millicores, and sent alerts <code>to</code> a target.
+        </p>
+        <p>
+          The form opened the values below, stored before the spec had a version: <code>{'createForm(spec, { values, from: 1 })'}</code>{' '}
+          migrated them on the way in, and what it writes says <code>"$version": 2</code>, so next time it needs no <code>from</code>.{' '}
+          <code>migrate(spec, json)</code> does only the migrating, and <code>parse</code> reports a value a migration could not work out.
         </p>
       </>
     ),
@@ -327,8 +353,8 @@ function App() {
             </h1>
             <p className="lede">
               One spec, the settings of a web service, grows a feature at a time: kinds, presets, controls, conditions, groups, nesting,
-              collections, unions, definitions, expressions, checks, layouts and translations. Each step shows what changed, the form
-              fieldspec draws from it, and the value that form edits. Every form is live.
+              collections, unions, definitions, expressions, checks, layouts, translations and versions. Each step shows what changed, the
+              form fieldspec draws from it, and the value that form edits. Every form is live.
             </p>
           </div>
           <ol className="toc" aria-label="Steps">
@@ -368,7 +394,7 @@ function App() {
             <Code code={FROM_CODE} label="service.tsx" />
           </div>
           <div className="feature-demo">
-            <Json value={toJSONSchema(L.translations)} label="toJSONSchema(service)" className="lesson-out" />
+            <Json value={toJSONSchema(L.versions)} label="toJSONSchema(service)" className="lesson-out" />
           </div>
         </section>
       </main>
@@ -387,10 +413,18 @@ function Lesson({ step, n, before }: { step: Step; n: number; before?: Spec }) {
           <h2>{step.title}</h2>
         </div>
         <div className="lesson-text">{step.text}</div>
+        {step.stored && <Json value={step.stored.json} label={step.stored.label} className="lesson-out" />}
         <Diff before={before} after={spec} />
       </div>
       <div className="feature-demo lesson-demo">
-        <Live spec={spec} view={step.view} locale={step.locale} type={(L.TYPES as Record<string, string>)[step.id]} />
+        <Live
+          spec={spec}
+          view={step.view}
+          locale={step.locale}
+          values={step.stored?.json}
+          from={step.stored?.from}
+          type={(L.TYPES as Record<string, string>)[step.id]}
+        />
       </div>
     </section>
   );
@@ -400,6 +434,8 @@ interface LiveProps {
   readonly spec: Spec;
   readonly view?: string;
   readonly locale?: string;
+  readonly values?: unknown;
+  readonly from?: number;
   readonly type?: string;
 }
 
@@ -423,8 +459,8 @@ function Live(props: LiveProps) {
   );
 }
 
-function LiveForm({ spec, view, locale, type }: LiveProps) {
-  const form = useForm(spec, { locale, ...(locale && { messages: L.german }) }) as Form;
+function LiveForm({ spec, view, locale, values, from, type }: LiveProps) {
+  const form = useForm(spec, { locale, values, from, ...(locale && { messages: L.german }) }) as Form;
   const [shown, setShown] = useState<string | undefined>(view);
   const [tab, setTab] = useState<'value' | 'type'>('value');
   return (

@@ -152,12 +152,14 @@ function Help({ field }: { field: FieldState }) {
 }
 
 function Errors({ fields }: { fields: readonly FieldState[] }) {
-  const shown = fields.flatMap((f) => (f.showIssues ? f.issues.map((i) => ({ ...i, label: f.label })) : []));
+  const issues = fields.flatMap((f) => (f.showIssues ? f.issues.map((i) => ({ ...i, label: f.label })) : []));
+  // Two checks may say the same thing; it is shown once.
+  const shown = [...new Map(issues.map((i) => [`${i.path}:${i.code}:${i.message}`, i])).entries()];
   if (shown.length === 0) return null;
   return (
     <ul className="fs-errors" role="alert">
-      {shown.map((i) => (
-        <li key={`${i.path}:${i.code}`}>{fields.length > 1 ? `${i.label} ${i.message}` : i.message}</li>
+      {shown.map(([key, i]) => (
+        <li key={key}>{fields.length > 1 ? `${i.label} ${i.message}` : i.message}</li>
       ))}
     </ul>
   );

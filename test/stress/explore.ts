@@ -34,7 +34,7 @@ if (process.argv[2] === '--one') {
     });
     const ms = Math.round(performance.now() - start);
     const [verdict, ...lines] = child.stdout.toString().trim().split('\n');
-    if (child.signalCode !== null) {
+    if (child.signalCode != null) {
       const step = child.stderr.toString().trim().split('\n').at(-1)?.trim();
       console.log(`FAIL ${c.name}: ${child.signalCode} after ${ms}ms, in step: ${step}`);
     } else {

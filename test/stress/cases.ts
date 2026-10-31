@@ -1,9 +1,13 @@
 /**
  * Specs written to find endless loops and blow-ups: definitions that use themselves every way
  * the format allows (and ways it does not), groups and renders that refer to themselves,
- * defaults that read each other, very deep and very wide specs, and deep values.
+ * defaults that read each other, very deep and very wide specs, and deep values; checks, `$cel`,
+ * translations and migrations, at the size and depth those reach too.
  */
-import type { FieldDecl, Spec } from '#src/index.ts';
+import { createCel } from '#src/cel.ts';
+import { createRegistry, type FieldDecl, type Spec } from '#src/index.ts';
+
+const withCel = createRegistry({ languages: [createCel()] });
 
 export interface Case {
   readonly name: string;
@@ -310,7 +314,162 @@ export const CASES: Case[] = [
     spec: { fields: Object.fromEntries(Array.from({ length: 300 }, (_, i) => [`field${i}`, { type: 'string' }])) },
     values: Object.fromEntries(Array.from({ length: 300 }, (_, i) => [`x${'y'.repeat(200)}${i}`, i])),
   },
+
+  // Checks, $cel, translations and migrations.
+  {
+    name: 'checks, $cel, translations and a migration together',
+    spec: everything(),
+    values: { $version: 1, start: '2026-01-02', stop: '2026-01-01', tags: ['a', 'b'] },
+    expect: 'valid',
+  },
+  {
+    name: 'a recursive definition with a check over its children',
+    spec: withCel.define({
+      fields: { t: { use: 'Node' } },
+      defs: {
+        Node: {
+          type: 'object',
+          fields: { name: { type: 'string' }, children: { type: 'array', items: { use: 'Node' } } },
+          checks: [{ assert: { $cel: 'size(c) < 2', args: { c: { $state: 'children' } } }, message: 'At most one child' }],
+        },
+      },
+    }),
+    values: { t: deepTree(60) },
+    expect: 'valid',
+  },
+  {
+    name: '200 checks on one field, each over every other',
+    spec: withCel.define({
+      fields: {
+        n: {
+          type: 'int',
+          checks: Array.from({ length: 200 }, (_, i) => ({
+            assert: { $cel: `n + m > ${i}`, args: { n: { $state: 'n' }, m: { $state: 'm' } } },
+            message: `Above ${i}`,
+          })),
+        },
+        m: { type: 'int' },
+      },
+    }),
+    values: { n: 1, m: 1 },
+    expect: 'valid',
+  },
+  {
+    name: 'a translation for each of 3000 fields',
+    spec: {
+      fields: Object.fromEntries(Array.from({ length: 3000 }, (_, i) => [`f${i}`, { type: 'string', label: `F${i}` }])),
+      locales: { de: Object.fromEntries(Array.from({ length: 3000 }, (_, i) => [`/fields/f${i}/label`, `Feld ${i}`])) },
+    },
+    expect: 'valid',
+  },
+  {
+    name: 'a migration over 5000 items with *',
+    spec: {
+      version: 2,
+      fields: { items: { type: 'array', items: { type: 'object', fields: { y: { type: 'int' }, z: { type: 'int' } } } } },
+      migrations: {
+        '2': [
+          { op: 'move', from: '/items/*/x', path: '/items/*/y' },
+          { op: 'add', path: '/items/*/z', value: { $state: 'y' } },
+        ],
+      },
+    },
+    values: { $version: 1, items: Array.from({ length: 5000 }, (_, i) => ({ x: i })) },
+    expect: 'valid',
+    huge: true,
+  },
+  {
+    name: 'migrations that move a value into itself and copy the root',
+    spec: {
+      version: 3,
+      fields: { a: { type: 'json' } },
+      migrations: {
+        '2': [{ op: 'move', from: '/a', path: '/a/b' }],
+        '3': [
+          { op: 'copy', from: '/a', path: '/a/c' },
+          { op: 'copy', from: '/a/c', path: '/a/c/d' },
+        ],
+      },
+    },
+    values: { $version: 1, a: { x: { y: 1 } } },
+  },
+  {
+    name: '100 versions, each renaming the last',
+    spec: {
+      version: 101,
+      fields: { k100: { type: 'int' } },
+      migrations: Object.fromEntries(
+        Array.from({ length: 100 }, (_, i) => [String(i + 2), [{ op: 'move', from: `/k${i}`, path: `/k${i + 1}` }]]),
+      ),
+    },
+    values: { $version: 1, k0: 7 },
+    expect: 'valid',
+  },
+  {
+    name: 'a migration whose value reads what it writes',
+    spec: withCel.define({
+      version: 2,
+      fields: { n: { type: 'int' }, list: { type: 'array', items: { type: 'int' } } },
+      migrations: {
+        '2': [
+          { op: 'replace', path: '/n', value: { $cel: 'n * 2', args: { n: { $state: 'n' } } } },
+          { op: 'add', path: '/list/-', value: { $state: '/n' } },
+          { op: 'replace', path: '/list/*', value: { $cel: 'size(l)', args: { l: { $state: '/list' } } } },
+        ],
+      },
+    }),
+    values: { $version: 1, n: 2, list: [1, 2, 3] },
+  },
 ];
+
+/** A spec using checks, `$cel`, translations and a migration, all valid. */
+function everything(): Spec {
+  return withCel.define({
+    version: 2,
+    title: 'Trip',
+    fields: {
+      start: { type: 'date', label: 'Start' },
+      stop: {
+        type: 'date',
+        label: { $template: 'End, after ${start}' },
+        checks: [
+          {
+            assert: { $cel: 'stop >= start', args: { start: { $state: 'start' }, stop: { $state: 'stop' } } },
+            message: 'Ends before it starts',
+          },
+        ],
+      },
+      tags: {
+        type: 'set',
+        items: { type: 'enum', options: [{ value: 'a', label: 'A' }, 'b'] },
+        checks: [
+          {
+            assert: { $cel: 'size(t) <= 1', args: { t: { $state: 'tags' } } },
+            message: { $cond: { $state: 'start', eq: null }, $then: 'One', $else: 'Only one' },
+            code: 'one',
+          },
+        ],
+      },
+      days: {
+        type: 'int',
+        default: { $cel: '(stop - start).getHours() / 24', args: { start: { $state: 'start' }, stop: { $state: 'stop' } } },
+        visible: { $cel: 'stop > start', args: { start: { $state: 'start' }, stop: { $state: 'stop' } } },
+      },
+    },
+    locales: {
+      de: {
+        '/title': 'Reise',
+        '/fields/start/label': 'Beginn',
+        '/fields/stop/label/$template': 'Ende, nach ${start}',
+        '/fields/stop/checks/0/message': 'Endet vor dem Beginn',
+        '/fields/tags/items/options/0/label': 'Ä',
+        '/fields/tags/checks/0/message/$else': 'Nur eins',
+      },
+      'de-AT': { '/title': 'Fahrt' },
+    },
+    migrations: { '2': [{ op: 'move', from: '/begin', path: '/start' }] },
+  });
+}
 
 function deepTree(n: number): unknown {
   let t: unknown = { name: 'leaf', children: [] };

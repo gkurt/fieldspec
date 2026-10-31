@@ -299,6 +299,31 @@ const de = {
 
 export const translations = withCel.define({ fields: checked, groups: groupsOf, defs: { Probe }, layouts: views, locales: { de } });
 
+/** Values as version 1 stored them: `instances`, the CPU limit in millicores, and alerts sent `to` a target. */
+export const STORED_V1 = {
+  name: 'checkout-api',
+  instances: 3,
+  cpuMillis: 750,
+  alerts: [{ channel: 'slack', to: '#ops' }],
+};
+
+export const versions = withCel.define({
+  version: 2,
+  fields: checked,
+  groups: groupsOf,
+  defs: { Probe },
+  layouts: views,
+  locales: { de },
+  migrations: {
+    '2': [
+      { op: 'move', from: '/instances', path: '/replicas' },
+      { op: 'add', path: '/cpu', value: { $cel: 'double(millis) / 1000.0', args: { millis: { $state: 'cpuMillis' } } } },
+      { op: 'remove', path: '/cpuMillis' },
+      { op: 'move', from: '/alerts/*/to', path: '/alerts/*/target' },
+    ],
+  },
+});
+
 /** The library's own messages in German, by what they are about. */
 export const german: Messages = ({ code, params }) => {
   switch (code) {

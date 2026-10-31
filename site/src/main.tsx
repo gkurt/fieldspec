@@ -50,9 +50,9 @@ function App() {
           text={
             <>
               <code>visible</code>, <code>enabled</code> and <code>required</code> take conditions; labels, defaults and options take
-              expressions; <code>checks</code> hold a value to rules over the others. What a condition cannot say, <code>$cel</code> can.
-              Pointers without a leading slash are relative, so a definition works wherever it is placed. Try picking up instead, or
-              choosing the US.
+              expressions; <code>checks</code> hold a value to rules over the others. What a condition cannot say, <code>$cel</code> can,
+              and <code>$js</code> past that. Pointers without a leading slash are relative, so a definition works wherever it is placed.
+              Try picking up instead, or choosing the US.
             </>
           }
           code={<Code code={shippingSource} label="spec.json" />}
@@ -233,6 +233,8 @@ const OUTPUTS: readonly [string, string, string][] = [
   ['Standard Schema', 'spec["~standard"]', 'Every defined spec validates wherever Standard Schema is accepted.'],
   ['json-render', 'toJsonRender(spec)', "The whole form for json-render's shadcn components, bound to its state."],
   ['Agents', 'prompt(registry)', 'A system prompt and a meta-schema for structured output, from the registry itself.'],
+  ['Translations', 'localize(spec, "de")', "The spec's text in other languages, carried in the spec by JSON Pointer."],
+  ['Migrations', 'migrate(spec, json)', 'Values stored by an earlier version, brought forward by the operations the spec carries.'],
 ];
 
 function Outputs() {

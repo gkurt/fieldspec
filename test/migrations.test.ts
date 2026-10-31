@@ -127,6 +127,7 @@ describe('checking versions and migrations', () => {
             { op: 'copy', from: '/old/*/x', path: '/tags' },
             { op: 'add', path: '/nope', value: { $state: '/whatever' } },
             { op: 'replace', path: '/tags/*', value: { $cel: 'x', args: { x: { $state: '/old' } } } },
+            { op: 'move', from: 'old/*', path: 'name' },
           ],
         },
       },
@@ -140,6 +141,8 @@ describe('checking versions and migrations', () => {
       ['/migrations/2/2/value', 'error'],
       ['/migrations/2/3/path', 'error'],
       ['/migrations/2/4/path', 'warning'],
+      ['/migrations/2/6/from', 'error'],
+      ['/migrations/2/6/path', 'error'],
       ['/migrations/3', 'error'],
     ]);
     expect(faults[1]!.message).toContain('must be one of "add", "replace", "remove", "move", "copy"');

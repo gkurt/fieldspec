@@ -218,7 +218,7 @@ function checkMigrationOp(c: Checker, op: unknown, at: string, last: boolean) {
       c.fault(`${at}/${prop}`, 'must be a JSON Pointer into the values, starting with /; * stands for every item or key');
   }
   if (op.value !== undefined && isDynamic(op.value)) checkExpr(c, op.value, `${at}/value`, PAST);
-  const stars = (p: unknown) => (typeof p === 'string' ? parsePointer(p).filter((s) => s === '*').length : 0);
+  const stars = (p: unknown) => (typeof p === 'string' && p.startsWith('/') ? parsePointer(p).filter((s) => s === '*').length : 0);
   if (typeof op.from === 'string' && stars(op.from) !== stars(op.path))
     c.fault(`${at}/path`, `has ${stars(op.path)} * where \`from\` has ${stars(op.from)}; each * takes what the one in \`from\` stood for`);
   if (last && op.op !== 'remove' && typeof op.path === 'string' && op.path.startsWith('/')) {

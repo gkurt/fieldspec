@@ -5,9 +5,9 @@ import { schema as jsonRenderSchema } from '@json-render/react/schema';
 import { shadcnComponents } from '@json-render/shadcn';
 import { shadcnComponentDefinitions } from '@json-render/shadcn/catalog';
 /**
- * Runs a spec through every entry point: the checker, values, the form and its edits, layout,
- * JSON Schema, Zod, Standard Schema, commonFields, json-render (output, state, and its React
- * renderer) and the React controls. Each step is timed and its error kept, so a stress test
+ * Runs a spec through every entry point: the checker, values, migrations, translations, the form
+ * and its edits, layout, JSON Schema, Zod, Standard Schema, commonFields, json-render (output,
+ * state, and its React renderer) and the React controls. Each step is timed and its error kept, so a stress test
  * can say which step of which spec hung or broke.
  */
 import { act, createElement, type ReactNode } from 'react';
@@ -15,6 +15,7 @@ import { createRoot } from 'react-dom/client';
 import { htmlRenderers } from '#examples/renderers/html.tsx';
 import {
   checkSpec,
+  checkTranslations,
   commonFields,
   createForm,
   fromJSONSchema,
@@ -22,9 +23,12 @@ import {
   JSON_RENDER_ACTIONS,
   jsonRenderActions,
   layout,
+  localize,
+  migrate,
   parse,
   PatchError,
   standardOf,
+  texts,
   toJSONSchema,
   toJsonRender,
   toJsonRenderState,
@@ -129,16 +133,51 @@ export async function exercise(spec: Spec, values: unknown = {}, options: Exerci
   const faults = run('checkSpec', () => checkSpec(spec)) ?? [];
   const valid = faults.every((f) => f.severity !== 'error');
 
+  run('migrate', () => {
+    migrate(spec, values);
+    migrate(spec, values, { from: 1 });
+  });
   const parsed = run('parse', () => parse(spec, values));
   const form = run('createForm', () => createForm(spec, { values }));
   if (form) {
     run('form.issues', () => form.issues);
     run('form.json', () => JSON.stringify(form.json()));
+    // What a form writes, it reads back: the same values, at the spec's version.
+    if (valid && parsed?.ok) {
+      run('form.json round trip', () => {
+        const json = form.json();
+        const again = createForm(spec, { values: json }).json();
+        if (JSON.stringify(again) !== JSON.stringify(json))
+          throw new Error(`${JSON.stringify(json)} came back as ${JSON.stringify(again)}`.slice(0, 280));
+      });
+    }
     run('form.field (every value)', () => {
       for (const p of pointers(form.values)) form.field(p);
     });
     run('form.submit', () => form.submit());
     run('edits', () => edit(createForm(spec, { values }), options.edits ?? 40, options.seed ?? 1));
+  }
+
+  run('texts', () => texts(spec));
+  for (const locale of Object.keys(spec.locales ?? {})) {
+    run(`checkTranslations ${locale}`, () => checkTranslations(spec, spec.locales![locale]));
+    const localized = run(`localize ${locale}`, () => localize(spec, locale));
+    // Translations the checker accepts keep the spec valid.
+    if (valid && localized) {
+      run(`checkSpec(localize ${locale})`, () => {
+        const errors = checkSpec(localized).filter((f) => f.severity === 'error');
+        if (errors.length > 0) throw new Error(JSON.stringify(errors).slice(0, 280));
+      });
+    }
+    const shown = run(`createForm ${locale}`, () => createForm(spec, { values, locale }));
+    if (shown) {
+      run(`form ${locale}`, () => {
+        void shown.issues;
+        for (const p of pointers(shown.values)) shown.field(p);
+        let n = 0;
+        for (const _ of walk(shown.layout())) if (++n > WALK_LIMIT) break;
+      });
+    }
   }
 
   run('layout + walk', () => walkAll());
@@ -208,6 +247,13 @@ async function mount(element: ReactNode, seed: number, clicks = 12) {
   // Work React schedules outside act still belongs to this step.
   const stray = (e: unknown) => errors.push(e);
   process.on('uncaughtException', stray);
+  process.on('unhandledRejection', stray);
+  // An error in a click handler reaches the window, not the click.
+  const reported = (e: ErrorEvent) => {
+    e.preventDefault();
+    errors.push(e.error);
+  };
+  window.addEventListener('error', reported);
   try {
     await act(async () => root.render(element));
     const r = random(seed);
@@ -221,6 +267,8 @@ async function mount(element: ReactNode, seed: number, clicks = 12) {
     await act(async () => root.unmount());
     host.remove();
     process.off('uncaughtException', stray);
+    process.off('unhandledRejection', stray);
+    window.removeEventListener('error', reported);
   }
   if (errors.length > 0) throw errors[0];
 }

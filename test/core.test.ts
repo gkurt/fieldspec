@@ -146,6 +146,18 @@ describe('parse', () => {
     expect(json).toMatchObject({ renews: '2026-12-01', limits: [['cpu', '5']], tags: [] });
     expect(parse(account, JSON.parse(JSON.stringify(json))).value).toEqual(value);
   });
+
+  test('encode leaves a value of another type as it is', () => {
+    const spec = define({
+      fields: { d: { type: 'date' }, b: { type: 'bigint' }, u: { type: 'url' }, r: { type: 'regexp' }, y: { type: 'bytes' } },
+    });
+    const junk = { d: '', b: null, u: 'x', r: 3, y: [] };
+    expect(encode(spec, junk)).toEqual(junk);
+    expect(() => encode(spec, { d: new Date(Number.NaN) })).not.toThrow();
+    const form = createForm(spec);
+    form.set('/d', null);
+    expect(form.json()).toMatchObject({ d: null });
+  });
 });
 
 describe('expressions', () => {

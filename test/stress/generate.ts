@@ -1,17 +1,37 @@
 /**
  * Random specs, seeded: every kind, definitions that use each other (in rings too), groups with
- * random parents, renders that place random fields and groups, conditions and defaults over
- * random pointers, and values that only sometimes fit. Many are invalid on purpose; the
+ * random parents, renders that place random fields and groups, conditions, defaults, checks and
+ * `$cel` over random pointers, translations of random texts, migrations over random paths, and
+ * values that only sometimes fit (and say random versions). Many are invalid on purpose; the
  * checker must say so, and nothing may hang either way.
  */
-import type { FieldDecl, RenderNode, Spec } from '#src/index.ts';
+import { createCel } from '#src/cel.ts';
+import { createRegistry, type FieldDecl, type MigrationOp, type RenderNode, type Spec } from '#src/index.ts';
 import { random } from './harness.ts';
+
+/** The registry random specs are defined through: the core one, running `$cel`. */
+const registry = createRegistry({ languages: [createCel()] });
 
 type R = ReturnType<typeof random>;
 
 const LEAVES = ['string', 'number', 'int', 'boolean', 'enum', 'date', 'bigint', 'url', 'regexp', 'bytes', 'json'] as const;
 const PRESETS = ['percent', 'email', 'port', 'color', 'password'];
 const CONTAINERS = ['stack', 'row', 'columns', 'collapsible', 'scroll', 'tabs'];
+/** CEL over args `a` and `b`: some fit any type, some only some, some do not parse. */
+const CEL = [
+  'a',
+  'a == b',
+  'a != null',
+  'size(a) > 0',
+  'a > 1',
+  'a + b',
+  'a ? 1 : 2',
+  "string(a) + 'x'",
+  'has(a.x)',
+  'a.exists(v, v == b)',
+  'oops ((',
+  '',
+];
 const CONTROLS = [
   'input',
   'textarea',
@@ -38,13 +58,19 @@ export function randomSpec(seed: number): { spec: Spec; values: unknown } {
     defNames.map((name) => [name, r.chance(0.15) ? { use: r.pick([...defNames, 'Nope']) } : g.field(1, true)]),
   );
   const fields = g.fields(0);
+  const version = r.chance(0.3) ? 1 + r.int(4) : undefined;
   const spec: Spec = {
     fields,
     ...(defNames.length > 0 && { defs }),
     ...(r.chance(0.6) && { groups: g.groups(Object.keys(fields)) as Spec['groups'] }),
     ...(r.chance(0.4) && { layouts: { main: g.render(Object.keys(fields), 0), other: g.render(Object.keys(fields), 0) } }),
+    ...(version !== undefined && { version }),
+    ...(version !== undefined && r.chance(0.9) && { migrations: g.migrations(Object.keys(fields), version) }),
   };
-  return { spec, values: g.value(spec.fields, 0) };
+  const values = g.value(spec.fields, 0) as Record<string, unknown>;
+  if (r.chance(version === undefined ? 0.05 : 0.6)) values.$version = r.pick<unknown>([1, 1, 2, version ?? 1, (version ?? 1) + 1, 'x', 0]);
+  if (r.chance(0.3)) Object.assign(spec, { locales: g.locales(spec) });
+  return { spec: registry.define(spec), values };
 }
 
 class Gen {
@@ -77,8 +103,11 @@ class Gen {
     if (r.chance(0.1)) base.enabled = this.condition(0);
     if (r.chance(0.1)) base.required = this.condition(0);
     if (r.chance(0.2)) base.group = r.pick([...this.groupIds, 'nope']);
-    if (r.chance(0.15)) base.label = r.chance(0.5) ? 'Label' : { $template: `\${${this.pointer()}} and \${${this.pointer()}}` };
-    if (r.chance(0.1)) base.default = r.chance(0.5) ? { $state: this.pointer() } : r.pick<unknown>([0, '', 'x', true, [], {}, null]);
+    if (r.chance(0.15))
+      base.label = r.pick<unknown>(['Label', { $template: `\${${this.pointer()}} and \${${this.pointer()}}` }, this.cel()]);
+    if (r.chance(0.1))
+      base.default = r.pick<unknown>([{ $state: this.pointer() }, this.cel(), r.pick<unknown>([0, '', 'x', true, [], {}, null])]);
+    if (r.chance(0.15)) base.checks = this.checks();
 
     const roll = r.next();
     if (this.defs.length > 0 && (roll < 0.15 || (depth > 3 && roll < 0.5))) return { ...base, use: r.pick(this.defs) };
@@ -176,6 +205,89 @@ class Gen {
     } as RenderNode;
   }
 
+  /** A `$cel` expression over two random pointers, or a broken one. */
+  cel(): unknown {
+    const r = this.r;
+    const args = r.chance(0.9)
+      ? { a: { $state: this.pointer() }, b: r.pick<unknown>([{ $state: this.pointer() }, 1, 'x', null]) }
+      : undefined;
+    return { $cel: r.pick(CEL), ...(args && { args }) };
+  }
+
+  checks(): unknown {
+    const r = this.r;
+    return Array.from({ length: 1 + r.int(3) }, () => ({
+      assert: this.condition(0),
+      message: r.pick<unknown>(['Bad', { $template: `Not \${${this.pointer()}}` }, this.cel(), 3]),
+      ...(r.chance(0.2) && { code: r.pick<unknown>(['custom', 'min', '']) }),
+    }));
+  }
+
+  /**
+   * Migrations to `version` over the top-level keys and keys that are gone: moves, copies,
+   * removes, adds and replaces, with `*` and expression values. Sometimes keyed past the version.
+   */
+  migrations(keys: string[], version: number): Record<string, MigrationOp[]> {
+    const r = this.r;
+    const path = () => {
+      const key = r.pick([...keys, 'old', 'gone']);
+      return r.pick([`/${key}`, `/${key}/*`, `/${key}/*/a0`, `/${key}/x`, '/*', `/${key}/-`, `/${key}/0`, '', 'bad']);
+    };
+    const value = () => r.pick<unknown>([1, 'x', null, [], {}, { $state: this.pointer() }, { $state: `../${r.pick(keys)}` }, this.cel()]);
+    const op = (): MigrationOp => {
+      switch (r.int(6)) {
+        case 0:
+          return { op: 'move', from: path(), path: path() };
+        case 1:
+          return { op: 'copy', from: path(), path: path() };
+        case 2:
+          return { op: 'remove', path: path() };
+        case 3:
+          return { op: 'replace', path: path(), value: value() } as MigrationOp;
+        case 4:
+          return { op: 'add', path: path(), value: value() } as MigrationOp;
+        default:
+          return r.pick<unknown>([{ op: 'test', path: path() }, { op: 'move', path: path() }, 'move']) as MigrationOp;
+      }
+    };
+    const out: Record<string, MigrationOp[]> = {};
+    for (let v = 2; v <= version + (r.chance(0.1) ? 1 : 0); v++) out[String(v)] = Array.from({ length: r.int(4) }, op);
+    if (r.chance(0.05)) out.x = [op()];
+    return out;
+  }
+
+  /** Translations of texts the spec has, implies and lacks, some of them expressions, in tags good and bad. */
+  locales(spec: Spec): Record<string, Record<string, unknown>> {
+    const r = this.r;
+    const keys = Object.keys(spec.fields);
+    const pointers = () => {
+      const key = r.pick([...keys, 'nope']);
+      return r.pick([
+        `/fields/${key}/label`,
+        `/fields/${key}/description`,
+        `/fields/${key}/hint`,
+        `/fields/${key}/label/$template`,
+        `/fields/${key}/options/0/label`,
+        `/fields/${key}/checks/0/message`,
+        `/fields/${key}/fields/a0/label`,
+        `/fields/${key}/items/label`,
+        `/fields/${key}/type`,
+        `/groups/${r.pick(this.groupIds)}/label`,
+        '/title',
+        '',
+        'nope',
+      ]);
+    };
+    const table = () =>
+      Object.fromEntries(
+        Array.from({ length: r.int(6) }, () => [
+          pointers(),
+          r.pick<unknown>(['Übersetzt', '', { $template: `\${${this.pointer()}} übersetzt` }, this.cel(), 3, null]),
+        ]),
+      );
+    return Object.fromEntries(r.pick([['de'], ['de', 'de-AT'], ['pt-BR', 'fr'], ['bad tag'], []]).map((tag) => [tag, table()]));
+  }
+
   pointer(): string {
     const r = this.r;
     const key = this.keys.length > 0 ? r.pick(this.keys) : 'x';
@@ -187,6 +299,7 @@ class Gen {
     const roll = r.next();
     if (depth < 3 && roll < 0.2) return { [r.pick(['$and', '$or'])]: [this.condition(depth + 1), this.condition(depth + 1)] };
     if (roll < 0.25) return r.chance(0.5);
+    if (roll < 0.35) return this.cel();
     const source = r.pick<unknown>([{ $state: this.pointer() }, { $state: this.pointer() }, { $item: '' }, { $index: true }]) as Record<
       string,
       unknown
