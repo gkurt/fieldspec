@@ -126,6 +126,18 @@ the checker rejects one whose value could never end, and warns of definitions wh
 value is huge because they use one another several times over (each use repeats its definition
 whole, so two uses per step double it). `Infer` follows `use`, recursively.
 
+A definition is also how a spec names a shape of text of its own:
+
+```json
+{
+  "defs": { "Slug": { "type": "string", "pattern": "[a-z0-9]+(-[a-z0-9]+)*", "placeholder": "my-post" } },
+  "fields": { "slug": { "use": "Slug" }, "short": { "use": "Slug", "maxLength": 20 } }
+}
+```
+
+A value that does not match says "This isn't a valid slug", named after the definition or
+preset the field uses, else its label or key; `patternMessage` says something else.
+
 ## Rendering: `render`
 
 `render` is one grammar everywhere: an element name, or an element object as in json-render.
@@ -301,7 +313,8 @@ checks meaning (references, conditions, defaults).
 
 - `checkSpec(spec)`: every fault, at a pointer into the spec, phrased as the fix, with "did you mean".
 - `toJSONSchema` / `fromJSONSchema`: draft 2020-12. `defs` become `$defs`, a use of one
-  becomes `$ref`, a preset is written out; `x-` keywords keep what JSON Schema cannot say.
+  becomes `$ref` with the field's added constraints beside it (or is written out when it changes
+  one the definition has), a preset is written out; `x-` keywords keep what JSON Schema cannot say.
 - Defined specs carry `~standard` (Standard Schema, with the JSON Schema extension).
 - `fieldspec/zod`: `toZod(spec)` (refined with the spec's own validation), `fromZod(schema)`.
 - `toFlat` / `fromFlat`: json-render's flat element format.

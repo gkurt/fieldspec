@@ -6,7 +6,7 @@ import { deref, requiresItself, usedName, type Lookup } from './defs.ts';
 import { evaluate, isDynamic, test, type Env, type Functions, type Scope } from './expr.ts';
 import type { Infer } from './infer.ts';
 import { CONTAINER_KINDS, isJson, type AnyKind } from './kinds.ts';
-import { child, getAt, joinPointer, setAt } from './pointer.ts';
+import { child, getAt, joinPointer, parsePointer, setAt } from './pointer.ts';
 import { registryOf, functionsOf, type Registry } from './registry.ts';
 import type {
   ArrayField,
@@ -482,7 +482,7 @@ function checkFields(
     const pointer = joinPointer(at, key);
     if (!safeTest(decl.visible, env, scope, issues, pointer)) continue;
     if (!groupsVisible(groups, decl.group, env, scope)) continue;
-    checkField(ctx, env, decl, value[key], pointer, scope, issues);
+    checkField(ctx, env, raw, value[key], pointer, scope, issues);
   }
   if (unknown === 'keep' || unknown === 'strip') return;
   for (const key of Object.keys(value)) {
@@ -496,8 +496,8 @@ function checkFields(
   }
 }
 
-export function checkField(ctx: Ctx, env: Env, decl: FieldDecl, value: unknown, at: string, scope: Scope, issues: Issue[]) {
-  decl = deref(lk(ctx), decl);
+export function checkField(ctx: Ctx, env: Env, given: FieldDecl, value: unknown, at: string, scope: Scope, issues: Issue[]) {
+  const decl = deref(lk(ctx), given);
   const issue = (code: string, message: string, path = at) => issues.push({ path, code, message });
   if (value === undefined || value === null) {
     const required = decl.required !== undefined && safeTest(decl.required, env, scope, issues, at);
@@ -573,12 +573,14 @@ export function checkField(ctx: Ctx, env: Env, decl: FieldDecl, value: unknown, 
     default: {
       const chain = kindChain(ctx.registry, decl.type);
       if (chain.length === 0) return issue('kind', `has a kind this registry does not know: "${decl.type}"`);
+      const name = calledBy(given, decl, at);
       for (const kind of chain) {
         if (CONTAINER_KINDS.has(kind.name)) continue;
         let failed = false;
         kind.check?.(value, decl, {
           env,
           scope,
+          name,
           issue: (code, message) => {
             failed = true;
             issue(code, message);
@@ -588,6 +590,23 @@ export function checkField(ctx: Ctx, env: Env, decl: FieldDecl, value: unknown, 
       }
     }
   }
+}
+
+/** What a field is called in a message: the definition or preset it uses, else its label or key, in lowercase words. */
+function calledBy(given: FieldDecl, decl: Resolved, at: string): string | undefined {
+  const key = parsePointer(at).at(-1);
+  const name =
+    usedName(given)?.split('.').at(-1) ??
+    (typeof decl.label === 'string' ? decl.label : key !== undefined && !/^\d*$/.test(key) ? key : undefined);
+  if (name === undefined) return undefined;
+  return name
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .trim()
+    .split(/\s+/)
+    .map((word) => (/^[A-Z0-9]{2,}$/.test(word) ? word : word.toLowerCase()))
+    .join(' ');
 }
 
 // ── Parsing ──────────────────────────────────────────────────────────────────────────────

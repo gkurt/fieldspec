@@ -124,6 +124,23 @@ describe('JSON Schema', () => {
     expect(fromJSONSchema(schema)).toEqual(JSON.parse(JSON.stringify(tree)));
   });
 
+  test("a field's own constraints hold beside its definition's $ref, or write it out when they change one", () => {
+    const spec = define({
+      defs: { Slug: { type: 'string', pattern: '[a-z]+', maxLength: 40 } },
+      fields: { short: { use: 'Slug', minLength: 3 }, long: { use: 'Slug', maxLength: 60 }, plain: { use: 'Slug', label: 'Plain' } },
+    });
+    // oxlint-disable-next-line typescript/no-explicit-any -- reads the generated JSON Schema by path
+    const schema = toJSONSchema(spec) as any;
+    expect(schema.properties.short).toEqual({ $ref: '#/$defs/Slug', minLength: 3, 'x-use': 'Slug', 'x-own': { minLength: 3 } });
+    expect(schema.properties.long).toMatchObject({ type: 'string', maxLength: 60, pattern: '^(?:[a-z]+)$', 'x-use': 'Slug' });
+    expect(schema.properties.long.$ref).toBeUndefined();
+    expect(schema.properties.plain).toEqual({ $ref: '#/$defs/Slug', title: 'Plain', 'x-use': 'Slug', 'x-own': { label: 'Plain' } });
+    expect(fromJSONSchema(schema)).toEqual(JSON.parse(JSON.stringify(spec)));
+    // Written out, a field still brings its definition back when nothing else refers to it.
+    const alone = define({ defs: { Slug: { type: 'string', maxLength: 40 } }, fields: { long: { use: 'Slug', maxLength: 60 } } });
+    expect(fromJSONSchema(toJSONSchema(alone))).toEqual(JSON.parse(JSON.stringify(alone)));
+  });
+
   test('a recursive Zod schema comes in as a definition', () => {
     type Category = { name: string; sub: Category[] };
     const Category: z.ZodType<Category> = z.object({

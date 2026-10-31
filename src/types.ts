@@ -154,6 +154,8 @@ export interface StringField extends FieldBase {
   readonly minLength?: number;
   readonly maxLength?: number;
   readonly pattern?: string;
+  /** Shown when the value does not match `pattern`, in place of "This isn't a valid slug". */
+  readonly patternMessage?: string;
   readonly format?: 'email' | 'uri' | 'uuid' | 'hostname' | 'ipv4' | 'color' | (string & {});
   /** Values to offer as it is typed, any other still allowed: a list of strings, or an expression giving one. */
   readonly suggestions?: Expr;

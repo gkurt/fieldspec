@@ -19,6 +19,11 @@ export interface PropInfo {
 export interface LeafContext {
   readonly env: Env;
   readonly scope: Scope;
+  /**
+   * What the field is called in a message, in lowercase words: the definition or preset it
+   * uses (`Slug` is "slug"), else its label or key. Absent for an unnamed item.
+   */
+  readonly name?: string;
   issue(code: string, message: string): void;
 }
 
@@ -146,7 +151,7 @@ const numberProps = {
 
 export const stringKind = defineKind<
   string,
-  { minLength?: number; maxLength?: number; pattern?: string; format?: string; suggestions?: unknown }
+  { minLength?: number; maxLength?: number; pattern?: string; patternMessage?: string; format?: string; suggestions?: unknown }
 >()({
   name: 'string',
   control: (decl) => (decl.suggestions === undefined ? 'input' : 'autocomplete'),
@@ -155,6 +160,11 @@ export const stringKind = defineKind<
     minLength: { schema: { type: 'integer', minimum: 0 }, description: 'Fewest characters.' },
     maxLength: { schema: { type: 'integer', minimum: 0 }, description: 'Most characters.' },
     pattern: { schema: { type: 'string' }, description: 'A regular expression the whole value must match.' },
+    patternMessage: {
+      schema: { type: 'string' },
+      description:
+        'Shown when the value does not match `pattern`. Default: "This isn\'t a valid slug", named after the definition or preset the field uses, else its label or key.',
+    },
     format: {
       schema: { type: 'string' },
       description: `A known shape: ${Object.keys(STRING_FORMATS).join(', ')}. Others are kept as hints.`,
@@ -175,7 +185,7 @@ export const stringKind = defineKind<
       ctx.issue('maxLength', `must be at most ${decl.maxLength} characters`);
 
     if (decl.pattern !== undefined && value !== '' && !new RegExp(`^(?:${decl.pattern})$`, 'u').test(value))
-      ctx.issue('pattern', `must match ${decl.pattern}`);
+      ctx.issue('pattern', decl.patternMessage ?? (ctx.name === undefined ? "This isn't valid" : `This isn't a valid ${ctx.name}`));
 
     const format = decl.format === undefined ? undefined : STRING_FORMATS[decl.format];
     if (format && value !== '' && !format(value)) ctx.issue('format', `must be a valid ${decl.format}`);
@@ -190,6 +200,8 @@ export const stringKind = defineKind<
     }
     if (decl.minLength !== undefined && decl.maxLength !== undefined && decl.minLength > decl.maxLength)
       ctx.fault('maxLength', 'must be at least minLength');
+    if (decl.patternMessage !== undefined && decl.pattern === undefined)
+      ctx.fault('patternMessage', 'explains a pattern, but there is none', 'warning');
   },
   jsonSchema: (decl) => ({
     type: 'string',

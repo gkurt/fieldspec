@@ -109,6 +109,32 @@ describe('parse', () => {
     });
   });
 
+  test("a pattern's message names what the field is", () => {
+    const spec = define({
+      defs: { Slug: { type: 'string', pattern: '[a-z0-9]+(-[a-z0-9]+)*' }, ZipCode: { type: 'string', pattern: '[0-9]{5}' } },
+      fields: {
+        slug: { use: 'Slug', label: 'Address' },
+        zip: { use: 'ZipCode' },
+        code: { type: 'string', label: 'IBAN code', pattern: '[A-Z]{2}[0-9]+' },
+        vatId: { type: 'string', pattern: '[A-Z]+' },
+        tags: { type: 'array', items: { type: 'string', pattern: '[a-z]+' } },
+        own: { type: 'string', pattern: 'x+', patternMessage: 'Only x, please' },
+      },
+    });
+    const values = { slug: 'Hello World', zip: '1', code: 'x', vatId: '1', tags: ['A'], own: 'y' };
+    expect(Object.fromEntries(parse(spec, values).issues.map((i) => [i.path, i.message]))).toEqual({
+      '/slug': "This isn't a valid slug",
+      '/zip': "This isn't a valid zip code",
+      '/code': "This isn't a valid IBAN code",
+      '/vatId': "This isn't a valid vat id",
+      '/tags/0': "This isn't valid",
+      '/own': 'Only x, please',
+    });
+    expect(checkSpec({ fields: { a: { type: 'string', patternMessage: 'No' } } })).toEqual([
+      { path: '/fields/a/patternMessage', message: 'explains a pattern, but there is none', severity: 'warning' },
+    ]);
+  });
+
   test('conditional visibility unlocks validation', () => {
     const result = parse(account, { email: 'a@b.co', plan: 'pro', seats: 1000 });
     expect(result.issues.map((i) => i.path)).toEqual(['/seats']);

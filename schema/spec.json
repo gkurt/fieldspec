@@ -172,6 +172,10 @@
               "type": "string",
               "description": "A regular expression the whole value must match."
             },
+            "patternMessage": {
+              "type": "string",
+              "description": "Shown when the value does not match `pattern`. Default: \"This isn't a valid slug\", named after the definition or preset the field uses, else its label or key."
+            },
             "format": {
               "type": "string",
               "description": "A known shape: email, uri, uuid, hostname, ipv4, color. Others are kept as hints."

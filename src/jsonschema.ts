@@ -62,7 +62,7 @@ function kindChain(registry: Registry, type: string): AnyKind[] {
 export function toJSONSchema(spec: Spec, options: ToJSONSchemaOptions = {}): JsonSchema {
   const registry = options.registry ?? registryOf(spec);
   const io = options.io ?? 'output';
-  const ctx: Out = { registry, io, lookup: { defs: spec.defs, presets: registry.presets } };
+  const ctx: Out = { registry, io, lookup: { defs: spec.defs, presets: registry.presets }, comparing: new Set() };
   const out: JsonSchema = { $schema: DIALECT };
   if (typeof spec.title === 'string') out.title = spec.title;
   else if (spec.title !== undefined) out['x-title'] = spec.title;
@@ -79,6 +79,8 @@ interface Out {
   readonly registry: Registry;
   readonly io: 'input' | 'output';
   readonly lookup: Lookup;
+  /** Fields whose shape is being compared with their definition's. */
+  readonly comparing: Set<FieldDecl>;
 }
 
 function objectSchema(ctx: Out, fields: ObjectField['fields'], unknown: ObjectField['unknown']): JsonSchema {
@@ -108,16 +110,44 @@ const pointerName = (name: string) => name.replace(/~/g, '~0').replace(/\//g, '~
 /**
  * A field built with `use`: a definition becomes `$ref`, a preset is written out in full. Both
  * carry `x-use` and the field's own properties as `x-own`, so the way back restores the field.
+ * What the field's own properties add to a definition's constraints sits beside the `$ref`, so
+ * validators apply it too; one that changes a constraint the definition has writes the field out.
  */
 function schemaOfUse(ctx: Out, decl: FieldDecl, name: string): JsonSchema {
   const { use: _use, ...own } = decl as FieldDecl & { use: string };
+  const def = isBuiltinName(name) ? undefined : ctx.lookup.defs?.[name];
   // Definitions that only name each other in a ring stand for nothing: written out, not a `$ref` to itself.
-  const isDef = !isBuiltinName(name) && ctx.lookup.defs?.[name] !== undefined && !circular(ctx.lookup, decl);
-  const s: JsonSchema = isDef ? { $ref: `#/$defs/${pointerName(name)}` } : fieldSchema(ctx, deref(ctx.lookup, decl));
-  if (isDef) annotate(s, own as Resolved);
+  const added = def && !circular(ctx.lookup, decl) ? addedTo(ctx, def, decl) : undefined;
+  const s: JsonSchema = added ? { $ref: `#/$defs/${pointerName(name)}`, ...added } : fieldSchema(ctx, deref(ctx.lookup, decl));
+  if (added) annotate(s, own as Resolved);
   s['x-use'] = name;
   if (Object.keys(own).length > 0) s['x-own'] = own;
   return s;
+}
+
+/** The keywords a field's shape has beyond its definition's, or undefined when it changes one the definition has. */
+function addedTo(ctx: Out, def: FieldDecl, decl: FieldDecl): JsonSchema | undefined {
+  // Annotations leave the shape as it is; and a definition met again inside its own comparison adds nothing.
+  if (Object.keys(decl).every((key) => key === 'use' || BASE_KEYS.has(key)) || ctx.comparing.has(decl)) return {};
+  ctx.comparing.add(decl);
+  try {
+    return compare(ctx, def, decl);
+  } finally {
+    ctx.comparing.delete(decl);
+  }
+}
+
+function compare(ctx: Out, def: FieldDecl, decl: FieldDecl): JsonSchema | undefined {
+  const base = shapeOf(ctx, deref(ctx.lookup, def));
+  const mine = shapeOf(ctx, deref(ctx.lookup, decl));
+  const added: JsonSchema = {};
+  for (const key of new Set([...Object.keys(base), ...Object.keys(mine)])) {
+    // `x-props` only carries what JSON Schema cannot say; `x-own` restores it on the way back.
+    if (key === 'x-props' || JSON.stringify(base[key]) === JSON.stringify(mine[key])) continue;
+    if (key in base) return undefined;
+    added[key] = mine[key];
+  }
+  return added;
 }
 
 function fieldSchema(ctx: Out, decl: FieldDecl): JsonSchema {
@@ -318,7 +348,9 @@ function fieldFrom(ctx: FromCtx, raw: Schema): FieldDecl {
   if (ctx.depth > 32) return { type: 'json' };
   ctx.depth++;
   try {
-    const named = defName(raw?.$ref);
+    // A field written out in full still names its definition by `x-use`.
+    const use = raw?.['x-use'];
+    const named = defName(raw?.$ref) ?? (typeof use === 'string' && ctx.root.$defs?.[use] ? { group: '$defs', name: use } : undefined);
     const target = named && ctx.root[named.group]?.[named.name];
     let defined: string | undefined;
     if (named && target) {

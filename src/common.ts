@@ -65,6 +65,7 @@ interface Cx {
 const SHOWN_FROM_FIRST = new Set(['label', 'description', 'hint', 'placeholder']);
 /** Kept when every spec says the same, left out otherwise: none of them limits the value. */
 const KEPT_IF_EQUAL = new Set([
+  'patternMessage',
   'examples',
   'aliases',
   'deprecated',
