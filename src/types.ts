@@ -393,7 +393,27 @@ export interface Spec {
   readonly functions?: { readonly [name: string]: FunctionDecl };
   /** Translations the spec carries, by locale (`"de"`, `"pt-BR"`); see {@link Translations}. */
   readonly locales?: { readonly [locale: string]: Translations };
+  /** Which version of its values the spec describes: a whole number from 1. Values `encode` writes carry it as `$version`. */
+  readonly version?: number;
+  /**
+   * How values written for an earlier version are brought forward, by the version each list of
+   * operations reaches: `{ "2": [ … ], "3": [ … ] }`. See {@link MigrationOp}.
+   */
+  readonly migrations?: { readonly [version: string]: readonly MigrationOp[] };
 }
+
+/**
+ * One step of a migration: a JSON Patch operation over values as stored (JSON). In `path` and
+ * `from`, `*` stands for every item or key at its level, and a target's `*`s take what its
+ * source's stood for, in order. `value` may be an expression, evaluated where the target sits
+ * (`{ "$state": "timeout" }` is a sibling). What an operation does not find, it leaves be.
+ */
+export type MigrationOp =
+  | { readonly op: 'add'; readonly path: string; readonly value: Expr }
+  | { readonly op: 'replace'; readonly path: string; readonly value: Expr }
+  | { readonly op: 'remove'; readonly path: string }
+  | { readonly op: 'move'; readonly from: string; readonly path: string }
+  | { readonly op: 'copy'; readonly from: string; readonly path: string };
 
 /**
  * A translation: JSON Pointers into the spec, each to a text it shows (`/fields/name/label`) or a

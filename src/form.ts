@@ -64,6 +64,8 @@ export interface FormOptions {
   readonly locale?: string;
   /** Says the library's own issue messages another way; see {@link Messages}. */
   readonly messages?: Messages;
+  /** The version `values` were written for, when they do not say with `$version`; they are migrated from it. */
+  readonly from?: number;
 }
 
 export interface Form<V = unknown> {
@@ -112,7 +114,7 @@ export function createForm<S extends Spec>(given: S, options: FormOptions = {}):
   const registry = options.registry ?? registryOf(given);
   const spec = options.locale === undefined ? given : localize(given, options.locale, { registry });
   const fns = options.fns ?? functionsOf(given);
-  const vo = { registry, fns, defs: spec.defs, messages: options.messages };
+  const vo = { registry, fns, defs: spec.defs, messages: options.messages, from: options.from };
   const listeners = new Set<() => void>();
   const touched = new Set<string>();
   const mixed = new Set(options.mixed);

@@ -156,6 +156,18 @@ export function metaSchema(registry: Registry = coreRegistry, options: MetaSchem
         additionalProperties: { $ref: '#/$defs/field' },
       },
       layouts: { type: 'object', description: 'Named arrangements of the whole form.', additionalProperties: { $ref: '#/$defs/render' } },
+      version: {
+        type: 'integer',
+        minimum: 1,
+        description: 'The version of the values this spec describes. Values written for it carry it as `$version`.',
+      },
+      migrations: {
+        type: 'object',
+        description:
+          'How values written for an earlier version are brought forward: JSON Patch operations over the stored values, by the version they reach. `*` in a pointer stands for every item or key there; `value` may be an expression.',
+        propertyNames: { pattern: '^[1-9][0-9]*$' },
+        additionalProperties: { type: 'array', items: { $ref: '#/$defs/migrationOp' } },
+      },
       locales: {
         type: 'object',
         description:
@@ -208,6 +220,29 @@ export function metaSchema(registry: Registry = coreRegistry, options: MetaSchem
           leaf,
         ],
       },
+      migrationOp: {
+        oneOf: [
+          {
+            type: 'object',
+            properties: { op: { enum: ['add', 'replace'] }, path: { $ref: '#/$defs/valuePointer' }, value: { $ref: '#/$defs/expr' } },
+            required: ['op', 'path', 'value'],
+            additionalProperties: false,
+          },
+          {
+            type: 'object',
+            properties: { op: { const: 'remove' }, path: { $ref: '#/$defs/valuePointer' } },
+            required: ['op', 'path'],
+            additionalProperties: false,
+          },
+          {
+            type: 'object',
+            properties: { op: { enum: ['move', 'copy'] }, from: { $ref: '#/$defs/valuePointer' }, path: { $ref: '#/$defs/valuePointer' } },
+            required: ['op', 'from', 'path'],
+            additionalProperties: false,
+          },
+        ],
+      },
+      valuePointer: { type: 'string', pattern: '^/', description: 'A JSON Pointer into the values; * stands for every item or key there.' },
       check: {
         type: 'object',
         description: 'A rule the value must keep: `assert` holds while it is valid; while it fails, the field shows `message`.',

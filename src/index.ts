@@ -65,6 +65,7 @@ export {
   type Messages,
   type ValueOptions,
 } from './values.ts';
+export { migrate, versionOf, VERSION_KEY, type MigrateOptions } from './migrations.ts';
 export { texts, localize, fallbacksOf, checkTranslations, type Locale, type LocalizeOptions, type TextsOptions } from './locales.ts';
 export { checkSpec, assertSpec, formatFaults, type CheckOptions } from './check.ts';
 export { layout, walk, defaultControl, type LayoutNode } from './layout.ts';

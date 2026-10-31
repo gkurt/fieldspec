@@ -1,6 +1,7 @@
 import { circular, deref, usedName, type Lookup } from './defs.ts';
 import { isDynamic } from './expr.ts';
 import type { AnyKind, JsonSchema } from './kinds.ts';
+import { VERSION_KEY } from './migrations.ts';
 import { isBuiltinName, toUserName } from './names.ts';
 /**
  * JSON Schema (draft 2020-12), both ways. Out: the JSON form of the values, with everything
@@ -74,6 +75,17 @@ export function toJSONSchema(spec: Spec, options: ToJSONSchemaOptions = {}): Jso
   if (spec.layouts) out['x-layouts'] = spec.layouts;
   if (spec.functions) out['x-functions'] = spec.functions;
   if (spec.locales) out['x-locales'] = spec.locales;
+  if (spec.version !== undefined) {
+    // Values `encode` writes say their version; what `parse` reads may say an earlier one.
+    const properties = out.properties as Record<string, JsonSchema>;
+    out.properties = {
+      [VERSION_KEY]: io === 'output' ? { const: spec.version } : { type: 'integer', minimum: 1, maximum: spec.version },
+      ...properties,
+    };
+    if (io === 'output') out.required = [VERSION_KEY, ...((out.required as string[] | undefined) ?? [])];
+    out['x-version'] = spec.version;
+  }
+  if (spec.migrations) out['x-migrations'] = spec.migrations;
   return out;
 }
 
@@ -296,7 +308,8 @@ export function fromJSONSchema(schema: JsonSchema, options: FromJSONSchemaOption
   const ctx: FromCtx = { root, registry, depth: 0, defs: {}, names: new Map() };
   const body = derefSchema(ctx, root);
   if (body.type !== 'object' && !body.properties) throw new Error('the root of the schema must be an object with properties');
-  const spec: Record<string, unknown> = { fields: fieldsFrom(ctx, body) };
+  const { [VERSION_KEY]: _, ...properties } = (body.properties ?? {}) as Schema;
+  const spec: Record<string, unknown> = { fields: fieldsFrom(ctx, body.properties ? { ...body, properties } : body) };
   if (typeof root.title === 'string') spec.title = root.title;
   if (root['x-title'] !== undefined) spec.title = root['x-title'];
   if (typeof root.description === 'string') spec.description = root.description;
@@ -304,6 +317,8 @@ export function fromJSONSchema(schema: JsonSchema, options: FromJSONSchemaOption
   if (root['x-layouts']) spec.layouts = root['x-layouts'];
   if (root['x-functions']) spec.functions = root['x-functions'];
   if (root['x-locales']) spec.locales = root['x-locales'];
+  if (root['x-version'] !== undefined) spec.version = root['x-version'];
+  if (root['x-migrations']) spec.migrations = root['x-migrations'];
   if (Object.keys(ctx.defs).length > 0) spec.defs = ctx.defs;
   return spec as unknown as Spec;
 }

@@ -44,6 +44,7 @@ Parent-directory imports go through the `#*` alias (`#src/form.ts`), siblings us
 - `src/form.ts` — `createForm`, the headless form: values, field state, issues, layout.
 - `src/common.ts` — `commonFields`: one spec for the fields several specs share, with mixed values.
 - `src/locales.ts` — translations: `texts`, `localize`, `checkTranslations`, over a spec's `locales`.
+- `src/migrations.ts` — `version` and `migrations`: `migrate` brings stored values forward.
 - `src/patch.ts`, `src/pointer.ts` — JSON Patch over values; JSON Pointers.
 - `src/jsonschema.ts`, `src/zod.ts`, `src/standard.ts`, `src/jsonrender.ts` — interop.
 - `src/prompt.ts`, `src/schema.ts` — a system prompt and the JSON Schema of specs, for agents.

@@ -407,6 +407,54 @@ parse(spec, json, { messages: german });
 It is asked only for issues with `params`. Messages the spec writes, a check's or
 `patternMessage`, have none: they translate with the spec.
 
+## Versions and migrations
+
+Values outlive the spec they were written for. Many changes need nothing: a new field takes its
+`default`, and a renamed key can keep reading its old name through `aliases`. For the rest, a
+spec says which `version` of its values it describes, and `migrations` bring values written for
+an earlier version forward, keyed by the version each list of operations reaches:
+
+```json
+{
+  "version": 3,
+  "fields": { … },
+  "migrations": {
+    "2": [
+      { "op": "move", "from": "/host", "path": "/server/host" },
+      { "op": "move", "from": "/backends/*/address", "path": "/backends/*/url" }
+    ],
+    "3": [
+      { "op": "move", "from": "/timeout", "path": "/timeoutMs" },
+      { "op": "replace", "path": "/timeoutMs", "value": { "$cel": "timeoutMs * 1000.0", "args": { "timeoutMs": { "$state": "timeoutMs" } } } },
+      { "op": "replace", "path": "/mode", "value": { "$cond": { "$state": "mode", "eq": "fast" }, "$then": "quick", "$else": "thorough" } },
+      { "op": "add", "path": "/backends/*/weight", "value": 1 },
+      { "op": "remove", "path": "/legacy" }
+    ]
+  }
+}
+```
+
+- Each operation is JSON Patch (`add`, `replace`, `remove`, `move`, `copy`) over the values as
+  stored, before decoding. In a pointer, `*` stands for every item or key at its level, and a
+  target's `*`s take what its source's stood for, in order.
+- `value` may be an expression, evaluated where the value goes: `{ "$state": "timeout" }` is a
+  sibling. It reads the stored JSON, so a `$cel` arg has no field type: a number is a CEL double
+  (`* 1000.0`). A value that cannot be worked out keeps its old one, and `parse` reports a
+  `migration` issue there.
+- What an operation does not find, it leaves be: an absent optional value, a list with no
+  items. `replace` changes only what is there; `add` and a move's target make missing objects.
+- `encode` writes `"$version": 3` first, and `decode` (so `parse` and `createForm`) migrates
+  values that say an earlier one. Values that do not say are taken as current; `from` gives
+  their version: `parse(spec, json, { from: 1 })`, `createForm(spec, { values, from: 1 })`.
+  `migrate(spec, json)` does only the migrating, JSON to JSON.
+- `parse` reports a `$version` later than the spec's, or one that is not a version.
+- `checkSpec` checks `version` and `migrations`: each operation's shape and pointers, a
+  migration keyed past the spec's version, `*`s that do not pair up, and expressions (whose
+  pointers it cannot check, since they read an earlier shape). In the last migration, a target
+  that is no field of the spec is a warning.
+- In JSON Schema, `$version` is a property (`const` on output, an integer up to the version on
+  input), and `version` and `migrations` ride along as `x-version` and `x-migrations`.
+
 ## Extending
 
 A registry is the vocabulary specs are written in: kinds (what `type` names), elements (what

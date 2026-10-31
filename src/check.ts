@@ -8,7 +8,7 @@ import { EXPR_KEYS, isDynamic, LANGUAGE_KEYS, OPERATORS, stateOf, type Functions
 import { CONTAINER_KINDS, type AnyKind } from './kinds.ts';
 import { checkTranslations, LOCALE_TAG, tablesOf } from './locales.ts';
 import { isBuiltinName, isUserName, toUserName } from './names.ts';
-import { escapeSegment, joinPointer, resolveSegments } from './pointer.ts';
+import { escapeSegment, joinPointer, parsePointer, resolveSegments } from './pointer.ts';
 import { BASE_PROPS, registryOf, functionsOf, type Registry, type Rule } from './registry.ts';
 import type {
   ArrayField,
@@ -45,6 +45,8 @@ interface Scope {
   readonly inItem: boolean;
   /** Inside a definition, which can be placed anywhere: relative pointers cannot be checked. */
   readonly floating?: boolean;
+  /** Over values of an earlier version, in a migration: no pointer can be checked against this spec. */
+  readonly past?: boolean;
 }
 
 interface Checker {
@@ -55,7 +57,19 @@ interface Checker {
   fault(path: string, message: string, severity?: Fault['severity']): void;
 }
 
-const ROOT_PROPS = ['$schema', 'title', 'description', 'fields', 'groups', 'defs', 'layouts', 'functions', 'locales'];
+const ROOT_PROPS = [
+  '$schema',
+  'title',
+  'description',
+  'fields',
+  'groups',
+  'defs',
+  'layouts',
+  'functions',
+  'locales',
+  'version',
+  'migrations',
+];
 const GROUP_PROPS = ['label', 'description', 'render', 'visible', 'group'];
 const ELEMENT_KEYS = ['type', 'props', 'children', 'visible'];
 
@@ -117,6 +131,7 @@ export function checkSpec(spec: unknown, options: CheckOptions = {}): Fault[] {
     else checkDefs(c, s.defs!);
   }
   if (spec.locales !== undefined) checkLocales(c, spec.locales);
+  checkVersions(c);
   checkFunctions(c, options.fns ?? functionsOf(s));
   const report = (path: string, message: string, severity?: Fault['severity']) => c.fault(path, message, severity);
   for (const rule of [...registry.rules, ...(options.rules ?? [])]) rule(s, report);
@@ -142,6 +157,74 @@ function checkLocales(c: Checker, locales: unknown) {
       c.fault(at, `"${tag}" is not a locale tag: a language, then optional parts, like "de", "pt-BR" or "zh-Hant"`);
     const fallbacks = tablesOf(c.spec, tag).filter((t) => t !== table);
     c.faults.push(...checkTranslations(c.spec, table, { registry: c.registry, at, fallbacks }));
+  }
+}
+
+// ── Versions and migrations ──────────────────────────────────────────────────────────────
+
+const MIGRATION_OPS: { readonly [op: string]: readonly string[] } = {
+  add: ['op', 'path', 'value'],
+  replace: ['op', 'path', 'value'],
+  remove: ['op', 'path'],
+  move: ['op', 'from', 'path'],
+  copy: ['op', 'from', 'path'],
+};
+
+const MIGRATION_PROPS: { readonly [prop: string]: string } = {
+  path: 'where the operation applies, a JSON Pointer into the values',
+  from: 'where the value comes from, a JSON Pointer into the values',
+  value: 'the value, or an expression that gives it',
+};
+
+/** Where a migration's expressions are checked: over values of an earlier shape. */
+const PAST: Scope = { fields: {}, groups: undefined, base: [], inItem: true, floating: true, past: true };
+
+function checkVersions(c: Checker) {
+  const { version, migrations } = c.spec;
+  const current = Number.isInteger(version) && version! >= 1 ? version : undefined;
+  if (version !== undefined && current === undefined) c.fault('/version', 'must be a whole number from 1');
+  if (migrations === undefined) return;
+  if (!isObject(migrations))
+    return c.fault('/migrations', 'must be an object of operation lists by the version they reach: `{ "2": [ … ] }`');
+  if (version === undefined) c.fault('/migrations', 'needs `version`: the version of the values this spec describes');
+  for (const [key, ops] of Object.entries(migrations)) {
+    const at = `/migrations/${escapeSegment(key)}`;
+    const reached = /^[1-9]\d*$/.test(key) ? Number(key) : undefined;
+    if (reached === undefined || reached < 2 || (current !== undefined && reached > current)) {
+      const upTo = current === undefined ? '' : ` to ${current}, the spec's version`;
+      c.fault(at, `names no version a migration reaches: a whole number from 2${upTo}`);
+    }
+    if (!Array.isArray(ops)) {
+      c.fault(at, 'must be an array of JSON Patch operations');
+      continue;
+    }
+    ops.forEach((op: unknown, i) => checkMigrationOp(c, op, `${at}/${i}`, reached !== undefined && reached === current));
+  }
+}
+
+/** An operation of a migration. In the last one, what it writes must be a field of this spec. */
+function checkMigrationOp(c: Checker, op: unknown, at: string, last: boolean) {
+  if (!isObject(op)) return c.fault(at, 'must be an operation: `{ "op": "move", "from": "/old", "path": "/new" }`');
+  const ops = Object.keys(MIGRATION_OPS);
+  const name = typeof op.op === 'string' ? op.op : undefined;
+  const props = name === undefined ? undefined : MIGRATION_OPS[name];
+  if (!props) return c.fault(`${at}/op`, `must be one of ${listOf(ops)}.${name === undefined ? '' : mean(name, ops)}`);
+  for (const prop of Object.keys(op))
+    if (!props.includes(prop)) c.fault(`${at}/${escapeSegment(prop)}`, `is not part of a ${name} operation.${mean(prop, props)}`);
+  for (const prop of props.filter((p) => p !== 'op')) {
+    const value = op[prop];
+    if (value === undefined) c.fault(`${at}/${prop}`, `required: ${MIGRATION_PROPS[prop]}`);
+    else if (prop !== 'value' && (typeof value !== 'string' || !value.startsWith('/')))
+      c.fault(`${at}/${prop}`, 'must be a JSON Pointer into the values, starting with /; * stands for every item or key');
+  }
+  if (op.value !== undefined && isDynamic(op.value)) checkExpr(c, op.value, `${at}/value`, PAST);
+  const stars = (p: unknown) => (typeof p === 'string' ? parsePointer(p).filter((s) => s === '*').length : 0);
+  if (typeof op.from === 'string' && stars(op.from) !== stars(op.path))
+    c.fault(`${at}/path`, `has ${stars(op.path)} * where \`from\` has ${stars(op.from)}; each * takes what the one in \`from\` stood for`);
+  if (last && op.op !== 'remove' && typeof op.path === 'string' && op.path.startsWith('/')) {
+    const segments = parsePointer(op.path).map((s) => (s === '-' ? '*' : s));
+    if (!resolveStatic(c, segments))
+      c.fault(`${at}/path`, `"${op.path}" leads to no field of this spec, though this migration brings values to its version`, 'warning');
   }
 }
 
@@ -725,7 +808,7 @@ function resolveStatic(c: Checker, segments: readonly string[]): FieldDecl | und
 
 function checkPointer(c: Checker, pointer: unknown, at: string, scope: Scope) {
   if (typeof pointer !== 'string') return c.fault(at, 'must be a JSON Pointer string');
-  if (scope.floating && !pointer.startsWith('/')) return;
+  if (scope.past || (scope.floating && !pointer.startsWith('/'))) return;
   let climbs = 0;
   for (let rest = pointer; rest === '..' || rest.startsWith('../'); rest = rest.slice(3)) climbs++;
   if (climbs > scope.base.length) {
@@ -911,7 +994,7 @@ function checkCode(c: Checker, key: LanguageKey, expr: Record<string, unknown>, 
     if (!IDENTIFIER.test(name)) continue;
     const pointer = stateOf((expr.args as Record<string, unknown>)[name]);
     // Inside a definition a relative pointer could read anything: the arg is left untyped.
-    const known = pointer !== undefined && !(scope.floating && !pointer.startsWith('/'));
+    const known = pointer !== undefined && !scope.past && !(scope.floating && !pointer.startsWith('/'));
     decls[name] = known ? (resolveStatic(c, resolveSegments(pointer, scope.base)) as Resolved | undefined) : undefined;
   }
   const why = language.check(source, decls);

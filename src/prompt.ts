@@ -125,6 +125,22 @@ export function prompt(registry: Registry = coreRegistry, options: PromptOptions
     json({ locales: { de: { '/fields/name/label': 'Name', '/fields/plan/options/0/label': 'Kostenlos' } } }),
     '```',
     '',
+    '## Versions and migrations (`version`, `migrations`)',
+    '',
+    'Only when changing a spec whose values are already stored. Adding a field with a `default` needs nothing, and a renamed key can keep its old name in `aliases`. For anything else, raise `version` and add the operations that bring old values forward, keyed by the version they reach: JSON Patch over the values as stored, where `*` stands for every item or key and `value` may be an expression, evaluated where the value goes.',
+    '',
+    '```json',
+    json({
+      version: 2,
+      migrations: {
+        '2': [
+          { op: 'move', from: '/host', path: '/server/host' },
+          { op: 'replace', path: '/timeout', value: { $cond: { $state: 'timeout', lt: 1000 }, $then: 1000, $else: { $state: 'timeout' } } },
+        ],
+      },
+    }),
+    '```',
+    '',
     '## Groups',
     '',
     'A group gathers fields for display; it does not change the shape of the values. A field joins with `"group": "<id>"`. A group may have `label`, `description`, `visible`, `render`, and a parent `group`. It draws where its first field would, as a titled `stack` unless `render` names another container.',

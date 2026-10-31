@@ -6,6 +6,7 @@ import { deref, requiresItself, usedName, type Lookup } from './defs.ts';
 import { evaluate, isDynamic, test, textOf, type Env, type Functions, type Scope } from './expr.ts';
 import type { Infer } from './infer.ts';
 import { CONTAINER_KINDS, isJson, type AnyKind } from './kinds.ts';
+import { migrate, VERSION_KEY, versionOf, type MigrateOptions } from './migrations.ts';
 import { child, getAt, joinPointer, parsePointer, setAt } from './pointer.ts';
 import { registryOf, functionsOf, type Registry } from './registry.ts';
 import type {
@@ -31,6 +32,8 @@ export interface ValueOptions {
   readonly fns?: Functions;
   /** Says the library's own issue messages another way; see {@link Messages}. */
   readonly messages?: Messages;
+  /** The version JSON was written for when it does not say with `$version`; see {@link migrate}. */
+  readonly from?: number;
 }
 
 /**
@@ -120,9 +123,15 @@ export function isEmpty(value: unknown): boolean {
 
 // ── Decoding ─────────────────────────────────────────────────────────────────────────────
 
-/** JSON (or partly decoded values) to values: aliases renamed, built-ins revived. No defaults. */
-export function decode(spec: Spec, json: unknown, options?: ValueOptions): unknown {
-  return decodeFields(ctxOf(spec, options), spec.fields, json, 'keep');
+/** JSON (or partly decoded values) to values: migrated from an earlier version, aliases renamed, built-ins revived. No defaults. */
+export function decode(spec: Spec, json: unknown, options?: ValueOptions & MigrateOptions): unknown {
+  return decodeFields(ctxOf(spec, options), spec.fields, withoutVersion(migrate(spec, json, options)), 'keep');
+}
+
+function withoutVersion(json: unknown): unknown {
+  if (!isPlainObject(json) || !(VERSION_KEY in json)) return json;
+  const { [VERSION_KEY]: _, ...fields } = json;
+  return fields;
 }
 
 function decodeFields(ctx: Ctx, fields: Fields, json: unknown, unknown: ObjectField['unknown'], extra?: string): unknown {
@@ -202,7 +211,8 @@ function decodeKey(ctx: Ctx, decl: FieldDecl, key: unknown): unknown {
 
 /** Values to JSON. */
 export function encode(spec: Spec, values: unknown, options?: ValueOptions): Json {
-  return encodeFields(ctxOf(spec, options), spec.fields, values) as Json;
+  const json = encodeFields(ctxOf(spec, options), spec.fields, values) as Json;
+  return spec.version !== undefined && isPlainObject(json) ? { [VERSION_KEY]: spec.version, ...json } : json;
 }
 
 function encodeFields(ctx: Ctx, fields: Fields, value: unknown): unknown {
@@ -669,11 +679,35 @@ function calledBy(given: FieldDecl, decl: Resolved, at: string): string | undefi
 
 /** JSON or values in; typed, defaulted values out, or every issue with its path. */
 export function parse<S extends Spec>(spec: S, input: unknown, options?: ValueOptions): Result<Infer<S>> {
-  const values = resolve(spec, decode(spec, input, options), options);
-  const issues = validate(spec, values, options);
+  const failed: Issue[] = [];
+  const onError = (path: string, version: number, error: string) =>
+    failed.push({ path, code: 'migration', message: `could not be brought to version ${version}: ${error}`, params: { version, error } });
+  const values = resolve(spec, decode(spec, input, { ...options, onError }), options);
+  const issues = [...versionIssues(spec, input), ...failed, ...validate(spec, values, options)];
   return (issues.length === 0 ? { ok: true, value: values, issues: [] } : { ok: false, value: values, issues }) as unknown as Result<
     Infer<S>
   >;
+}
+
+/** A `$version` this spec cannot read: not a version, or a later one than the spec's. */
+function versionIssues(spec: Spec, input: unknown): Issue[] {
+  const stated = isPlainObject(input) ? input[VERSION_KEY] : undefined;
+  if (stated === undefined) return [];
+  const current = versionOf(spec);
+  const path = `/${VERSION_KEY}`;
+  if (typeof stated !== 'number' || !Number.isInteger(stated) || stated < 1)
+    return [{ path, code: 'version', message: 'must be a version: a whole number from 1', params: { current } }];
+  if (stated > current) {
+    return [
+      {
+        path,
+        code: 'version',
+        message: `was written for version ${stated}; this is version ${current}`,
+        params: { version: stated, current },
+      },
+    ];
+  }
+  return [];
 }
 
 /** Like {@link parse}, but throws a readable error. */

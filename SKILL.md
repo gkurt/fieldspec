@@ -53,6 +53,15 @@ are, and run `checkSpec`. `createForm(spec, { locale: "de" })` or `localize(spec
 The library's own issue messages carry `params`; a `messages` function on `parse`, `validate`
 or `createForm` says them in another language.
 
+## Changing a spec whose values are stored
+
+A new field with a `default` needs nothing; a renamed key can list its old name in `aliases`.
+Otherwise raise `version` and add `"migrations": { "<new version>": [ … ] }`: JSON Patch
+operations (`add`, `replace`, `remove`, `move`, `copy`) over the stored JSON, `*` for every
+item or key, `value` an expression evaluated where the value goes. `$cel` args there are
+untyped JSON (numbers are doubles). `encode` writes `$version`; `parse` and `createForm` migrate
+older values, and take `from` for values that do not say their version.
+
 ## Code: `$cel` and `$js`
 
 What a condition or expression cannot say goes in `$cel`, which is CEL (Common Expression
