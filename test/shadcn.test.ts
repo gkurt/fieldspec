@@ -95,12 +95,12 @@ describe('shadcn renderers', () => {
     expect(label.closest('[data-slot=field]')!.querySelector('[data-slot=field-description]')!.textContent).toBe('Shown on the card.');
     // A unit sits in the input's group; a percent slider shows a percent, and its thumb is named by the label.
     expect(q('[data-slot=input-group]')[0]!.textContent).toBe('px');
-    const thumb = q('[role=slider]')[0]!;
+    const thumb = q('[data-slot=slider-thumb] input[type=range]')[0]!;
     expect(document.getElementById(thumb.getAttribute('aria-labelledby')!)!.textContent).toBe('Opacity');
     expect(q('[data-slot=slider] + output')[0]!.textContent).toBe('50%');
     // Radios and toggles are named by their options, the group by its legend.
     expect(q('[data-slot=radio-group] label').map((l) => l.textContent)).toEqual(['s', 'm', 'l']);
-    expect(q('[data-slot=toggle-group-item][data-state=on]').map((t) => t.textContent)).toEqual(['stack']);
+    expect(q('[data-slot=toggle-group-item][data-pressed]').map((t) => t.textContent)).toEqual(['stack']);
     const group = q('[data-slot=radio-group]')[0]!;
     expect(document.getElementById(group.getAttribute('aria-labelledby')!)!.textContent).toBe('Size');
     await unmount();
@@ -123,7 +123,7 @@ describe('shadcn renderers', () => {
     await act(() => form.set('/port', 443));
     expect(q('input[type=number]').map((i) => (i as HTMLInputElement).value)).toContain('443');
     await act(() => form.set('/layout', 'grid'));
-    expect(q('[data-slot=toggle-group-item][data-state=on]').map((t) => t.textContent)).toEqual(['grid']);
+    expect(q('[data-slot=toggle-group-item][data-pressed]').map((t) => t.textContent)).toEqual(['grid']);
     await act(() => form.set('/region', 'us'));
     expect(q('[data-slot=select-value]')[0]!.textContent).toBe('us');
     await unmount();
@@ -135,7 +135,7 @@ describe('shadcn renderers', () => {
     document.body.append(host);
     const root = client.createRoot(host);
     await React.act(async () => root.render(React.createElement(ui.FormView, { form, renderers: shadcn.shadcnRenderers })));
-    expect(host.querySelector('[data-slot=checkbox]')!.getAttribute('data-state')).toBe('indeterminate');
+    expect(host.querySelector('[data-slot=checkbox]')!.hasAttribute('data-indeterminate')).toBe(true);
     await React.act(async () => root.unmount());
   });
 
@@ -156,12 +156,15 @@ describe('shadcn renderers', () => {
     const city = q('input[role=combobox]')[0] as HTMLInputElement;
     await act(() => city.focus());
     await type(city, 'ber');
-    const offered = () => [...document.querySelectorAll('[data-slot=command-item]')].map((i) => i.textContent);
+    expect((form.values as { city: string }).city).toBe('ber');
+    // Typing in a browser opens the list; here the arrow key does.
+    await act(() => city.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })));
+    const offered = () => [...document.querySelectorAll('[data-slot=combobox-item]')].map((i) => i.textContent);
     expect(offered()).toEqual(['Berlin', 'Bern']);
     // The box keeps the focus while the list highlights an option, and is named by the field's label.
     expect(document.activeElement).toBe(city);
-    expect(document.getElementById(city.getAttribute('aria-labelledby')!)!.textContent).toBe('City');
-    await act(() => (document.querySelector('[data-slot=command-item]') as HTMLElement).click());
+    expect(document.querySelector(`label[for="${city.id}"]`)!.textContent).toBe('City');
+    await act(() => (document.querySelector('[data-slot=combobox-item]') as HTMLElement).click());
     expect((form.values as { city: string }).city).toBe('Berlin');
     expect(offered()).toEqual([]);
     await unmount();
@@ -190,7 +193,7 @@ describe('shadcn renderers', () => {
     expect(values().tags).toHaveLength(1);
 
     expect(q('[data-slot=accordion-trigger]').map((t) => t.textContent)).toEqual(['Ada', 'Lin']);
-    expect(q('[data-slot=accordion-item][data-state=open]')).toHaveLength(1);
+    expect(q('[data-slot=accordion-item][data-open]')).toHaveLength(1);
     const handle = q('[data-slot=accordion] [role=button]')[0]!;
     await act(() => handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })));
     expect(values().people.map((p) => p.name)).toEqual(['Lin', 'Ada']);

@@ -143,10 +143,10 @@ function App() {
         </section>
         <section className="section" id="shadcn">
           <Heading kicker="With shadcn/ui" title="Your components, drawing the spec">
-            The shadcn set draws every element with <a href="https://ui.shadcn.com">shadcn/ui</a>'s components, the ones you already keep in{' '}
-            <code>components/ui</code>: <code>Field</code> for labels, help and errors, input groups for units, a select, radio and toggle
-            groups, a slider, a calendar in a popover, a command list for the framework's suggestions, an accordion for the domains, and a
-            collapsible for the advanced settings. It has no stylesheet of its own: Tailwind and your theme style it, so it looks like the
+            The shadcn set draws every element with <a href="https://ui.shadcn.com">shadcn/ui</a>'s components on Base UI, the ones you keep
+            in <code>components/ui</code>: <code>Field</code> for labels, help and errors, input groups for units, a select, radio and
+            toggle groups, a slider, a calendar in a popover, a combobox for the framework's suggestions, an accordion for the domains, and
+            a collapsible for the advanced settings. It has no stylesheet of its own: Tailwind and your theme style it, so it looks like the
             rest of your app. Clear the project's name, or give it a capital, to see the field's error.
           </Heading>
           <ShadcnDemo />

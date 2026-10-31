@@ -1,20 +1,21 @@
-import { Command as CommandPrimitive } from 'cmdk';
 /**
  * An example renderer set: shadcn/ui drawing fieldspec forms. fieldspec keeps the form (values,
  * conditions, validation, lists, layouts); shadcn's components draw every element: `Field` for
  * labels, help and errors, inputs and input groups, selects, radio and toggle groups, checkboxes,
- * switches, sliders, a calendar in a popover for dates, a command list for suggestions, tabs,
+ * switches, sliders, a calendar in a popover for dates, suggestions in a combobox's list, tabs,
  * collapsibles and accordions, and buttons for adding, removing and reordering items.
  *
- * `./shadcn/ui` holds shadcn's components (new-york) as `npx shadcn add` writes them, adapted to
- * this repository's lint rules (`cn` is in `./shadcn/ui/utils.ts`); in your app, import yours
- * from `@/components/ui/*`. Two are edited, as
+ * `./shadcn/ui` holds shadcn's components on Base UI, in its default style (`base-nova`), as
+ * `npx shadcn add` writes them, adapted to this repository's lint rules (`cn` is in
+ * `./shadcn/ui/utils.ts`); in your app, import yours from `@/components/ui/*`. Two are edited, as
  * shadcn means its components to be: the checkbox shows a dash for mixed values, and the slider
- * passes its label on to its thumb. Styled by Tailwind CSS 4 and your shadcn theme: there is no
- * stylesheet of its own. Needs `radix-ui`, `lucide-react`, `react-day-picker` and `cmdk`.
+ * passes its label on to its thumb. Suggestions use Base UI's `Autocomplete`, drawn with shadcn's
+ * combobox parts, which it shares. Styled by Tailwind CSS 4 and your shadcn theme: there is no
+ * stylesheet of its own. Needs `@base-ui/react`, `lucide-react` and `react-day-picker`.
  *
  * `<FormView form={form} renderers={shadcnRenderers} />`
  */
+import { Autocomplete as AutocompletePrimitive } from '@base-ui/react/autocomplete';
 import { defaultControl, deref, type FieldDecl, type FieldState } from 'fieldspec';
 import {
   checksOf,
@@ -39,11 +40,11 @@ import { Button } from './shadcn/ui/button.tsx';
 import { Calendar } from './shadcn/ui/calendar.tsx';
 import { Checkbox } from './shadcn/ui/checkbox.tsx';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './shadcn/ui/collapsible.tsx';
-import { Command, CommandItem, CommandList } from './shadcn/ui/command.tsx';
+import { ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from './shadcn/ui/combobox.tsx';
 import { Field, FieldContent, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from './shadcn/ui/field.tsx';
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from './shadcn/ui/input-group.tsx';
 import { Input } from './shadcn/ui/input.tsx';
-import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from './shadcn/ui/popover.tsx';
+import { Popover, PopoverContent, PopoverTrigger } from './shadcn/ui/popover.tsx';
 import { RadioGroup, RadioGroupItem } from './shadcn/ui/radio-group.tsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './shadcn/ui/select.tsx';
 import { Separator } from './shadcn/ui/separator.tsx';
@@ -124,11 +125,9 @@ function CollapsibleSection({ children, props }: LayoutProps) {
   const [open, setOpen] = useState(!props.collapsed);
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="flex flex-col gap-4 rounded-lg border px-4 py-3">
-      <CollapsibleTrigger asChild>
-        <Button variant="ghost" size="sm" className="-mx-2 w-fit [&[data-state=open]>svg]:rotate-90">
-          <ChevronRightIcon className="transition-transform" />
-          {text(props.title) ?? 'Details'}
-        </Button>
+      <CollapsibleTrigger render={<Button variant="ghost" size="sm" className="-mx-2 w-fit data-panel-open:[&>svg]:rotate-90" />}>
+        <ChevronRightIcon className="transition-transform" />
+        {text(props.title) ?? 'Details'}
       </CollapsibleTrigger>
       <CollapsibleContent className="flex flex-col gap-6 pb-2">
         {props.description !== undefined && <FieldDescription>{text(props.description)}</FieldDescription>}
@@ -143,16 +142,16 @@ function TabsSection({ node, children, props }: LayoutProps) {
   const titles = node.children.map((c, i) => text(c.props.title) ?? `Tab ${i + 1}`);
   return (
     <Frame props={props}>
-      <Tabs defaultValue="0">
+      <Tabs defaultValue={0}>
         <TabsList>
           {titles.map((t, i) => (
-            <TabsTrigger key={t + i} value={String(i)}>
+            <TabsTrigger key={t + i} value={i}>
               {t}
             </TabsTrigger>
           ))}
         </TabsList>
         {panes.map((pane, i) => (
-          <TabsContent key={i} value={String(i)} className="pt-2">
+          <TabsContent key={i} value={i} className="pt-2">
             <InTab.Provider value>{pane}</InTab.Provider>
           </TabsContent>
         ))}
@@ -337,68 +336,36 @@ function TextArea(p: ControlProps) {
   );
 }
 
-/** A text box offering the field's suggestions in a command list as it is typed; any other value is allowed. */
+/**
+ * A text box offering the field's suggestions as it is typed, in Base UI's `Autocomplete`: its
+ * value is the text, so any other value is allowed too.
+ */
 function Autocomplete(p: ControlProps) {
   const f = p.field;
   const { draft, error, placeholder, change } = useParsedText(p, parserFor(p.form.registry, f.decl.type));
-  const [open, setOpen] = useState(false);
-  const typed = draft.trim().toLowerCase();
-  const matches = (f.suggestions ?? []).filter((s) => s !== draft && s.toLowerCase().includes(typed));
   return (
     <>
-      <Popover open={open && matches.length > 0} onOpenChange={setOpen}>
-        <Command shouldFilter={false} className="overflow-visible bg-transparent">
-          <PopoverAnchor asChild>
-            <CommandPrimitive.Input asChild value={draft} onValueChange={change}>
-              {/*
-               * The field's id and label, in place of cmdk's own. Without its `cmdk-input` mark cmdk
-               * does not refocus the box by its own id, which would send the focus to the list.
-               */}
-              <Input
-                id={p.id}
-                cmdk-input={undefined}
-                aria-labelledby={labelId(p.id)}
-                placeholder={placeholder}
-                disabled={p.disabled}
-                aria-invalid={invalid(f) || error !== undefined}
-                onFocus={() => setOpen(true)}
-                onInput={() => setOpen(true)}
-                onBlur={() => {
-                  setOpen(false);
-                  p.touch();
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') setOpen(false);
-                }}
-              />
-            </CommandPrimitive.Input>
-          </PopoverAnchor>
-          <PopoverContent
-            align="start"
-            className="w-(--radix-popover-trigger-width) p-1"
-            onOpenAutoFocus={(e) => e.preventDefault()}
-            onInteractOutside={(e) => {
-              if (e.target instanceof Node && document.getElementById(p.id)?.contains(e.target)) e.preventDefault();
-            }}
-          >
-            {/* Pressing an option keeps the focus in the text box. */}
-            <CommandList onMouseDown={(e) => e.preventDefault()}>
-              {matches.map((s) => (
-                <CommandItem
-                  key={s}
-                  value={s}
-                  onSelect={() => {
-                    change(s);
-                    setOpen(false);
-                  }}
-                >
-                  {s}
-                </CommandItem>
-              ))}
-            </CommandList>
-          </PopoverContent>
-        </Command>
-      </Popover>
+      <AutocompletePrimitive.Root items={f.suggestions ?? []} value={draft} onValueChange={change} disabled={p.disabled}>
+        <ComboboxInput
+          id={p.id}
+          showTrigger={false}
+          placeholder={placeholder}
+          disabled={p.disabled}
+          aria-invalid={invalid(f) || error !== undefined}
+          onBlur={p.touch}
+          className="w-full"
+        />
+        {/* No popup while nothing matches: what is typed stands on its own. */}
+        <ComboboxContent className="data-empty:hidden">
+          <ComboboxList>
+            {(s: string) => (
+              <ComboboxItem key={s} value={s}>
+                {s}
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </AutocompletePrimitive.Root>
       {error && <FieldError>{error}</FieldError>}
     </>
   );
@@ -409,8 +376,12 @@ function SelectControl(p: ControlProps) {
   const { options, index, choose } = choicesOf(p);
   return (
     <Select
-      value={index < 0 ? '' : String(index)}
-      onValueChange={(v) => choose(Number(v))}
+      // By position, as `choicesOf` gives them; `items` lets the trigger show the chosen one's label.
+      items={options.map((o, i) => ({ label: o.label, value: i }))}
+      value={index < 0 ? null : index}
+      onValueChange={(i) => {
+        if (typeof i === 'number') choose(i);
+      }}
       onOpenChange={(open) => {
         if (!open) touch();
       }}
@@ -421,7 +392,7 @@ function SelectControl(p: ControlProps) {
       </SelectTrigger>
       <SelectContent>
         {options.map((o, i) => (
-          <SelectItem key={i} value={String(i)} title={o.description}>
+          <SelectItem key={i} value={i} title={o.description}>
             {o.label}
           </SelectItem>
         ))}
@@ -437,19 +408,18 @@ function Radios(p: ControlProps) {
     <RadioGroup
       id={id}
       aria-labelledby={labelId(id)}
-      value={index < 0 ? '' : String(index)}
-      onValueChange={(v) => {
-        choose(Number(v));
+      value={index < 0 ? null : index}
+      onValueChange={(i) => {
+        if (typeof i === 'number') choose(i);
         touch();
       }}
       disabled={disabled}
-      orientation="horizontal"
       aria-invalid={invalid(field)}
       className="flex flex-wrap gap-x-6 gap-y-3"
     >
       {options.map((o, i) => (
         <Field key={i} orientation="horizontal" className="w-fit" title={o.description}>
-          <RadioGroupItem id={`${id}-${i}`} value={String(i)} aria-invalid={invalid(field)} />
+          <RadioGroupItem id={`${id}-${i}`} value={i} aria-invalid={invalid(field)} />
           <FieldLabel htmlFor={`${id}-${i}`} className="font-normal">
             {o.label}
           </FieldLabel>
@@ -467,11 +437,11 @@ function Segmented(p: ControlProps) {
     <ToggleGroup
       id={id}
       aria-labelledby={labelId(id)}
-      type="single"
       variant="outline"
-      value={index < 0 ? '' : String(index)}
-      onValueChange={(v) => {
-        if (v === '') return;
+      value={index < 0 ? [] : [String(index)]}
+      onValueChange={(values) => {
+        const [v] = values;
+        if (v === undefined) return;
         choose(Number(v));
         touch();
       }}
@@ -490,11 +460,12 @@ function CheckboxControl({ field, id, disabled, set, touch }: ControlProps) {
   return (
     <Checkbox
       id={id}
-      checked={field.mixed ? 'indeterminate' : field.value === true}
+      checked={!field.mixed && field.value === true}
+      indeterminate={field.mixed}
       disabled={disabled}
       aria-invalid={invalid(field)}
       onCheckedChange={(v) => {
-        set(v === true);
+        set(v);
         touch();
       }}
     />
@@ -532,10 +503,11 @@ function SliderControl({ field, id, disabled, set, touch, props }: ControlProps)
         max={d.max ?? 100}
         step={d.step ?? (percent ? 0.01 : 1)}
         disabled={disabled}
-        onValueChange={([v]) => {
-          if (v !== undefined) set(v);
+        onValueChange={(v) => {
+          const n = Array.isArray(v) ? v[0] : v;
+          if (n !== undefined) set(n);
         }}
-        onValueCommit={touch}
+        onValueCommitted={touch}
       />
       <output htmlFor={id} className={cn('min-w-12 text-right text-sm text-muted-foreground tabular-nums', field.mixed && 'italic')}>
         {field.mixed ? MIXED : shown}
@@ -574,18 +546,20 @@ function DatePicker(p: ControlProps) {
           if (!o) touch();
         }}
       >
-        <PopoverTrigger asChild>
-          <Button
-            id={id}
-            variant="outline"
-            disabled={disabled}
-            aria-invalid={invalid(field)}
-            data-empty={!day}
-            className="min-w-0 flex-1 justify-between font-normal data-[empty=true]:text-muted-foreground"
-          >
-            {day ? day.toLocaleDateString(undefined, { dateStyle: 'medium' }) : field.mixed ? MIXED : 'Pick a date'}
-            <CalendarIcon className="text-muted-foreground" />
-          </Button>
+        <PopoverTrigger
+          render={
+            <Button
+              id={id}
+              variant="outline"
+              disabled={disabled}
+              aria-invalid={invalid(field)}
+              data-empty={!day}
+              className="min-w-0 flex-1 justify-between font-normal data-[empty=true]:text-muted-foreground"
+            />
+          }
+        >
+          {day ? day.toLocaleDateString(undefined, { dateStyle: 'medium' }) : field.mixed ? MIXED : 'Pick a date'}
+          <CalendarIcon className="text-muted-foreground" />
         </PopoverTrigger>
         <PopoverContent className="w-auto overflow-hidden p-0" align="start">
           <Calendar
@@ -792,7 +766,7 @@ function Checks(p: ControlProps) {
             checked={o.checked}
             disabled={p.disabled}
             onCheckedChange={(v) => {
-              checks.toggle(i, v === true);
+              checks.toggle(i, v);
               p.touch();
             }}
           />
@@ -894,7 +868,7 @@ function Entries(p: ControlProps) {
 
 /** Which sections of an accordion start open: none, the first, or all. */
 const startsOpen = (p: ControlProps, count: number) =>
-  p.props.open === 'all' ? Array.from({ length: count }, (_, i) => String(i)) : p.props.open === 'first' ? ['0'] : [];
+  p.props.open === 'all' ? Array.from({ length: count }, (_, i) => i) : p.props.open === 'first' ? [0] : [];
 
 /**
  * Items as sections that open and close, each headed by its name (the list's `namedBy`, else its
@@ -909,12 +883,12 @@ function ListAccordion(p: ControlProps) {
   const reorder = useReorder(list, p.disabled);
   return (
     <div className="flex flex-col gap-3">
-      <Accordion type="multiple" defaultValue={startsOpen(p, list.items.length)} className="rounded-lg border px-4 empty:hidden">
+      <Accordion multiple defaultValue={startsOpen(p, list.items.length)} className="rounded-lg border px-4 empty:hidden">
         {list.items.map(({ index: i, label, render }) => (
           // By position, as a list's rows are: a section keeps its open state while its item changes.
           <AccordionItem
             key={i}
-            value={String(i)}
+            value={i}
             className="data-[dragging]:opacity-40 data-[drop=after]:shadow-[0_2px_0_var(--color-ring)] data-[drop=before]:shadow-[0_-2px_0_var(--color-ring)]"
             {...reorder.row(i)}
           >
@@ -939,9 +913,9 @@ function EntriesAccordion(p: ControlProps) {
   const entries = entriesOf(p);
   return (
     <div className="flex flex-col gap-3">
-      <Accordion type="multiple" defaultValue={startsOpen(p, entries.entries.length)} className="rounded-lg border px-4 empty:hidden">
+      <Accordion multiple defaultValue={startsOpen(p, entries.entries.length)} className="rounded-lg border px-4 empty:hidden">
         {entries.entries.map((entry, i) => (
-          <AccordionItem key={i} value={String(i)}>
+          <AccordionItem key={i} value={i}>
             {/* The trigger sits in a heading of its own, which takes the row's room. */}
             <div className="flex items-center gap-1 [&>h3]:min-w-0 [&>h3]:flex-1">
               <AccordionTrigger className="min-w-0 py-3">{entry.name ?? entry.label}</AccordionTrigger>
@@ -964,8 +938,11 @@ function Variant(p: ControlProps) {
   return (
     <div className="flex flex-col gap-6">
       <Select
-        value={variant.current ?? ''}
-        onValueChange={variant.choose}
+        items={variant.options.map((o) => ({ label: o.label, value: o.name }))}
+        value={variant.current ?? null}
+        onValueChange={(name) => {
+          if (typeof name === 'string') variant.choose(name);
+        }}
         onOpenChange={(open) => {
           if (!open) p.touch();
         }}

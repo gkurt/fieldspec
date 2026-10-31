@@ -7,6 +7,7 @@
  */
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 @source '../../examples/renderers/shadcn.tsx';
 @source '../../examples/renderers/shadcn/ui';
 
@@ -54,27 +55,30 @@
  * What preflight would do, inside the demo and the popovers it opens only. Before the utilities, at
  * a class's weight: the utilities win, and the HTML set's styles on this page do not.
  */
-:is(.shadcn-host, [data-slot='popover-content'], [data-slot='select-content']) :where(*, ::before, ::after) {
+:is(.shadcn-host, [data-slot='popover-content'], [data-slot='select-content'], [data-slot='combobox-content'])
+  :where(*, ::before, ::after) {
   margin: 0;
   padding: 0;
   border: 0 solid var(--color-border);
   outline-color: color-mix(in oklab, var(--color-ring) 50%, transparent);
 }
-:is(.shadcn-host, [data-slot='popover-content'], [data-slot='select-content']) :where(button, input, select, textarea) {
+:is(.shadcn-host, [data-slot='popover-content'], [data-slot='select-content'], [data-slot='combobox-content'])
+  :where(button, input, select, textarea) {
   font: inherit;
   letter-spacing: inherit;
   color: inherit;
   background-color: transparent;
   border-radius: 0;
 }
-:is(.shadcn-host, [data-slot='popover-content'], [data-slot='select-content']) :where(svg) {
+:is(.shadcn-host, [data-slot='popover-content'], [data-slot='select-content'], [data-slot='combobox-content']) :where(svg) {
   display: block;
   vertical-align: middle;
 }
-:is(.shadcn-host, [data-slot='popover-content'], [data-slot='select-content']) :where(table) {
+:is(.shadcn-host, [data-slot='popover-content'], [data-slot='select-content'], [data-slot='combobox-content']) :where(table) {
   border-collapse: collapse;
 }
-:is(.shadcn-host, [data-slot='popover-content'], [data-slot='select-content']) :where(h1, h2, h3, h4, h5, h6) {
+:is(.shadcn-host, [data-slot='popover-content'], [data-slot='select-content'], [data-slot='combobox-content'])
+  :where(h1, h2, h3, h4, h5, h6) {
   font-size: inherit;
   font-weight: inherit;
 }
