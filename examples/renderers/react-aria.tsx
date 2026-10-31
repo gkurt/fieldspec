@@ -1,15 +1,28 @@
 /**
- * React Aria Components as fieldspec renderers. fieldspec keeps the form (values, conditions,
+ * An example renderer set: React Aria Components drawing fieldspec forms. fieldspec keeps the form (values, conditions,
  * validation, lists, layouts); React Aria draws its controls: text and number fields, sliders,
  * switches, checkboxes, selects, radio and toggle-button groups, date pickers and colour
  * fields, each with its own label, help and errors, and their accessibility. Controls React
- * Aria has none for here (lists, records, variants, files) keep fieldspec's own.
+ * Aria has none for here (lists, records, variants, files) keep the HTML set's (./html.tsx).
+ * Needs `react-aria-components` and `@internationalized/date`.
  *
  * Use `reactAriaRenderers` with `FormView`. React Aria is unstyled: `reactAriaStyles` is a
- * starting look, over fieldspec's `defaultStyles`.
+ * starting look, over the HTML set's `htmlStyles`.
  */
 import type { CalendarDate, CalendarDateTime } from '@internationalized/date';
 import { parseDate, parseDateTime } from '@internationalized/date';
+import { defaultControl, deref, optionsOf, type EnumField, type FieldDecl, type LayoutNode } from 'fieldspec';
+import {
+  defineRenderers,
+  parserFor,
+  useParsedText,
+  useRenderer,
+  type ControlProps,
+  type ElementRenderer,
+  type FieldProps,
+  type FieldState,
+  type Renderers,
+} from 'fieldspec/react';
 import type { ReactNode } from 'react';
 import {
   Button,
@@ -51,22 +64,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from 'react-aria-components';
-import { deref } from './defs.ts';
-import { optionsOf } from './kinds.ts';
-import { defaultControl, type LayoutNode } from './layout.ts';
-import {
-  defaultRenderers,
-  defineRenderers,
-  parserFor,
-  useParsedText,
-  useRenderer,
-  type ControlProps,
-  type ElementRenderer,
-  type FieldProps,
-  type FieldState,
-  type Renderers,
-} from './react/index.tsx';
-import type { EnumField, FieldDecl } from './types.ts';
+import { htmlRenderers } from './html.tsx';
 
 const CONTAINER_KINDS = new Set(['object', 'variant', 'array', 'set', 'record', 'map']);
 
@@ -364,7 +362,7 @@ const itemsOf = (p: Pick<ControlProps, 'form' | 'field'>) =>
 function AriaChecks(p: ControlProps) {
   const f = p.field;
   const items = itemsOf(p);
-  if (items.type !== 'enum') return defaultRenderers.list!(p);
+  if (items.type !== 'enum') return htmlRenderers.list!(p);
   const options = optionsOf(items as EnumField, { values: p.form.values }, f.scope);
   const set = f.value instanceof Set ? f.value : new Set();
   return (
@@ -530,7 +528,7 @@ function AriaField(p: FieldProps) {
     form: p.form,
   });
   const checks = drawer === AriaChecks && itemsOf(p).type === 'enum';
-  if ((CONTAINER_KINDS.has(field.decl.type) && !checks) || !ARIA_RENDERERS.has(drawer)) return defaultRenderers.field!(p);
+  if ((CONTAINER_KINDS.has(field.decl.type) && !checks) || !ARIA_RENDERERS.has(drawer)) return htmlRenderers.field!(p);
   return (
     <div
       className="fs-field fs-aria-field"
@@ -544,20 +542,23 @@ function AriaField(p: FieldProps) {
 }
 
 /** The default renderers, with React Aria's controls laid over. */
-export const reactAriaRenderers: Renderers = defineRenderers({
-  field: AriaField,
-  input: AriaInput,
-  textarea: AriaTextarea,
-  slider: AriaSlider,
-  checkbox: AriaCheckbox,
-  switch: AriaSwitch,
-  select: AriaSelect,
-  radio: AriaRadio,
-  segmented: AriaSegmented,
-  checks: AriaChecks,
-  date: AriaDate,
-  color: AriaColor,
-});
+export const reactAriaRenderers: Renderers = {
+  ...htmlRenderers,
+  ...defineRenderers({
+    field: AriaField,
+    input: AriaInput,
+    textarea: AriaTextarea,
+    slider: AriaSlider,
+    checkbox: AriaCheckbox,
+    switch: AriaSwitch,
+    select: AriaSelect,
+    radio: AriaRadio,
+    segmented: AriaSegmented,
+    checks: AriaChecks,
+    date: AriaDate,
+    color: AriaColor,
+  }),
+};
 
 /**
  * A starting look for React Aria's controls, using its state attributes. Use with `defaultStyles`.

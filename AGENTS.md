@@ -26,7 +26,7 @@ formatter and `tsc` own all mechanical style rules. Fix the code; don't disable 
 
 ## Project Structure
 
-One package, `fieldspec`, ESM-only, with five entry points (see `exports` in `package.json`).
+One package, `fieldspec`, ESM-only, with three entry points (see `exports` in `package.json`).
 Parent-directory imports go through the `#*` alias (`#src/form.ts`), siblings use `./`.
 
 - `src/types.ts` — the serialized format: specs, field declarations, expressions. Plain JSON.
@@ -45,11 +45,12 @@ Parent-directory imports go through the `#*` alias (`#src/form.ts`), siblings us
 - `src/jsonschema.ts`, `src/zod.ts`, `src/standard.ts`, `src/jsonrender.ts` — interop.
 - `src/prompt.ts`, `src/schema.ts` — a system prompt and the format's JSON Schema, for agents.
 - `src/version.ts` — `VERSION`, written by the Tegami config on each release (see below).
-- `src/react/index.tsx` — `fieldspec/react`: `FormView`, the renderer protocol, built-in renderers.
-- `src/dialkit.tsx`, `src/react-aria.tsx` — renderer sets drawing with DialKit and React Aria.
+- `src/react/index.tsx` — `fieldspec/react`: `FormView`, the renderer protocol, text parsing. No look of its own.
+- `src/react/controls.tsx` — what container and choice controls do: `listOf`, `entriesOf`, `variantOf`, `objectOf`, `choicesOf`, `checksOf`.
 - `test/` — `bun test` suites; `test/stress/` generates random specs and checks invariants.
 - `site/` — the website (Vite, React), deployed to GitHub Pages by `pages.yml`.
-- `demo/` — a design-tool demo app; `examples/` — a custom format used by tests and the demo.
+- `examples/renderers/` — renderer sets to copy (HTML, DialKit, React Aria), not shipped; they import fieldspec by its package name, which the `fieldspec@dev` condition resolves to source.
+- `examples/design.ts` — a custom format used by tests and the demo; `demo/` — a design-tool demo app.
 - `experiments/` — studies with small models (spec generation, filling); their `out/` is data.
 - `schema/spec.json` — the generated JSON Schema of the format, shipped and served by unpkg.
 
@@ -64,7 +65,8 @@ Parent-directory imports go through the `#*` alias (`#src/form.ts`), siblings us
 - **Headless first.** `createForm` holds values and computes each field's state and a
   `LayoutNode` tree; it knows nothing of React. `fieldspec/react` walks that tree and asks
   renderers (a table keyed by element name, or a function) to draw each node. Renderers get
-  props by role: `LayoutProps`, `PartProps`, `FieldProps`, `ControlProps`.
+  props by role: `LayoutProps`, `PartProps`, `FieldProps`, `ControlProps`. fieldspec ships no
+  look: behaviour lives in `src/react/controls.tsx`, visuals in `examples/renderers/`.
 - **Names**: built-in names are lowercase, user-defined ones capitalized.
 - **Versioning**: `VERSION` in `src/version.ts` and the `$id` of `schema/spec.json` carry the
   package version. Don't edit them by hand: a Tegami changelog entry bumps the version, and

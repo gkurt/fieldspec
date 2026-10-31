@@ -35,9 +35,8 @@ npm install fieldspec
 ```
 
 ES modules only, with types; from CommonJS, use `import()`. `fieldspec/react` needs `react` 19
-or later, `fieldspec/zod` needs `zod` 4, `fieldspec/dialkit` needs `dialkit` 2 (with `motion`),
-and `fieldspec/react-aria` needs `react-aria-components` 1.22 and `@internationalized/date` 3.12
-or later. All are optional peer dependencies, so the core needs none of them.
+or later and `fieldspec/zod` needs `zod` 4. Both are optional peer dependencies, so the core
+needs neither.
 
 ## Names
 
@@ -153,13 +152,30 @@ control edits, so `"render": "slider"` on a string, or `"collapsed": "yes"`, is 
 "groups": { "delivery": { "label": "Delivery", "render": { "type": "scroll", "props": { "maxHeight": "18rem" } } } }
 ```
 
-`fieldspec/react` draws it with one renderer table keyed by element name: `FormView`,
-`useForm`, `useField`, and `defineRenderers({ GradientPicker })` to add or replace
-any element. A control with no renderer falls back to its kind's default control. Each
-renderer gets its role's props: `ControlProps` (the field, `set`, `touch`, `disabled`, `id`),
-`FieldProps` (the field and its `control()`), `LayoutProps` (`children`) or `PartProps`.
-`defineRenderers` types a built-in element's renderer for you; for your own elements, say
-which, as in `function GradientPicker(p: ControlProps)`.
+`fieldspec/react` draws it, but not its look: `FormView` walks the layout tree and asks the
+renderers you give it to draw each element. fieldspec decides what a form holds and does; how it
+looks is yours. [examples/renderers](examples/renderers) has three sets to copy and make your
+own: plain HTML (`html.tsx`, with `htmlStyles`), [DialKit](https://github.com/joshpuckett/dialkit)'s
+controls (`dialkit.tsx`) and [React Aria Components](https://react-spectrum.adobe.com/react-aria/)
+(`react-aria.tsx`, accessible and unstyled, laid over the HTML set). The website draws every form
+with them.
+
+```tsx
+import { FormView, useForm } from "fieldspec/react";
+import { htmlRenderers, htmlStyles } from "./renderers/html"; // copied from examples/renderers
+
+<style>{htmlStyles}</style>
+<FormView form={useForm(spec)} renderers={htmlRenderers} />
+```
+
+A renderer table is keyed by element name; `defineRenderers({ input: MyInput })` types each
+built-in element's renderer by its role, and tables layer by spreading
+(`{ ...htmlRenderers, ...defineRenderers({ input: MyInput }) }`). Each renderer gets its role's
+props: `ControlProps` (the field, `set`, `touch`, `disabled`, `id`), `FieldProps` (the field
+and its `control()`), `LayoutProps` (`children`) or `PartProps`. For your own elements, say
+which, as in `function GradientPicker(p: ControlProps)`. A control with no renderer falls back
+to its kind's default control, then `input`; a layout element to `stack`, then its bare
+children; a field with no `field` renderer is its bare control; a part with none is not drawn.
 
 Renderers can also be a function, called for each element about to be drawn with what it is
 (`element`, `role`, its `node` and `field`, and `explicit`: whether the spec names the
@@ -169,25 +185,30 @@ stands:
 
 ```tsx
 const renderers: ResolveRenderer = (want, next) => {
-  if (want.role === "control" && want.field?.decl.format === "email") return EmailInput; // every email
-  if (want.element === "select" && !want.explicit) return Chips; // where the spec left it to the kind
+  if (want.role === 'control' && want.field?.decl.format === 'email') return EmailInput; // every email
+  if (want.element === 'select' && !want.explicit) return Chips; // where the spec left it to the kind
   return next();
 };
-<FormView form={form} renderers={renderers} />
-<FormView form={form} renderers={extendRenderers(dialkitRenderers, renderers)} />
+<FormView form={form} renderers={extendRenderers(htmlRenderers, renderers)} />;
 ```
 
 Return renderers made once, at module level: one made inside the function is a new component
-each time, and React remounts the control, losing its focus and what is being typed. A text
-control of your own gets the built-in one's typing rules (what is typed stays until it parses)
-from `useParsedText(props, parserFor(form.format, kind))`. List items
-reorder by dragging their handle, or with the arrow keys while it has the focus, and a record's or map's keys are
-edited in place: a rename keeps the entry's value and position, and a taken or unreadable key is
-refused with the reason. An absent object (an optional one, say) shows an Add button rather
-than its fields, and an optional one that is there can be removed, so a definition that may
-contain itself draws only as deep as its values go. A container field's label and a titled
-group's title both sit on their frame's border, and a list's or record's items show no label
-of their own: their position or key names them (screen readers still hear it).
+each time, and React remounts the control, losing its focus and what is being typed.
+
+What controls do comes with `fieldspec/react`, so a renderer set only draws:
+
+- `listOf(props)`: a list's items (each with its `render()`), `add`, `remove`, `move`, `canAdd`.
+- `entriesOf(props)`: a record's or map's entries; `add(typedKey)` and `rename(key, typed)`
+  return why a key is refused (taken, or unreadable as the map's key kind), and a rename keeps
+  the entry's value and position.
+- `objectOf(props)`: whether an object is there, `add`, `remove`, `render()`. Offer an absent one
+  (an optional one, say) rather than drawing it, so a definition that may contain itself draws
+  only as deep as its values go.
+- `variantOf(props)`: the current variant, the options, `choose`, `render()`.
+- `choicesOf(props)`: an enum's options and the chosen one, by position; `checksOf(props)`: a
+  set of enum values as checkboxes.
+- `useParsedText(props, parserFor(form.format, kind))`: a text control's typing rules: what is
+  typed stays until it parses, and a value set from elsewhere replaces it.
 
 ## Extending
 
@@ -224,7 +245,7 @@ const [newTitle, newCard] = common.apply(form.values);
 - `common.dropped` lists what was left out, and why: `{ path: "/corner", reason: "is not in spec 0" }`,
   `"has no option every spec allows"`, `"is an enum in spec 0 but a string in spec 1"`.
 - `common.values` are the first spec's values, and `common.mixed` the pointers where the specs'
-  values differ. A form marks those fields `mixed` until they are edited; the React controls
+  values differ. A form marks those fields `mixed` until they are edited; the example renderers
   show "Mixed", and checkboxes and switches are indeterminate.
 - `common.apply(edited)` writes only what changed, to every spec that has the field, so what
   each one has of its own is kept. An edit inside a variant reaches only the values that are
@@ -270,23 +291,6 @@ checks meaning (references, conditions, defaults).
   removes its items with the `removeItem` action: declare `JSON_RENDER_ACTIONS` in your catalog
   and pass `jsonRenderActions(store)` as handlers. A `scroll` box is a `Stack` with Tailwind
   classes (`overflow-y-auto max-h-[18rem]`), so Tailwind must see the class.
-- `fieldspec/dialkit`: a form drawn with [DialKit](https://github.com/joshpuckett/dialkit)'s
-  controls. fieldspec keeps the form (values, conditions, validation, lists, layouts); DialKit
-  draws its text, sliders, toggles, selects, colours, and folders for objects, groups and
-  collapsibles. Lists, records, sets, variants, dates, files and passwords keep fieldspec's own
-  controls, inside a folder. `<DialKitView form={form} title="Card" />` is an inline DialKit
-  panel; `dialkitRenderers` (with `dialkitStyles`) go in your own `FormView` inside a
-  `dialkit-root`. Import `dialkit/styles.css` once. DialKit's controls have no disabled state, so
-  a disabled field's row is made `inert`.
-- `fieldspec/react-aria`: a form drawn with
-  [React Aria Components](https://react-spectrum.adobe.com/react-aria/): text and number fields
-  (with steppers), sliders, switches, checkboxes, selects, radio and toggle-button groups,
-  checkbox groups for sets, date pickers with a calendar, and colour fields with swatches. Each
-  control carries its own label, help and errors in React Aria's slots. Lists, records,
-  variants, objects and files keep fieldspec's own controls and frame.
-  `<FormView form={form} renderers={reactAriaRenderers} />`; React Aria is unstyled, and
-  `reactAriaStyles` (over `defaultStyles`) is a starting look, coloured by `--fs-accent`,
-  `--fs-bg`, `--fs-border`, `--fs-muted` and `--fs-danger`.
 - `prompt(format)` and `metaSchema(format)`: a system prompt and a JSON Schema for structured
   outputs, both generated from the format's kinds, elements and presets. The prompt tells
   agents to start specs with `$schema`.

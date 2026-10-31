@@ -20,6 +20,6 @@ jobs:
       - run: bun run schema --check
       - run: bun run build
       # The built entry points load in Node, by the names consumers import them by.
-      - run: node --input-type=module -e "for (const e of ['fieldspec', 'fieldspec/react', 'fieldspec/zod', 'fieldspec/dialkit', 'fieldspec/react-aria']) await import(e)"
+      - run: node --input-type=module -e "for (const e of ['fieldspec', 'fieldspec/react', 'fieldspec/zod']) await import(e)"
       - run: bun run check:package
       - run: bun run site:build

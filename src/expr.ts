@@ -4,10 +4,21 @@ import type { ComparisonOp, Condition, ConditionLeaf, Expr } from './types.ts';
 
 /** A value as text: nothing for none, and JSON for objects and lists, which have no text of their own. */
 export function textOf(value: unknown): string {
-  if (value === undefined || value === null) return '';
-  if (value instanceof Date) return value.toISOString();
-  if (typeof value === 'object') return JSON.stringify(value);
-  return String(value);
+  switch (typeof value) {
+    case 'string':
+      return value;
+    case 'number':
+    case 'boolean':
+    case 'bigint':
+      return String(value);
+    case 'object':
+      if (value === null) return '';
+      return value instanceof Date ? value.toISOString() : JSON.stringify(value);
+    case 'undefined':
+    case 'function':
+    case 'symbol':
+      return '';
+  }
 }
 
 /** What a `$computed` function is handed besides its arguments. */

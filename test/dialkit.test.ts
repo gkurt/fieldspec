@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
 import type { act, createElement } from 'react';
 import type * as ClientModule from 'react-dom/client';
-import type * as DialKitModule from '#src/dialkit.tsx';
+import type * as DialKitModule from '#examples/renderers/dialkit.tsx';
 import { createForm, define } from '#src/index.ts';
 import type { RenderRequest } from '#src/react/index.tsx';
 
@@ -36,7 +36,7 @@ describe('DialKitView', () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     React = await import('react');
     client = await import('react-dom/client');
-    ui = await import('#src/dialkit.tsx');
+    ui = await import('#examples/renderers/dialkit.tsx');
   });
   afterAll(() => GlobalRegistrator.unregister());
 

@@ -1,5 +1,6 @@
 /** Edit a spec as JSON: the checker, the form and the values follow as you type. */
 import { Component, useMemo, useState, type ReactNode } from 'react';
+import { htmlRenderers } from '#examples/renderers/html.tsx';
 import { checkSpec, createForm, type Fault, type Form, type Spec } from '#src/index.ts';
 import { FormView, useFormVersion } from '#src/react/index.tsx';
 import { Json } from './Code.tsx';
@@ -99,7 +100,7 @@ function Faults({ faults, error }: { faults: readonly Fault[]; error?: string })
 }
 
 function Live({ form }: { form: Form }) {
-  return <FormView form={form} />;
+  return <FormView form={form} renderers={htmlRenderers} />;
 }
 
 function Values({ form }: { form: Form }) {

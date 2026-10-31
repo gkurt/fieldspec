@@ -4,7 +4,8 @@
  */
 import 'dialkit/styles.css';
 import { useEffect, useState } from 'react';
-import { DialKitView } from '#src/dialkit.tsx';
+import { DialKitView } from '#examples/renderers/dialkit.tsx';
+import { htmlRenderers } from '#examples/renderers/html.tsx';
 import { define, type Infer } from '#src/index.ts';
 import { FormView, useForm, useFormVersion } from '#src/react/index.tsx';
 
@@ -38,7 +39,7 @@ export const cardSpec = define({
 });
 
 export const cardSource = `import "dialkit/styles.css";
-import { DialKitView } from "fieldspec/dialkit";
+import { DialKitView } from "./renderers/dialkit"; // copied from fieldspec's examples/renderers
 import { useForm } from "fieldspec/react";
 
 function Card() {
@@ -62,13 +63,13 @@ export function DialKitDemo() {
       </div>
       <div className="dial-pair">
         <figure>
-          <figcaption>fieldspec/react</figcaption>
+          <figcaption>examples/renderers/html</figcaption>
           <div className="card form-card" data-fieldspec="">
-            <FormView form={form} />
+            <FormView form={form} renderers={htmlRenderers} />
           </div>
         </figure>
         <figure>
-          <figcaption>fieldspec/dialkit</figcaption>
+          <figcaption>examples/renderers/dialkit</figcaption>
           <DialKitView form={form} title="Card" theme={theme} className="dial-host" />
         </figure>
       </div>

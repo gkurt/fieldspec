@@ -1,8 +1,9 @@
 /** fieldspec's homepage. Every form, fault and output on it comes from the library, live. */
 import { StrictMode, useMemo, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { htmlRenderers, htmlStyles } from '#examples/renderers/html.tsx';
 import { parse, prompt, toJSONSchema, toJsonRender, VERSION, type Form } from '#src/index.ts';
-import { defaultStyles, FormView, useForm, useFormVersion } from '#src/react/index.tsx';
+import { FormView, useForm, useFormVersion } from '#src/react/index.tsx';
 import { toZod } from '#src/zod.ts';
 import { Canvas } from './Canvas.tsx';
 import { Footer, Heading, Nav, REPO } from './chrome.tsx';
@@ -39,7 +40,7 @@ function App() {
   const hero = useForm(account, { values: { firstName: 'Ada', lastName: 'Lovelace', email: 'ada@' } });
   return (
     <>
-      <style>{defaultStyles}</style>
+      <style>{htmlStyles}</style>
       <Nav links={LINKS} />
       <main>
         <Hero form={hero} />
@@ -105,16 +106,16 @@ function App() {
         <Interop form={hero} />
         <section className="section" id="dialkit">
           <Heading kicker="With DialKit" title="The same form, in DialKit's controls">
-            <code>fieldspec/dialkit</code> draws a form with <a href="https://github.com/joshpuckett/dialkit">DialKit</a>'s sliders,
-            toggles, selects, colour pickers and folders, while fieldspec keeps the values, conditions and checks. Lists and other shapes
-            DialKit has no control for keep fieldspec's own, inside a folder. Both views below are one form; edit either.
+            The DialKit example renderers draw a form with <a href="https://github.com/joshpuckett/dialkit">DialKit</a>'s sliders, toggles,
+            selects, colour pickers and folders, while fieldspec keeps the values, conditions and checks. Lists and other shapes DialKit has
+            no control for keep the HTML set's, inside a folder. Both views below are one form; edit either.
           </Heading>
           <DialKitDemo />
           <Code code={cardSource} label="card.tsx" className="dial-code" />
         </section>
         <section className="section" id="react-aria">
           <Heading kicker="With React Aria" title="Accessible controls, from the same spec">
-            <code>fieldspec/react-aria</code> draws a form with{' '}
+            The React Aria example renderers draw a form with{' '}
             <a href="https://react-spectrum.adobe.com/react-aria/">React Aria Components</a>: number fields with steppers, a date picker
             with a calendar, radio and toggle-button groups, checkbox groups, colour fields with swatches. Each control carries its own
             label, help and errors, wired the way React Aria wires them. fieldspec keeps the values, conditions and checks; pick "Online" to
@@ -127,7 +128,7 @@ function App() {
         <Sturdy />
         <Start />
       </main>
-      <Footer>Every form on this page is drawn by fieldspec's own React renderer.</Footer>
+      <Footer>Every form on this page is drawn by FormView with the example renderers.</Footer>
     </>
   );
 }
@@ -174,7 +175,7 @@ function Hero({ form }: { form: Form }) {
           <Code code={view === 'spec' ? accountSource : accountType} />
         </div>
         <div className="card form-card hero-form" data-fieldspec="">
-          <FormView form={form} />
+          <FormView form={form} renderers={htmlRenderers} />
           <div className={`result ${result.ok ? 'good' : 'bad'}`}>
             <code>parse(account, json)</code>
             <span>{result.ok ? 'ok: true' : result.issues.map((i) => `${i.path} ${i.message}`).join(' · ')}</span>
@@ -188,7 +189,7 @@ function Hero({ form }: { form: Form }) {
 const OUTPUTS: readonly [string, string, string][] = [
   ['TypeScript', 'Infer<typeof spec>', 'The value type, inferred through presets, definitions, variants and recursion.'],
   ['Validation', 'parse(spec, json)', 'Typed values, or every issue with a JSON Pointer path and a code.'],
-  ['Forms', 'layout(spec)', 'A headless tree any renderer walks. A React renderer comes with it.'],
+  ['Forms', 'layout(spec)', 'A headless tree any renderer walks. FormView draws it in React with renderers you bring.'],
   ['JSON Schema', 'toJSONSchema(spec)', 'Draft 2020-12, both ways, with x- keywords for what it cannot say.'],
   ['Zod', 'toZod(spec)', "A Zod schema refined with the spec's own conditional rules. fromZod goes back."],
   ['Standard Schema', 'spec["~standard"]', 'Every defined spec validates wherever Standard Schema is accepted.'],
@@ -252,7 +253,7 @@ function LiveForm({ spec, values, view }: { spec: Parameters<typeof useForm>[0];
   const form = useForm(spec, values === undefined ? undefined : { values });
   return (
     <div className="card form-card" data-fieldspec="">
-      <FormView key={view ?? ''} form={form} view={view} />
+      <FormView key={view ?? ''} form={form} view={view} renderers={htmlRenderers} />
     </div>
   );
 }
@@ -447,7 +448,8 @@ function Sturdy() {
 }
 
 const START = `import { define, parse } from "fieldspec";
-import { FormView, useForm, defaultStyles } from "fieldspec/react";
+import { FormView, useForm } from "fieldspec/react";
+import { htmlRenderers } from "./renderers/html"; // copied from fieldspec's examples/renderers
 
 const settings = define({
   fields: {
@@ -458,7 +460,7 @@ const settings = define({
 
 function Settings({ values }) {
   const form = useForm(settings, { values });
-  return <FormView form={form} />;
+  return <FormView form={form} renderers={htmlRenderers} />;
 }`;
 
 function Start() {
@@ -467,7 +469,8 @@ function Start() {
       <div className="feature-copy">
         <Heading kicker="Get started" title="Define, parse, draw">
           <code>define</code> checks the spec and keeps its type. <code>parse</code> turns JSON into typed values. <code>FormView</code>{' '}
-          draws the form; or walk <code>layout(spec)</code> with a renderer of your own.
+          draws it with renderers you bring: copy a set from the repository's <code>examples/renderers</code> (plain HTML, DialKit or React
+          Aria) and make it yours, or walk <code>layout(spec)</code> yourself.
         </Heading>
         <div className="ctas">
           <a className="button primary" href={REPO}>

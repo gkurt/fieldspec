@@ -1,5 +1,6 @@
 /** Several canvas nodes of different kinds, selected together and edited with one form: `commonFields`. */
 import { useEffect, useMemo, useState } from 'react';
+import { htmlRenderers } from '#examples/renderers/html.tsx';
 import { commonFields, createForm, define } from '#src/index.ts';
 import { FormView, useFormVersion } from '#src/react/index.tsx';
 
@@ -119,7 +120,11 @@ export function Canvas() {
         </p>
       </div>
       <div className="card form-card" data-fieldspec="">
-        {selected.length === 0 ? <p className="caption">Select a node to edit it.</p> : <FormView key={selected.join(',')} form={form} />}
+        {selected.length === 0 ? (
+          <p className="caption">Select a node to edit it.</p>
+        ) : (
+          <FormView key={selected.join(',')} form={form} renderers={htmlRenderers} />
+        )}
       </div>
     </div>
   );

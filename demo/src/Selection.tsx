@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { htmlRenderers } from '#examples/renderers/html.tsx';
 import { commonFields, createForm, decode, define, encode, SCHEMA_URL, type Spec } from '#src/index.ts';
 import { FormView, useFormVersion } from '#src/react/index.tsx';
 import { JsonTree } from './JsonTree.tsx';
@@ -167,7 +168,11 @@ export function Selection() {
             Fields any has
           </button>
         </div>
-        {selected.length === 0 ? <p className="status">Select a node.</p> : <FormView key={`${selected.join(',')}:${match}`} form={form} />}
+        {selected.length === 0 ? (
+          <p className="status">Select a node.</p>
+        ) : (
+          <FormView key={`${selected.join(',')}:${match}`} form={form} renderers={htmlRenderers} />
+        )}
       </section>
       <section className="pane output">
         <div role="tablist">

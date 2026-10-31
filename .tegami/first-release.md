@@ -21,4 +21,4 @@ JSON Schema and Zod (`fieldspec/zod`) both ways, Standard Schema, and json-rende
 
 ### Rendering
 
-`fieldspec/react` draws a form with a renderer table or a function that picks a renderer per element, each renderer typed by its role. `fieldspec/dialkit` and `fieldspec/react-aria` draw forms with DialKit's and React Aria's controls.
+`fieldspec/react` draws a form with renderers you bring: a table or a function that picks one per element, each typed by its role. It ships no look of its own; `listOf`, `entriesOf`, `variantOf`, `objectOf`, `choicesOf` and `checksOf` carry what controls do, and the repository's `examples/renderers` are sets to copy (plain HTML, DialKit, React Aria).

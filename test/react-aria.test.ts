@@ -3,8 +3,8 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
 import type { act, createElement } from 'react';
 import type * as ClientModule from 'react-dom/client';
+import type * as AriaModule from '#examples/renderers/react-aria.tsx';
 import { createForm, define } from '#src/index.ts';
-import type * as AriaModule from '#src/react-aria.tsx';
 import type * as UiModule from '#src/react/index.tsx';
 
 /** The part of React the tests use, imported once the DOM is registered. */
@@ -41,7 +41,7 @@ describe('React Aria renderers', () => {
     React = await import('react');
     client = await import('react-dom/client');
     ui = await import('#src/react/index.tsx');
-    aria = await import('#src/react-aria.tsx');
+    aria = await import('#examples/renderers/react-aria.tsx');
   });
   afterAll(() => GlobalRegistrator.unregister());
 

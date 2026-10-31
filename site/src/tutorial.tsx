@@ -4,8 +4,9 @@
  */
 import { StrictMode, useMemo, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { htmlRenderers, htmlStyles } from '#examples/renderers/html.tsx';
 import { toJSONSchema, type Form, type Spec } from '#src/index.ts';
-import { defaultStyles, FormView, useForm, useFormVersion } from '#src/react/index.tsx';
+import { FormView, useForm, useFormVersion } from '#src/react/index.tsx';
 import { Footer, Nav, REPO } from './chrome.tsx';
 import { Code, highlight, Json } from './Code.tsx';
 import * as L from './lessons.ts';
@@ -238,6 +239,7 @@ const STEPS: readonly Step[] = [
 
 const FROM_CODE = `import { checkSpec, define, parse, toJSONSchema, type Infer } from "fieldspec";
 import { FormView, useForm } from "fieldspec/react";
+import { htmlRenderers } from "./renderers/html"; // copied from fieldspec's examples/renderers
 
 // The spec above. define keeps its literal types for Infer.
 const service = define({ fields: { … }, groups: { … }, defs: { … }, layouts: { … } });
@@ -249,7 +251,7 @@ const schema = toJSONSchema(service);
 
 function Settings() {
   const form = useForm(service);
-  return <FormView form={form} view="tabs" />;
+  return <FormView form={form} view="tabs" renderers={htmlRenderers} />;
 }
 
 // A spec that arrives as JSON, from a file or a model, is checked first:
@@ -265,7 +267,7 @@ const LINKS = [
 function App() {
   return (
     <>
-      <style>{defaultStyles}</style>
+      <style>{htmlStyles}</style>
       <Nav links={LINKS} home="./" />
       <main>
         <header className="hero tutorial-hero" id="top">
@@ -323,7 +325,7 @@ function App() {
           </div>
         </section>
       </main>
-      <Footer>Every form on this page is drawn by fieldspec's own React renderer.</Footer>
+      <Footer>Every form on this page is drawn by FormView with the example renderers.</Footer>
     </>
   );
 }
@@ -364,7 +366,7 @@ function Live({ spec, view, type }: { spec: Spec; view?: string; type?: string }
         </div>
       )}
       <div className="card form-card" data-fieldspec="">
-        <FormView key={shown ?? ''} form={form} view={shown} />
+        <FormView key={shown ?? ''} form={form} view={shown} renderers={htmlRenderers} />
       </div>
       <div className="card lesson-out-card">
         <div className="tabs" role="tablist">

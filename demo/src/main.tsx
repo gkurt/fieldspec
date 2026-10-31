@@ -1,8 +1,9 @@
 import { StrictMode, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { design, type GradientValue } from '#examples/design.ts';
+import { htmlStyles } from '#examples/renderers/html.tsx';
 import { checkSpec, formatFaults, prompt, SCHEMA_URL, toJSONSchema, toJsonRender } from '#src/index.ts';
-import { defaultStyles, defineRenderers, FormView, useForm, useFormVersion, type ControlProps } from '#src/react/index.tsx';
+import { defineRenderers, FormView, useForm, useFormVersion, type ControlProps } from '#src/react/index.tsx';
 import { JsonTree, jsonTreeStyles } from './JsonTree.tsx';
 import { Selection, selectionStyles } from './Selection.tsx';
 
@@ -174,7 +175,7 @@ function App() {
   const [page, setPage] = useState<'form' | 'selection'>('form');
   return (
     <main>
-      <style>{defaultStyles + jsonTreeStyles + selectionStyles + pageStyles}</style>
+      <style>{htmlStyles + jsonTreeStyles + selectionStyles + pageStyles}</style>
       <header>
         <h1>fieldspec</h1>
         <div role="group" aria-label="Page">

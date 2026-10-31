@@ -4,13 +4,14 @@
  */
 import { StrictMode, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { htmlRenderers, htmlStyles } from '#examples/renderers/html.tsx';
 import generatedJev from '#experiments/clairic-specs/out/jev.json' with { type: 'json' };
 import generatedBoth from '#experiments/clairic-specs/out/results.json' with { type: 'json' };
 import delegation from '#experiments/delegate/out/delegate-gemma.json' with { type: 'json' };
 import { CASES } from '#experiments/fill/cases.ts';
 import filling from '#experiments/fill/out/fill.json' with { type: 'json' };
 import { createForm, type Spec } from '#src/index.ts';
-import { defaultStyles, FormView } from '#src/react/index.tsx';
+import { FormView } from '#src/react/index.tsx';
 import { Footer, Heading, Nav, REPO } from './chrome.tsx';
 import { Json } from './Code.tsx';
 import './styles.css';
@@ -124,7 +125,7 @@ function App() {
   const both = DELEGATE.summary['jev-checks']!;
   return (
     <>
-      <style>{defaultStyles}</style>
+      <style>{htmlStyles}</style>
       <Nav links={LINKS} home="./" />
       <main>
         <header className="hero models-hero" id="top">
@@ -170,7 +171,7 @@ function App() {
         <Delegate />
         <Lessons />
       </main>
-      <Footer>Every form on this page is drawn by fieldspec's own React renderer.</Footer>
+      <Footer>Every form on this page is drawn by FormView with the example renderers.</Footer>
     </>
   );
 }
@@ -212,7 +213,7 @@ function Generate() {
       <blockquote className="quote">{g.criteria}</blockquote>
       <div className="split">
         <div className="card form-card" data-fieldspec="">
-          <FormView key={`${index}-${withClairic}`} form={form} />
+          <FormView key={`${index}-${withClairic}`} form={form} renderers={htmlRenderers} />
         </div>
         <div className="card notes">
           <p className="meta">
@@ -308,7 +309,7 @@ function Fill() {
       </blockquote>
       <div className="split">
         <div className="card form-card" data-fieldspec="">
-          <FormView key={`${caseId}-${way}`} form={form} />
+          <FormView key={`${caseId}-${way}`} form={form} renderers={htmlRenderers} />
         </div>
         <div className="card notes">
           <p className="meta">

@@ -4,12 +4,10 @@
   "description": "A typed, serializable, headless format for configs and the forms that edit them.",
   "keywords": [
     "config",
-    "dialkit",
     "forms",
     "json-render",
     "json-schema",
     "react",
-    "react-aria",
     "schema",
     "typescript",
     "validation",
@@ -68,22 +66,6 @@
       },
       "source": "./src/zod.ts"
     },
-    "./dialkit": {
-      "fieldspec@dev": "./src/dialkit.tsx",
-      "import": {
-        "types": "./dist/dialkit.d.ts",
-        "default": "./dist/dialkit.js"
-      },
-      "source": "./src/dialkit.tsx"
-    },
-    "./react-aria": {
-      "fieldspec@dev": "./src/react-aria.tsx",
-      "import": {
-        "types": "./dist/react-aria.d.ts",
-        "default": "./dist/react-aria.js"
-      },
-      "source": "./src/react-aria.tsx"
-    },
     "./schema.json": "./schema/spec.json",
     "./package.json": "./package.json"
   },
@@ -138,10 +120,7 @@
     "zod": "^4.6.7"
   },
   "peerDependencies": {
-    "@internationalized/date": ">=3.12",
-    "dialkit": ">=2",
     "react": ">=19",
-    "react-aria-components": ">=1.22",
     "zod": ">=4"
   },
   "peerDependenciesMeta": {
@@ -149,15 +128,6 @@
       "optional": true
     },
     "zod": {
-      "optional": true
-    },
-    "dialkit": {
-      "optional": true
-    },
-    "react-aria-components": {
-      "optional": true
-    },
-    "@internationalized/date": {
       "optional": true
     }
   },

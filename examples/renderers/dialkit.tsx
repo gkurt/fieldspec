@@ -1,19 +1,16 @@
 /**
- * DialKit's controls as fieldspec renderers. fieldspec keeps the form (values, conditions,
- * validation, lists, layouts); DialKit draws it: sliders, toggles, selects, colours and text in
- * DialKit's panel style, objects, groups and collapsibles as its folders. Controls DialKit has
- * no counterpart for (lists, records, sets, variants, dates, files) keep fieldspec's own,
- * inside a folder.
+ * An example renderer set: DialKit's controls drawing fieldspec forms. fieldspec keeps the form
+ * (values, conditions, validation, lists, layouts); DialKit draws it: sliders, toggles, selects,
+ * colours and text in DialKit's panel style, objects, groups and collapsibles as its folders.
+ * Controls DialKit has no counterpart for (lists, records, sets, variants, dates, files) keep the
+ * HTML set's (./html.tsx), inside a folder. Needs `dialkit` and `motion`.
  *
  * Use `DialKitView` in place of `FormView`, or `dialkitRenderers` with `FormView` inside your
  * own `dialkit-root`. Import "dialkit/styles.css" once.
  */
 import { ColorControl, Folder, SelectControl, Slider, TextControl, Toggle } from 'dialkit';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { textOf } from './expr.ts';
-import { defaultControl } from './layout.ts';
+import { defaultControl } from 'fieldspec';
 import {
-  defaultRenderers,
   defineRenderers,
   extendRenderers,
   FormView,
@@ -28,7 +25,12 @@ import {
   type LayoutProps,
   type Renderers,
   type ResolveRenderer,
-} from './react/index.tsx';
+} from 'fieldspec/react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { htmlRenderers } from './html.tsx';
+
+/** A value as text: JSON for objects and lists, which have no text of their own. */
+const textOf = (v: unknown): string => (typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v));
 
 const CONTAINER_KINDS = new Set(['object', 'variant', 'array', 'set', 'record', 'map']);
 
@@ -146,7 +148,7 @@ function DialColor({ field, disabled, set, touch }: ControlProps) {
 }
 
 function DialInput(p: ControlProps) {
-  return p.props.secret ? defaultRenderers.input!(p) : <DialText {...p} />;
+  return p.props.secret ? htmlRenderers.input!(p) : <DialText {...p} />;
 }
 
 /** The renderers that draw with DialKit's controls, which carry their own label. */
@@ -176,7 +178,7 @@ function DialField(p: FieldProps) {
       </Folder>
     );
   }
-  if (!DIAL_RENDERERS.has(drawer) || (control === 'input' && p.node.control?.props.secret === true)) return defaultRenderers.field!(p);
+  if (!DIAL_RENDERERS.has(drawer) || (control === 'input' && p.node.control?.props.secret === true)) return htmlRenderers.field!(p);
   return (
     <div className="fs-dial-field" data-invalid={field.showIssues && field.issues.length > 0 ? '' : undefined}>
       {p.control()}
@@ -188,7 +190,7 @@ function DialField(p: FieldProps) {
 /** A container with a title is a folder around the container without it. */
 function titled(element: string) {
   return (p: LayoutProps) => {
-    const plain = defaultRenderers[element]!;
+    const plain = htmlRenderers[element]!;
     if (p.props.title === undefined) return plain(p);
     return (
       <Folder title={textOf(p.props.title)}>
@@ -200,26 +202,29 @@ function titled(element: string) {
 }
 
 /** The default renderers, with DialKit's controls and folders laid over. */
-export const dialkitRenderers: Renderers = defineRenderers({
-  field: DialField,
-  stack: titled('stack'),
-  row: titled('row'),
-  columns: titled('columns'),
-  collapsible: (p) => (
-    <Folder title={p.props.title === undefined ? 'Details' : textOf(p.props.title)} defaultOpen={!p.props.collapsed}>
-      <div className="fs-dial-column">{p.children}</div>
-    </Folder>
-  ),
-  input: DialInput,
-  textarea: DialText,
-  slider: DialSlider,
-  checkbox: DialToggle,
-  switch: DialToggle,
-  select: DialSelect,
-  radio: DialSelect,
-  segmented: DialSelect,
-  color: DialColor,
-});
+export const dialkitRenderers: Renderers = {
+  ...htmlRenderers,
+  ...defineRenderers({
+    field: DialField,
+    stack: titled('stack'),
+    row: titled('row'),
+    columns: titled('columns'),
+    collapsible: (p) => (
+      <Folder title={p.props.title === undefined ? 'Details' : textOf(p.props.title)} defaultOpen={!p.props.collapsed}>
+        <div className="fs-dial-column">{p.children}</div>
+      </Folder>
+    ),
+    input: DialInput,
+    textarea: DialText,
+    slider: DialSlider,
+    checkbox: DialToggle,
+    switch: DialToggle,
+    select: DialSelect,
+    radio: DialSelect,
+    segmented: DialSelect,
+    color: DialColor,
+  }),
+};
 
 /** How fieldspec's own pieces sit among DialKit's. */
 export const dialkitStyles = `

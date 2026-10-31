@@ -12,6 +12,7 @@ import { shadcnComponentDefinitions } from '@json-render/shadcn/catalog';
  */
 import { act, createElement, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { htmlRenderers } from '#examples/renderers/html.tsx';
 import {
   checkSpec,
   commonFields,
@@ -187,9 +188,12 @@ export async function exercise(spec: Spec, values: unknown = {}, options: Exerci
     }
   }
   if (form && options.react !== false) {
-    await runAsync('FormView', () => mount(createElement(FormView, { form }), options.seed ?? 1, clicks));
-    for (const view of Object.keys(spec.layouts ?? {}))
-      await runAsync(`FormView ${view}`, () => mount(createElement(FormView, { form, view }), options.seed ?? 1, clicks));
+    await runAsync('FormView', () => mount(createElement(FormView, { form, renderers: htmlRenderers }), options.seed ?? 1, clicks));
+    for (const view of Object.keys(spec.layouts ?? {})) {
+      await runAsync(`FormView ${view}`, () =>
+        mount(createElement(FormView, { form, view, renderers: htmlRenderers }), options.seed ?? 1, clicks),
+      );
+    }
   }
   return { valid, steps };
 }

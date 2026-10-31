@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
 import type { act, createElement } from 'react';
 import type * as ClientModule from 'react-dom/client';
+import type * as HtmlModule from '#examples/renderers/html.tsx';
 import { createForm, define } from '#src/index.ts';
 import type * as UiModule from '#src/react/index.tsx';
 
@@ -21,6 +22,7 @@ describe('React controls', () => {
   let React: ReactModule;
   let client: typeof ClientModule;
   let ui: typeof UiModule;
+  let html: typeof HtmlModule;
 
   beforeAll(async () => {
     GlobalRegistrator.register();
@@ -28,6 +30,7 @@ describe('React controls', () => {
     React = await import('react');
     client = await import('react-dom/client');
     ui = await import('#src/react/index.tsx');
+    html = await import('#examples/renderers/html.tsx');
   });
   afterAll(() => GlobalRegistrator.unregister());
 
@@ -37,7 +40,7 @@ describe('React controls', () => {
     document.body.append(host);
     const root = client.createRoot(host);
     const act = (fn: () => void) => React.act(async () => fn());
-    await act(() => root.render(React.createElement(ui.FormView, { form })));
+    await act(() => root.render(React.createElement(ui.FormView, { form, renderers: html.htmlRenderers })));
     const type = (input: HTMLInputElement, text: string) =>
       act(() => {
         Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')!.set!.call(input, text);
@@ -88,7 +91,7 @@ describe('React controls', () => {
     document.body.append(host);
     const root = client.createRoot(host);
     const act = (fn: () => void) => React.act(async () => fn());
-    await act(() => root.render(React.createElement(ui.FormView, { form })));
+    await act(() => root.render(React.createElement(ui.FormView, { form, renderers: html.htmlRenderers })));
     const button = (label: string) => [...host.querySelectorAll('button')].filter((b) => b.textContent === label);
     expect(host.querySelectorAll('input')).toHaveLength(1);
     expect(button('Add')).toHaveLength(1);
@@ -162,7 +165,7 @@ describe('React controls', () => {
     document.body.append(host);
     const root = client.createRoot(host);
     const act = (fn: () => void) => React.act(async () => fn());
-    await act(() => root.render(React.createElement(ui.FormView, { form })));
+    await act(() => root.render(React.createElement(ui.FormView, { form, renderers: html.htmlRenderers })));
     expect([...host.querySelectorAll('fieldset > legend')].map((l) => l.textContent)).toEqual(['General', 'More']);
     const toggle = host.querySelector<HTMLButtonElement>('.fs-toggle')!;
     const body = () => host.querySelector<HTMLElement>(`#${CSS.escape(toggle.getAttribute('aria-controls')!)}`)!;

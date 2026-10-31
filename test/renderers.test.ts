@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
 import type { act, createElement } from 'react';
 import type * as ClientModule from 'react-dom/client';
+import type * as HtmlModule from '#examples/renderers/html.tsx';
 import { createForm, define } from '#src/index.ts';
 import type { ControlProps, ElementRenderer, LayoutProps, RenderRequest, Renderers, ResolveRenderer } from '#src/react/index.tsx';
 import type * as UiModule from '#src/react/index.tsx';
@@ -30,6 +31,7 @@ describe('Renderer functions', () => {
   let React: ReactModule;
   let client: typeof ClientModule;
   let ui: typeof UiModule;
+  let html: typeof HtmlModule;
   // Renderers made once, as they must be: a new one per call would remount the control.
   let Email: ElementRenderer;
   let Chips: ElementRenderer;
@@ -41,6 +43,7 @@ describe('Renderer functions', () => {
     React = await import('react');
     client = await import('react-dom/client');
     ui = await import('#src/react/index.tsx');
+    html = await import('#examples/renderers/html.tsx');
     const h = React.createElement;
     Email = (p: ControlProps) => h('output', { className: 'email', 'data-element': p.node.control?.type }, text(p.field.value));
     Chips = (p: ControlProps) =>
@@ -54,7 +57,14 @@ describe('Renderer functions', () => {
     const host = document.createElement('div');
     document.body.append(host);
     const root = client.createRoot(host);
-    await React.act(async () => root.render(React.createElement(ui.FormView, { form, renderers })));
+    await React.act(async () =>
+      root.render(
+        React.createElement(ui.FormView, {
+          form,
+          renderers: typeof renderers === 'function' ? ui.extendRenderers(html.htmlRenderers, renderers) : renderers,
+        }),
+      ),
+    );
     const q = (s: string) => [...host.querySelectorAll<HTMLElement>(s)];
     return { form, host, q, unmount: () => React.act(async () => root.unmount()) };
   }
@@ -89,7 +99,7 @@ describe('Renderer functions', () => {
 
   test('reaches layout elements, and lays over a table of its own', async () => {
     const Plain = (p: ControlProps) => React.createElement('input', { className: 'plain', value: text(p.field.value), readOnly: true });
-    const table: Renderers = ui.defineRenderers({ input: Plain });
+    const table: Renderers = { ...html.htmlRenderers, ...ui.defineRenderers({ input: Plain }) };
     const { q, unmount } = await mount(ui.extendRenderers(table, (want) => (want.node.group === 'box' ? Boxed : undefined)));
     // The group's row is replaced; its fields still draw, through the table beneath.
     expect(q('section.boxed')).toHaveLength(1);
@@ -98,6 +108,14 @@ describe('Renderer functions', () => {
     // The table's own renderer reaches every input, and the default ones everything else.
     expect(q('input.plain')).toHaveLength(4);
     expect(q('textarea')).toHaveLength(1);
+    await unmount();
+  });
+
+  test('with no look of its own, draws only what the table gives', async () => {
+    // Every control falls back to `input`; fields, rows and labels have no renderer, so there are none.
+    const { q, unmount } = await mount({ input: Email });
+    expect(q('output.email')).toHaveLength(7);
+    expect(q('label, fieldset, section')).toHaveLength(0);
     await unmount();
   });
 

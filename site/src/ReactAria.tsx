@@ -1,6 +1,6 @@
+import { reactAriaRenderers, reactAriaStyles } from '#examples/renderers/react-aria.tsx';
 /** A form drawn with React Aria Components, beside the values it edits. */
 import { define } from '#src/index.ts';
-import { reactAriaRenderers, reactAriaStyles } from '#src/react-aria.tsx';
 import { FormView, useForm, useFormVersion } from '#src/react/index.tsx';
 import { Json } from './Code.tsx';
 
@@ -38,10 +38,11 @@ export const meetupSpec = define({
   groups: { when: { label: 'When', render: 'row' } },
 });
 
-export const meetupSource = `import { FormView, defaultStyles } from "fieldspec/react";
-import { reactAriaRenderers, reactAriaStyles } from "fieldspec/react-aria";
+export const meetupSource = `import { FormView } from "fieldspec/react";
+import { htmlStyles } from "./renderers/html";
+import { reactAriaRenderers, reactAriaStyles } from "./renderers/react-aria"; // copied from fieldspec's examples/renderers
 
-<style>{defaultStyles + reactAriaStyles}</style>
+<style>{htmlStyles + reactAriaStyles}</style>
 <FormView form={form} renderers={reactAriaRenderers} />`;
 
 export function ReactAriaDemo() {
@@ -51,7 +52,7 @@ export function ReactAriaDemo() {
     <div className="aria-demo">
       <style>{reactAriaStyles}</style>
       <figure>
-        <figcaption>fieldspec/react-aria</figcaption>
+        <figcaption>examples/renderers/react-aria</figcaption>
         <div className="card form-card aria-host">
           <FormView form={form} renderers={reactAriaRenderers} />
         </div>
