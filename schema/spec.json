@@ -46,6 +46,22 @@
         "$ref": "#/$defs/render"
       }
     },
+    "locales": {
+      "type": "object",
+      "description": "Translations by locale tag (`de`, `pt-BR`): each maps JSON Pointers into this spec, to a text it shows or a string inside one, to the text in its place.",
+      "propertyNames": {
+        "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "propertyNames": {
+          "pattern": "^/"
+        },
+        "additionalProperties": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
     "functions": {
       "type": "object",
       "description": "Functions `$computed` may call, implemented by the application.",

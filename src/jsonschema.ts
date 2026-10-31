@@ -73,6 +73,7 @@ export function toJSONSchema(spec: Spec, options: ToJSONSchemaOptions = {}): Jso
   if (spec.groups) out['x-groups'] = spec.groups;
   if (spec.layouts) out['x-layouts'] = spec.layouts;
   if (spec.functions) out['x-functions'] = spec.functions;
+  if (spec.locales) out['x-locales'] = spec.locales;
   return out;
 }
 
@@ -302,6 +303,7 @@ export function fromJSONSchema(schema: JsonSchema, options: FromJSONSchemaOption
   if (root['x-groups']) spec.groups = root['x-groups'];
   if (root['x-layouts']) spec.layouts = root['x-layouts'];
   if (root['x-functions']) spec.functions = root['x-functions'];
+  if (root['x-locales']) spec.locales = root['x-locales'];
   if (Object.keys(ctx.defs).length > 0) spec.defs = ctx.defs;
   return spec as unknown as Spec;
 }

@@ -44,6 +44,15 @@ A failing check is an issue at the field (`code: "check"`, or the check's `code`
 only on a present, otherwise valid, visible value. A definition's checks add up with a use's
 own.
 
+## Translations: `locales`
+
+Write a spec in one language. When asked for others, `texts(spec)` lists every string to
+translate by JSON Pointer, implied labels included; put each translation under
+`"locales": { "de": { "<pointer>": "<text>" } }`, keep a template's `${…}` references as they
+are, and run `checkSpec`. `createForm(spec, { locale: "de" })` or `localize(spec, "de")` shows it.
+The library's own issue messages carry `params`; a `messages` function on `parse`, `validate`
+or `createForm` says them in another language.
+
 ## Code: `$cel` and `$js`
 
 What a condition or expression cannot say goes in `$cel`, which is CEL (Common Expression

@@ -78,7 +78,7 @@ describe('definitions', () => {
       },
       billing: { city: 'Oslo' },
     });
-    expect(result.issues).toEqual([{ path: '/root/children/1/children/0/label', code: 'required', message: 'is required' }]);
+    expect(result.issues).toEqual([{ path: '/root/children/1/children/0/label', code: 'required', message: 'is required', params: {} }]);
     expect(result.value!.root.children[1]!.children[0]).toEqual({
       label: '',
       kind: 'link',

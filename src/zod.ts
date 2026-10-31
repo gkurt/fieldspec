@@ -27,13 +27,15 @@ import type {
   UrlField,
   VariantField,
 } from './types.ts';
-import { validate } from './values.ts';
+import { validate, type Messages } from './values.ts';
 
 export interface ToZodOptions {
   readonly registry?: Registry;
   readonly fns?: Functions;
   /** Run the spec's full validation (conditions, dynamic options, extension kinds) too. Default true. */
   readonly refine?: boolean;
+  /** Says the library's own messages of that validation another way; see {@link Messages}. */
+  readonly messages?: Messages;
 }
 
 export function toZod<S extends Spec>(spec: S, options: ToZodOptions = {}): z.ZodType<Infer<S>> {
@@ -42,7 +44,7 @@ export function toZod<S extends Spec>(spec: S, options: ToZodOptions = {}): z.Zo
   const shape = objectOf({ lookup: { defs: spec.defs, presets: registry.presets }, built: new Map() }, spec.fields, 'error');
   if (options.refine === false) return shape as unknown as z.ZodType<Infer<S>>;
   return shape.superRefine((values, ctx) => {
-    for (const issue of validate(spec, values, { registry, fns }))
+    for (const issue of validate(spec, values, { registry, fns, messages: options.messages }))
       ctx.addIssue({ code: 'custom', message: issue.message, path: parsePointer(issue.path) });
   }) as unknown as z.ZodType<Infer<S>>;
 }

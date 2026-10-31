@@ -357,6 +357,56 @@ synchronously from a compiled module. Code then runs synchronously, in one VM pe
 - Specs from sources that must not reach each other's code belong in registries with languages
   of their own.
 
+## Translations: `locales`
+
+A spec is written in one language and may carry others. `locales` holds, for each locale tag, a
+table from a JSON Pointer into the spec to the text in its place:
+
+```json
+"locales": {
+  "de": {
+    "/fields/name/label": "Dienstname",
+    "/fields/region/options/0/label": "Europa",
+    "/fields/domain/label/$else/$template": "Domain für ${/name}",
+    "/fields/end/checks/0/message": "Endet vor dem Beginn",
+    "/layouts/tabs/children/0/props/title": "Dienst"
+  }
+}
+```
+
+- A pointer leads to a text the spec shows (a label, description, hint, placeholder,
+  `patternMessage`, an option's or a variant's label, a group's label, a check's message, an
+  element's text prop such as `title`), or to a string inside one: a template's
+  (`…/$template`) or a `$cond` branch (`…/$then`). Text that is code (`$cel`, `$computed`) is
+  replaced whole.
+- A text the spec only implies may be given too: the label made from a field's key, a plain
+  option's label (the option becomes `{ value, label }`), a preset's placeholder. A definition's
+  text is translated once, at `/defs/<Name>/…`.
+- `texts(spec)` lists every string there is to translate, by pointer, implied ones included:
+  what goes to a translator, or a model.
+- `localize(spec, "de")` is the spec with that locale's text laid over it, keeping its registry,
+  functions and type. `"de-AT"` falls back to `"de"`. It also takes tables of your own, and a
+  list, the first that translates a text winning: `localize(spec, [overrides, "de"])`.
+- `createForm(spec, { locale: "de" })` (and `useForm`) shows the form in that locale, and keeps
+  `form.locale` for renderers: their own words ("Add", "Remove") and number and date formats are
+  theirs.
+- `checkSpec` checks a spec's `locales`: a pointer that leads to no text (with "did you mean"),
+  a value that is not text, and a translated template that reads values the original does not.
+  It warns of the texts a locale leaves as written. `checkTranslations(spec, table)` checks a
+  table of your own the same way.
+
+The library's own issue messages ("is required", "must be at least 1") are English. Each
+carries `params`, what it is about (`{ code: "min", params: { min: 1 } }`), and `messages`, on
+`parse`, `validate`, `createForm` and `toZod`, says them another way:
+
+```ts
+const german: Messages = ({ code, params }) => (code === 'min' ? `Mindestens ${params.min}` : undefined);
+parse(spec, json, { messages: german });
+```
+
+It is asked only for issues with `params`. Messages the spec writes, a check's or
+`patternMessage`, have none: they translate with the spec.
+
 ## Extending
 
 A registry is the vocabulary specs are written in: kinds (what `type` names), elements (what
@@ -429,7 +479,8 @@ checks meaning (references, conditions, defaults).
   becomes `$ref` with the field's added constraints beside it (or is written out when it changes
   one the definition has), a preset is written out; `x-` keywords keep what JSON Schema cannot say.
 - Defined specs carry `~standard` (Standard Schema, with the JSON Schema extension).
-- `fieldspec/zod`: `toZod(spec)` (refined with the spec's own validation), `fromZod(schema)`.
+- `fieldspec/zod`: `toZod(spec)` (refined with the spec's own validation, its messages said by
+  `messages`), `fromZod(schema)`.
 - `toFlat` / `fromFlat`: json-render's flat element format.
 - `toJsonRender(spec, { values })`: the whole form as a json-render spec, bound to its state and
   drawn with `@json-render/shadcn`'s components (rename them with `components`). Lists, sets,

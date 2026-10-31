@@ -1,5 +1,6 @@
 import { LANGUAGE_KEYS } from './expr.ts';
 import type { JsonSchema, PropInfo } from './kinds.ts';
+import { LOCALE_TAG } from './locales.ts';
 import { USER_NAME } from './names.ts';
 /**
  * The JSON Schema of specs, generated from a registry's kinds, elements and presets so
@@ -155,6 +156,17 @@ export function metaSchema(registry: Registry = coreRegistry, options: MetaSchem
         additionalProperties: { $ref: '#/$defs/field' },
       },
       layouts: { type: 'object', description: 'Named arrangements of the whole form.', additionalProperties: { $ref: '#/$defs/render' } },
+      locales: {
+        type: 'object',
+        description:
+          'Translations by locale tag (`de`, `pt-BR`): each maps JSON Pointers into this spec, to a text it shows or a string inside one, to the text in its place.',
+        propertyNames: { pattern: LOCALE_TAG.source },
+        additionalProperties: {
+          type: 'object',
+          propertyNames: { pattern: '^/' },
+          additionalProperties: { $ref: '#/$defs/text' },
+        },
+      },
       functions: {
         type: 'object',
         description: 'Functions `$computed` may call, implemented by the application.',

@@ -62,8 +62,10 @@ export {
   fieldsOf,
   initialValue,
   isEmpty,
+  type Messages,
   type ValueOptions,
 } from './values.ts';
+export { texts, localize, fallbacksOf, checkTranslations, type Locale, type LocalizeOptions, type TextsOptions } from './locales.ts';
 export { checkSpec, assertSpec, formatFaults, type CheckOptions } from './check.ts';
 export { layout, walk, defaultControl, type LayoutNode } from './layout.ts';
 export { commonFields, type Common, type CommonOptions, type Dropped } from './common.ts';

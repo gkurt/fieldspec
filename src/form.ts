@@ -7,11 +7,12 @@ import { evaluate, test, textOf, type Env, type Functions, type Scope } from './
 import type { Infer } from './infer.ts';
 import { optionsOf } from './kinds.ts';
 import { layout, type LayoutNode } from './layout.ts';
+import { localize } from './locales.ts';
 import { applyPatch, type PatchOp } from './patch.ts';
 import { getAt, joinPointer, parsePointer, resolvePointer, setAt, splitPointer } from './pointer.ts';
 import { registryOf, functionsOf, type Registry } from './registry.ts';
 import type { Condition, EnumField, Expr, FieldDecl, GroupDecl, Issue, Json, Resolved, Result, Spec, StringField, Text } from './types.ts';
-import { declAt, decode, decodeField, encode, initialValue, resolve, validate } from './values.ts';
+import { declAt, decode, decodeField, encode, initialValue, resolve, validate, type Messages } from './values.ts';
 
 export interface FieldOption {
   readonly value: unknown;
@@ -55,10 +56,20 @@ export interface FormOptions {
    * `commonFields` gives them. A field is mixed until it, or a field in or around it, is edited.
    */
   readonly mixed?: readonly string[];
+  /**
+   * The language to show the form in. Text comes from the spec's `locales` (`"de-AT"` falls back
+   * to `"de"`), or from a table of your own with `localize`; renderers read it for their own
+   * words and for formatting numbers and dates.
+   */
+  readonly locale?: string;
+  /** Says the library's own issue messages another way; see {@link Messages}. */
+  readonly messages?: Messages;
 }
 
 export interface Form<V = unknown> {
+  /** The spec, translated when the form has a `locale`. */
   readonly spec: Spec;
+  readonly locale?: string;
   readonly registry: Registry;
   readonly values: V;
   readonly issues: readonly Issue[];
@@ -97,10 +108,11 @@ export function humanize(key: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): Form<Infer<S>> {
-  const registry = options.registry ?? registryOf(spec);
-  const fns = options.fns ?? functionsOf(spec);
-  const vo = { registry, fns, defs: spec.defs };
+export function createForm<S extends Spec>(given: S, options: FormOptions = {}): Form<Infer<S>> {
+  const registry = options.registry ?? registryOf(given);
+  const spec = options.locale === undefined ? given : localize(given, options.locale, { registry });
+  const fns = options.fns ?? functionsOf(given);
+  const vo = { registry, fns, defs: spec.defs, messages: options.messages };
   const listeners = new Set<() => void>();
   const touched = new Set<string>();
   const mixed = new Set(options.mixed);
@@ -249,6 +261,7 @@ export function createForm<S extends Spec>(spec: S, options: FormOptions = {}): 
 
   const form: Form<Infer<S>> = {
     spec,
+    ...(options.locale !== undefined && { locale: options.locale }),
     registry,
     get values() {
       return values as Infer<S>;

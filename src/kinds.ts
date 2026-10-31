@@ -4,7 +4,7 @@
  * Schema. Core kinds and extension kinds are defined the same way.
  */
 import { evaluate, type Env, type Scope } from './expr.ts';
-import type { EnumField, EnumOption, Expr, FieldDecl, Json, OptionValue } from './types.ts';
+import type { EnumField, EnumOption, Expr, FieldDecl, Json, OptionValue, Param } from './types.ts';
 
 export type JsonSchema = { [keyword: string]: unknown };
 
@@ -24,7 +24,8 @@ export interface LeafContext {
    * uses (`Slug` is "slug"), else its label or key. Absent for an unnamed item.
    */
   readonly name?: string;
-  issue(code: string, message: string): void;
+  /** An issue with the value. `params` say what the message is about, so it can be said in another language. */
+  issue(code: string, message: string, params?: { readonly [name: string]: Param }): void;
 }
 
 export interface DeclContext {
@@ -177,18 +178,27 @@ export const stringKind = defineKind<
   example: { type: 'string', label: 'Display name', maxLength: 40 },
   zero: () => '',
   check(value, decl, ctx) {
-    if (typeof value !== 'string') return ctx.issue('type', 'must be text');
+    if (typeof value !== 'string') return ctx.issue('type', 'must be text', { expected: 'string' });
     if (decl.minLength !== undefined && value.length < decl.minLength)
-      ctx.issue('minLength', `must be at least ${decl.minLength} characters`);
+      ctx.issue('minLength', `must be at least ${decl.minLength} characters`, { minLength: decl.minLength });
 
     if (decl.maxLength !== undefined && value.length > decl.maxLength)
-      ctx.issue('maxLength', `must be at most ${decl.maxLength} characters`);
+      ctx.issue('maxLength', `must be at most ${decl.maxLength} characters`, { maxLength: decl.maxLength });
 
-    if (decl.pattern !== undefined && value !== '' && !new RegExp(`^(?:${decl.pattern})$`, 'u').test(value))
-      ctx.issue('pattern', decl.patternMessage ?? (ctx.name === undefined ? "This isn't valid" : `This isn't a valid ${ctx.name}`));
+    if (decl.pattern !== undefined && value !== '' && !new RegExp(`^(?:${decl.pattern})$`, 'u').test(value)) {
+      // A message the spec writes translates with the spec; the library's says what it is about.
+      if (decl.patternMessage !== undefined) {
+        ctx.issue('pattern', decl.patternMessage);
+      } else {
+        ctx.issue('pattern', ctx.name === undefined ? "This isn't valid" : `This isn't a valid ${ctx.name}`, {
+          pattern: decl.pattern,
+          ...(ctx.name !== undefined && { name: ctx.name }),
+        });
+      }
+    }
 
     const format = decl.format === undefined ? undefined : STRING_FORMATS[decl.format];
-    if (format && value !== '' && !format(value)) ctx.issue('format', `must be a valid ${decl.format}`);
+    if (format && value !== '' && !format(value)) ctx.issue('format', `must be a valid ${decl.format}`, { format: decl.format! });
   },
   checkDecl(decl, ctx) {
     if (decl.pattern !== undefined) {
@@ -223,10 +233,10 @@ function numberKind<const Name extends 'number' | 'int'>(name: Name, integer: bo
       : { type: 'number', label: 'Opacity', min: 0, max: 1, step: 0.05, default: 1 },
     zero: (decl) => Math.min(Math.max(0, decl.min ?? 0), decl.max ?? Number.POSITIVE_INFINITY),
     check(value, decl, ctx) {
-      if (!finiteNumber(value)) return ctx.issue('type', 'must be a number');
-      if (integer && !Number.isInteger(value)) return ctx.issue('type', 'must be a whole number');
-      if (decl.min !== undefined && value < decl.min) ctx.issue('min', `must be at least ${decl.min}`);
-      if (decl.max !== undefined && value > decl.max) ctx.issue('max', `must be at most ${decl.max}`);
+      if (!finiteNumber(value)) return ctx.issue('type', 'must be a number', { expected: 'number' });
+      if (integer && !Number.isInteger(value)) return ctx.issue('type', 'must be a whole number', { expected: 'int' });
+      if (decl.min !== undefined && value < decl.min) ctx.issue('min', `must be at least ${decl.min}`, { min: decl.min });
+      if (decl.max !== undefined && value > decl.max) ctx.issue('max', `must be at most ${decl.max}`, { max: decl.max });
     },
     checkDecl(decl, ctx) {
       bounds(decl, ctx, Number);
@@ -250,7 +260,7 @@ export const booleanKind = defineKind<boolean>()({
   example: { type: 'boolean', label: 'Enabled', default: true },
   zero: () => false,
   check: (value, _, ctx) => {
-    if (typeof value !== 'boolean') ctx.issue('type', 'must be true or false');
+    if (typeof value !== 'boolean') ctx.issue('type', 'must be true or false', { expected: 'boolean' });
   },
   jsonSchema: () => ({ type: 'boolean' }),
 });
@@ -311,7 +321,7 @@ export const enumKind = defineKind<OptionValue, Pick<EnumField, 'options'>>()({
         .slice(0, 8)
         .map((o) => JSON.stringify(o.value))
         .join(', ');
-      ctx.issue('enum', `must be one of ${shown}${options.length > 8 ? ', …' : ''}`);
+      ctx.issue('enum', `must be one of ${shown}${options.length > 8 ? ', …' : ''}`, { options: options.map((o) => o.value) });
     }
   },
   checkDecl(decl, ctx) {
@@ -350,9 +360,11 @@ export const dateKind = defineKind<Date, { min?: string; max?: string; time?: bo
   },
   example: { type: 'date', label: 'Starts', optional: true },
   check(value, decl, ctx) {
-    if (!(value instanceof Date) || Number.isNaN(value.getTime())) return ctx.issue('type', 'must be a valid date');
-    if (decl.min !== undefined && value.getTime() < Date.parse(decl.min)) ctx.issue('min', `must be on or after ${decl.min}`);
-    if (decl.max !== undefined && value.getTime() > Date.parse(decl.max)) ctx.issue('max', `must be on or before ${decl.max}`);
+    if (!(value instanceof Date) || Number.isNaN(value.getTime())) return ctx.issue('type', 'must be a valid date', { expected: 'date' });
+    if (decl.min !== undefined && value.getTime() < Date.parse(decl.min))
+      ctx.issue('min', `must be on or after ${decl.min}`, { min: decl.min });
+    if (decl.max !== undefined && value.getTime() > Date.parse(decl.max))
+      ctx.issue('max', `must be on or before ${decl.max}`, { max: decl.max });
   },
   checkDecl: (decl, ctx) => bounds(decl, ctx, (v) => Date.parse(String(v))),
   encode: (value, decl) => (decl.time ? value.toISOString() : value.toISOString().slice(0, 10)),
@@ -370,9 +382,9 @@ export const bigintKind = defineKind<bigint, { min?: string; max?: string }>()({
   },
   zero: () => 0n,
   check(value, decl, ctx) {
-    if (typeof value !== 'bigint') return ctx.issue('type', 'must be an integer');
-    if (decl.min !== undefined && value < BigInt(decl.min)) ctx.issue('min', `must be at least ${decl.min}`);
-    if (decl.max !== undefined && value > BigInt(decl.max)) ctx.issue('max', `must be at most ${decl.max}`);
+    if (typeof value !== 'bigint') return ctx.issue('type', 'must be an integer', { expected: 'bigint' });
+    if (decl.min !== undefined && value < BigInt(decl.min)) ctx.issue('min', `must be at least ${decl.min}`, { min: decl.min });
+    if (decl.max !== undefined && value > BigInt(decl.max)) ctx.issue('max', `must be at most ${decl.max}`, { max: decl.max });
   },
   checkDecl(decl, ctx) {
     for (const prop of ['min', 'max'] as const)
@@ -399,8 +411,9 @@ export const urlKind = defineKind<URL, { protocols?: readonly string[] }>()({
   },
   example: { type: 'url', label: 'Webhook', protocols: ['https:'] },
   check(value, decl, ctx) {
-    if (!(value instanceof URL)) return ctx.issue('type', 'must be an absolute URL');
-    if (decl.protocols && !decl.protocols.includes(value.protocol)) ctx.issue('protocol', `must use ${decl.protocols.join(' or ')}`);
+    if (!(value instanceof URL)) return ctx.issue('type', 'must be an absolute URL', { expected: 'url' });
+    if (decl.protocols && !decl.protocols.includes(value.protocol))
+      ctx.issue('protocol', `must use ${decl.protocols.join(' or ')}`, { protocols: decl.protocols });
   },
   encode: (value) => value.href,
   decode: (json) => (typeof json === 'string' && URL.canParse(json) ? new URL(json) : json),
@@ -412,7 +425,7 @@ export const regexpKind = defineKind<RegExp>()({
   control: 'input',
   description: 'A regular expression. JSON form: "/source/flags".',
   check: (value, _, ctx) => {
-    if (!(value instanceof RegExp)) ctx.issue('type', 'must be a regular expression');
+    if (!(value instanceof RegExp)) ctx.issue('type', 'must be a regular expression', { expected: 'regexp' });
   },
   encode: (value) => String(value),
   decode: (json) => regexpOf(json) ?? json,
@@ -429,8 +442,9 @@ export const bytesKind = defineKind<Uint8Array, { maxBytes?: number; accept?: re
   },
   zero: () => new Uint8Array(),
   check(value, decl, ctx) {
-    if (!(value instanceof Uint8Array)) return ctx.issue('type', 'must be bytes');
-    if (decl.maxBytes !== undefined && value.length > decl.maxBytes) ctx.issue('maxBytes', `must be at most ${decl.maxBytes} bytes`);
+    if (!(value instanceof Uint8Array)) return ctx.issue('type', 'must be bytes', { expected: 'bytes' });
+    if (decl.maxBytes !== undefined && value.length > decl.maxBytes)
+      ctx.issue('maxBytes', `must be at most ${decl.maxBytes} bytes`, { maxBytes: decl.maxBytes });
   },
   encode: (value) => toBase64(value),
   decode: (json) => (typeof json === 'string' ? (fromBase64(json) ?? json) : json),
@@ -443,7 +457,7 @@ export const jsonKind = defineKind<Json>()({
   description: 'Any JSON value.',
   zero: () => null,
   check: (value, _, ctx) => {
-    if (!isJson(value)) ctx.issue('type', 'must be plain JSON');
+    if (!isJson(value)) ctx.issue('type', 'must be plain JSON', { expected: 'json' });
   },
   jsonSchema: () => ({}),
 });

@@ -29,7 +29,16 @@ import type {
 export interface ValueOptions {
   readonly registry?: Registry;
   readonly fns?: Functions;
+  /** Says the library's own issue messages another way; see {@link Messages}. */
+  readonly messages?: Messages;
 }
+
+/**
+ * The library's own message for an issue, said another way: in another language, say. It is
+ * asked for each issue with `params` (the ones the library wrote), and gives the message, or
+ * undefined to keep the English one. Messages the spec writes translate with the spec.
+ */
+export type Messages = (issue: Issue & { readonly params: NonNullable<Issue['params']> }) => string | undefined;
 
 /** What walking values needs besides the values: the vocabulary, the functions, the definitions. */
 export interface ValueCtx {
@@ -52,6 +61,7 @@ const MAX_DEPTH = 64;
 const depthOf = (pointer: string) => pointer.split('/').length;
 
 type Fields = { readonly [key: string]: FieldDecl };
+type Params = NonNullable<Issue['params']>;
 type Groups = { readonly [id: string]: GroupDecl } | undefined;
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
@@ -464,7 +474,12 @@ export function validate(spec: Spec, values: unknown, options?: ValueOptions): I
   };
   if (!isPlainObject(values)) return [{ path: '', code: 'type', message: 'must be an object' }];
   checkFields(ctx, env, spec.fields, spec.groups, values, '', 'error', issues);
-  return issues;
+  const messages = options?.messages;
+  if (!messages) return issues;
+  return issues.map((issue) => {
+    const message = issue.params && messages(issue as Parameters<Messages>[0]);
+    return message === undefined ? issue : { ...issue, message };
+  });
 }
 
 function safeTest(condition: Condition | undefined, env: Env, scope: Scope, issues: Issue[], at: string): boolean {
@@ -535,11 +550,12 @@ function messageOf(check: Check, env: Env, scope: Scope): string {
 }
 
 function checkValue(ctx: Ctx, env: Env, given: FieldDecl, decl: Resolved, value: unknown, at: string, scope: Scope, issues: Issue[]) {
-  const issue = (code: string, message: string, path = at) => issues.push({ path, code, message });
+  const issue = (code: string, message: string, params: Params = {}, path = at) => issues.push({ path, code, message, params });
   if (value === undefined || value === null) {
     const required = decl.required !== undefined && safeTest(decl.required, env, scope, issues, at);
     if (required || (!decl.optional && value === undefined)) issue('required', 'is required');
-    else if (value === null && !decl.optional && decl.type !== 'json') issue('type', 'must not be null');
+    else if (value === null && !decl.optional && decl.type !== 'json')
+      issue('type', 'must not be null', { expected: decl.type, actual: 'null' });
     return;
   }
   if (decl.required !== undefined && isEmpty(value) && safeTest(decl.required, env, scope, issues, at))
@@ -548,7 +564,7 @@ function checkValue(ctx: Ctx, env: Env, given: FieldDecl, decl: Resolved, value:
   switch (decl.type) {
     case 'object':
     case 'variant': {
-      if (!isPlainObject(value)) return issue('type', 'must be an object');
+      if (!isPlainObject(value)) return issue('type', 'must be an object', { expected: decl.type });
       if (decl.type === 'variant') {
         const v = decl as VariantField;
         const name = value[v.key];
@@ -558,6 +574,7 @@ function checkValue(ctx: Ctx, env: Env, given: FieldDecl, decl: Resolved, value:
             `must be one of ${Object.keys(v.variants)
               .map((n) => JSON.stringify(n))
               .join(', ')}`,
+            { options: Object.keys(v.variants) },
             joinPointer(at, v.key),
           );
         }
@@ -571,10 +588,12 @@ function checkValue(ctx: Ctx, env: Env, given: FieldDecl, decl: Resolved, value:
     case 'array':
     case 'set': {
       const list = decl.type === 'array' ? value : value instanceof Set ? [...value] : undefined;
-      if (!Array.isArray(list)) return issue('type', decl.type === 'array' ? 'must be a list' : 'must be a set');
+      if (!Array.isArray(list)) return issue('type', decl.type === 'array' ? 'must be a list' : 'must be a set', { expected: decl.type });
       const d = decl as ArrayField;
-      if (d.minItems !== undefined && list.length < d.minItems) issue('minItems', `needs at least ${d.minItems} items`);
-      if (d.maxItems !== undefined && list.length > d.maxItems) issue('maxItems', `takes at most ${d.maxItems} items`);
+      if (d.minItems !== undefined && list.length < d.minItems)
+        issue('minItems', `needs at least ${d.minItems} items`, { minItems: d.minItems });
+      if (d.maxItems !== undefined && list.length > d.maxItems)
+        issue('maxItems', `takes at most ${d.maxItems} items`, { maxItems: d.maxItems });
       list.forEach((x, i) => {
         const pointer = joinPointer(at, i);
         const itemScope: Scope = {
@@ -587,18 +606,18 @@ function checkValue(ctx: Ctx, env: Env, given: FieldDecl, decl: Resolved, value:
       return;
     }
     case 'record': {
-      if (!isPlainObject(value)) return issue('type', 'must be an object');
+      if (!isPlainObject(value)) return issue('type', 'must be an object', { expected: 'record' });
       const r = decl as RecordField;
       const pattern = r.keyPattern === undefined ? undefined : new RegExp(`^(?:${r.keyPattern})$`, 'u');
       for (const [k, v] of Object.entries(value)) {
         const pointer = joinPointer(at, k);
-        if (pattern && !pattern.test(k)) issue('key', `key must match ${r.keyPattern}`, pointer);
+        if (pattern && !pattern.test(k)) issue('key', `key must match ${r.keyPattern}`, { keyPattern: r.keyPattern! }, pointer);
         checkField(ctx, env, r.values, v, pointer, { ...scope, item: pointer }, issues);
       }
       return;
     }
     case 'map': {
-      if (!(value instanceof Map)) return issue('type', 'must be a map');
+      if (!(value instanceof Map)) return issue('type', 'must be a map', { expected: 'map' });
       const m = decl as MapField;
       for (const [k, v] of value) {
         const pointer = joinPointer(at, String(k));
@@ -609,7 +628,7 @@ function checkValue(ctx: Ctx, env: Env, given: FieldDecl, decl: Resolved, value:
     }
     default: {
       const chain = kindChain(ctx.registry, decl.type);
-      if (chain.length === 0) return issue('kind', `has a kind this registry does not know: "${decl.type}"`);
+      if (chain.length === 0) return issue('kind', `has a kind this registry does not know: "${decl.type}"`, { kind: decl.type });
       const name = calledBy(given, decl, at);
       for (const kind of chain) {
         if (CONTAINER_KINDS.has(kind.name)) continue;
@@ -618,9 +637,9 @@ function checkValue(ctx: Ctx, env: Env, given: FieldDecl, decl: Resolved, value:
           env,
           scope,
           name,
-          issue: (code, message) => {
+          issue: (code, message, params) => {
             failed = true;
-            issue(code, message);
+            issues.push({ path: at, code, message, ...(params && { params }) });
           },
         });
         if (failed) return;

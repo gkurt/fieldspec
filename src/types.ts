@@ -391,7 +391,16 @@ export interface Spec {
   /** Named alternative arrangements of the whole form. */
   readonly layouts?: { readonly [name: string]: RenderNode };
   readonly functions?: { readonly [name: string]: FunctionDecl };
+  /** Translations the spec carries, by locale (`"de"`, `"pt-BR"`); see {@link Translations}. */
+  readonly locales?: { readonly [locale: string]: Translations };
 }
+
+/**
+ * A translation: JSON Pointers into the spec, each to a text it shows (`/fields/name/label`) or a
+ * string inside one (`/fields/domain/label/$else/$template`), mapped to the text in its place.
+ * A text the spec only implies, like a label made from the key, may be given too.
+ */
+export type Translations = { readonly [pointer: string]: Text };
 
 // ── Results ───────────────────────────────────────────────────────────────────────────────
 
@@ -400,7 +409,16 @@ export interface Issue {
   readonly path: string;
   readonly code: string;
   readonly message: string;
+  /**
+   * What the library's own messages are about (`{ min: 3 }` for "must be at least 3"), so they
+   * can be said in another language. Absent where the spec wrote the message (a check's,
+   * `patternMessage`), which translates with the spec.
+   */
+  readonly params?: { readonly [name: string]: Param };
 }
+
+/** What an issue's message is about: a bound, a pattern, the options allowed. */
+export type Param = string | number | boolean | readonly (string | number | boolean)[];
 
 /** A problem with a spec, at a JSON Pointer into the spec. Phrased as the fix. */
 export interface Fault {

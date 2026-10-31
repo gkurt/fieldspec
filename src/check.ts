@@ -6,6 +6,7 @@ import { deref, requiresItself, type Lookup } from './defs.ts';
 import type { ElementDef } from './elements.ts';
 import { EXPR_KEYS, isDynamic, LANGUAGE_KEYS, OPERATORS, stateOf, type Functions, type LanguageKey } from './expr.ts';
 import { CONTAINER_KINDS, type AnyKind } from './kinds.ts';
+import { checkTranslations, LOCALE_TAG, tablesOf } from './locales.ts';
 import { isBuiltinName, isUserName, toUserName } from './names.ts';
 import { escapeSegment, joinPointer, resolveSegments } from './pointer.ts';
 import { BASE_PROPS, registryOf, functionsOf, type Registry, type Rule } from './registry.ts';
@@ -54,7 +55,7 @@ interface Checker {
   fault(path: string, message: string, severity?: Fault['severity']): void;
 }
 
-const ROOT_PROPS = ['$schema', 'title', 'description', 'fields', 'groups', 'defs', 'layouts', 'functions'];
+const ROOT_PROPS = ['$schema', 'title', 'description', 'fields', 'groups', 'defs', 'layouts', 'functions', 'locales'];
 const GROUP_PROPS = ['label', 'description', 'render', 'visible', 'group'];
 const ELEMENT_KEYS = ['type', 'props', 'children', 'visible'];
 
@@ -115,6 +116,7 @@ export function checkSpec(spec: unknown, options: CheckOptions = {}): Fault[] {
     if (!isObject(spec.defs)) c.fault('/defs', 'must be an object of named field declarations');
     else checkDefs(c, s.defs!);
   }
+  if (spec.locales !== undefined) checkLocales(c, spec.locales);
   checkFunctions(c, options.fns ?? functionsOf(s));
   const report = (path: string, message: string, severity?: Fault['severity']) => c.fault(path, message, severity);
   for (const rule of [...registry.rules, ...(options.rules ?? [])]) rule(s, report);
@@ -129,6 +131,18 @@ export function assertSpec(spec: unknown, options?: CheckOptions): asserts spec 
 
 export function formatFaults(faults: readonly Fault[]): string[] {
   return faults.map((f) => `  ${f.path || '/'}: ${f.message}${f.severity === 'warning' ? ' (warning)' : ''}`);
+}
+
+function checkLocales(c: Checker, locales: unknown) {
+  if (!isObject(locales))
+    return c.fault('/locales', 'must be an object of translations by locale: `{ "de": { "/fields/name/label": "Name" } }`');
+  for (const [tag, table] of Object.entries(locales)) {
+    const at = `/locales/${escapeSegment(tag)}`;
+    if (!LOCALE_TAG.test(tag))
+      c.fault(at, `"${tag}" is not a locale tag: a language, then optional parts, like "de", "pt-BR" or "zh-Hant"`);
+    const fallbacks = tablesOf(c.spec, tag).filter((t) => t !== table);
+    c.faults.push(...checkTranslations(c.spec, table, { registry: c.registry, at, fallbacks }));
+  }
 }
 
 function checkFunctions(c: Checker, fns: Functions | undefined) {

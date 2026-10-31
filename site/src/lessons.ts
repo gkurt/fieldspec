@@ -3,7 +3,7 @@
  * Each step is a whole spec; the page shows what changed since the one before.
  */
 import { createCel } from '#src/cel.ts';
-import { createRegistry, define, type Infer } from '#src/index.ts';
+import { createRegistry, define, type Infer, type Messages } from '#src/index.ts';
 
 // The fields, as they are first written. Later steps change some of them.
 const name = { type: 'string' } as const;
@@ -226,26 +226,94 @@ export const checks = withCel.define({
   defs: { Probe },
 });
 
-export const layouts = withCel.define({
-  fields: checked,
-  groups: groupsOf,
-  defs: { Probe },
-  layouts: {
-    tabs: {
-      type: 'tabs',
-      children: [
-        {
-          type: 'stack',
-          props: { title: 'Service' },
-          children: [{ field: 'name' }, { field: 'source' }, { field: 'region' }, { field: 'contact' }],
-        },
-        { type: 'stack', props: { title: 'Network' }, children: [{ group: 'network' }] },
-        { type: 'stack', props: { title: 'Scaling' }, children: [{ group: 'scaling' }] },
-        { type: 'stack', props: { title: 'More' }, children: [{ type: 'rest' }] },
-      ],
-    },
+const views = {
+  tabs: {
+    type: 'tabs',
+    children: [
+      {
+        type: 'stack',
+        props: { title: 'Service' },
+        children: [{ field: 'name' }, { field: 'source' }, { field: 'region' }, { field: 'contact' }],
+      },
+      { type: 'stack', props: { title: 'Network' }, children: [{ group: 'network' }] },
+      { type: 'stack', props: { title: 'Scaling' }, children: [{ group: 'scaling' }] },
+      { type: 'stack', props: { title: 'More' }, children: [{ type: 'rest' }] },
+    ],
   },
-});
+} as const;
+
+export const layouts = withCel.define({ fields: checked, groups: groupsOf, defs: { Probe }, layouts: views });
+
+const de = {
+  '/fields/name/label': 'Dienstname',
+  '/fields/name/hint': 'Kleinbuchstaben, Ziffern und Bindestriche.',
+  '/fields/name/placeholder': 'checkout-api',
+  '/fields/source/label': 'Quelle',
+  '/fields/source/variants/git/label': 'Git-Repository',
+  '/fields/source/variants/git/fields/repo/label': 'Repo',
+  '/fields/source/variants/git/fields/branch/label': 'Branch',
+  '/fields/source/variants/image/label': 'Container-Image',
+  '/fields/source/variants/image/fields/image/label': 'Image',
+  '/fields/source/variants/image/fields/image/placeholder': 'ghcr.io/acme/shop',
+  '/fields/source/variants/image/fields/tag/label': 'Tag',
+  '/fields/region/label': 'Region',
+  '/fields/region/options/0/label': 'Europa',
+  '/fields/region/options/1/label': 'USA Ost',
+  '/fields/region/options/2/label': 'Asien',
+  '/fields/public/label': 'Aus dem Internet erreichbar',
+  '/fields/domain/label/$then': 'Domain',
+  '/fields/domain/label/$else/$template': 'Domain für ${/name}',
+  '/fields/domain/placeholder': 'shop.beispiel.de',
+  '/fields/port/label': 'Port',
+  '/fields/replicas/label': 'Replikate',
+  '/fields/replicas/hint/$then': 'Mit einem Replikat ist jedes Deployment eine Ausfallzeit.',
+  '/fields/autoscale/label': 'Mit der Last skalieren',
+  '/fields/maxReplicas/label': 'Höchstens',
+  '/fields/maxReplicas/checks/0/message/$template': 'Weniger als die ${replicas} Replikate zu Beginn',
+  '/fields/cpu/label': 'CPU-Limit',
+  '/fields/contact/label': 'E-Mail für Bereitschaft',
+  '/fields/contact/placeholder': 'name@beispiel.de',
+  '/fields/liveness/label': 'Liveness-Prüfung',
+  '/fields/readiness/label': 'Readiness-Prüfung',
+  '/fields/env/label': 'Umgebung',
+  '/fields/alerts/label': 'Alarme',
+  '/fields/alerts/items/fields/channel/label': 'Kanal',
+  '/fields/alerts/items/fields/channel/options/0/label': 'E-Mail',
+  '/fields/alerts/items/fields/channel/options/1/label': 'Slack',
+  '/fields/alerts/items/fields/target/label': 'Ziel',
+  '/fields/alerts/items/fields/target/checks/0/message/$then': 'Eine E-Mail-Adresse hat ein @',
+  '/fields/alerts/items/fields/target/checks/0/message/$else': 'Ein Slack-Kanal beginnt mit #',
+  '/fields/features/label': 'Funktionen',
+  '/fields/features/items/options/0/label': 'Cache',
+  '/fields/features/items/options/1/label': 'Tracing',
+  '/fields/features/items/options/2/label': 'Canary',
+  '/groups/network/label': 'Netzwerk',
+  '/groups/scaling/label': 'Skalierung',
+  '/defs/Probe/fields/path/label': 'Pfad',
+  '/defs/Probe/fields/interval/label': 'Intervall',
+  '/layouts/tabs/children/0/props/title': 'Dienst',
+  '/layouts/tabs/children/1/props/title': 'Netzwerk',
+  '/layouts/tabs/children/2/props/title': 'Skalierung',
+  '/layouts/tabs/children/3/props/title': 'Mehr',
+} as const;
+
+export const translations = withCel.define({ fields: checked, groups: groupsOf, defs: { Probe }, layouts: views, locales: { de } });
+
+/** The library's own messages in German, by what they are about. */
+export const german: Messages = ({ code, params }) => {
+  switch (code) {
+    case 'required':
+      return 'Pflichtfeld';
+    case 'min':
+      return `Mindestens ${String(params.min)}`;
+    case 'max':
+      return `Höchstens ${String(params.max)}`;
+    case 'pattern':
+      return 'Das passt nicht zum Muster';
+    default:
+      return undefined;
+  }
+};
 
 // What `Infer` makes of them. The page shows these as written; the compiler holds them to it.
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;

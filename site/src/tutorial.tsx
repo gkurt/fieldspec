@@ -13,15 +13,19 @@ import * as L from './lessons.ts';
 import './styles.css';
 
 interface Step {
-  readonly id: Exclude<keyof typeof L, 'TYPES'>;
+  readonly id: Exclude<keyof typeof L, 'TYPES' | 'german'>;
   readonly title: string;
   readonly text: ReactNode;
   /** A layout to offer beside the default one. */
   readonly view?: string;
+  /** A locale to offer beside the spec's own language. */
+  readonly locale?: string;
 }
 
 /** Each step's spec, by the step's id. */
 const LESSONS: Readonly<Record<Step['id'], Spec>> = L;
+
+const LANGUAGES: Readonly<Record<string, string>> = { de: 'Deutsch' };
 
 const STEPS: readonly Step[] = [
   {
@@ -253,9 +257,28 @@ const STEPS: readonly Step[] = [
       </>
     ),
   },
+  {
+    id: 'translations',
+    title: 'Translations',
+    locale: 'de',
+    text: (
+      <>
+        <p>
+          <code>locales</code> carries the spec's text in other languages: for each locale, a table from a JSON Pointer into the spec to the
+          text in its place. A pointer reaches a label, a hint, an option, a check's message, a tab's title, or a string inside a template.{' '}
+          <code>texts(spec)</code> lists them all, including labels the spec only implies, ready for a translator or a model.
+        </p>
+        <p>
+          Switch to Deutsch: <code>{'createForm(spec, { locale: "de" })'}</code> lays the table over the spec. The library's own messages,
+          like <em>is required</em>, carry <code>params</code>, and a <code>messages</code> function says them in German. The checker
+          reports a pointer that leads nowhere, and what a locale leaves as written.
+        </p>
+      </>
+    ),
+  },
 ];
 
-const FROM_CODE = `import { checkSpec, createRegistry, parse, toJSONSchema, type Infer } from "fieldspec";
+const FROM_CODE = `import { checkSpec, createRegistry, parse, texts, toJSONSchema, type Infer } from "fieldspec";
 import { createCel } from "fieldspec/cel";
 import { FormView, useForm } from "fieldspec/react";
 import { htmlRenderers } from "./renderers/html"; // copied from fieldspec's examples/renderers
@@ -275,7 +298,10 @@ function Settings() {
 }
 
 // A spec that arrives as JSON, from a file or a model, is checked first:
-const faults = checkSpec(JSON.parse(text), { registry }); // each at a pointer, phrased as the fix`;
+const faults = checkSpec(JSON.parse(text), { registry }); // each at a pointer, phrased as the fix
+
+// What there is to translate, by pointer; its translation goes under "locales".
+const strings = texts(service); // { "/fields/name/label": "Service name", … }`;
 
 const LINKS = [
   ['./', 'Home', true],
@@ -301,8 +327,8 @@ function App() {
             </h1>
             <p className="lede">
               One spec, the settings of a web service, grows a feature at a time: kinds, presets, controls, conditions, groups, nesting,
-              collections, unions, definitions, expressions, checks and layouts. Each step shows what changed, the form fieldspec draws from
-              it, and the value that form edits. Every form is live.
+              collections, unions, definitions, expressions, checks, layouts and translations. Each step shows what changed, the form
+              fieldspec draws from it, and the value that form edits. Every form is live.
             </p>
           </div>
           <ol className="toc" aria-label="Steps">
@@ -342,7 +368,7 @@ function App() {
             <Code code={FROM_CODE} label="service.tsx" />
           </div>
           <div className="feature-demo">
-            <Json value={toJSONSchema(L.layouts)} label="toJSONSchema(service)" className="lesson-out" />
+            <Json value={toJSONSchema(L.translations)} label="toJSONSchema(service)" className="lesson-out" />
           </div>
         </section>
       </main>
@@ -364,14 +390,41 @@ function Lesson({ step, n, before }: { step: Step; n: number; before?: Spec }) {
         <Diff before={before} after={spec} />
       </div>
       <div className="feature-demo lesson-demo">
-        <Live spec={spec} view={step.view} type={(L.TYPES as Record<string, string>)[step.id]} />
+        <Live spec={spec} view={step.view} locale={step.locale} type={(L.TYPES as Record<string, string>)[step.id]} />
       </div>
     </section>
   );
 }
 
-function Live({ spec, view, type }: { spec: Spec; view?: string; type?: string }) {
-  const form = useForm(spec) as Form;
+interface LiveProps {
+  readonly spec: Spec;
+  readonly view?: string;
+  readonly locale?: string;
+  readonly type?: string;
+}
+
+/** A form for the spec, in its own language or, at a switch, in the step's locale. */
+function Live(props: LiveProps) {
+  const [locale, setLocale] = useState<string | undefined>(undefined);
+  return (
+    <>
+      {props.locale && (
+        <div className="seg" role="group" aria-label="Language">
+          <button type="button" aria-pressed={locale === undefined} onClick={() => setLocale(undefined)}>
+            English
+          </button>
+          <button type="button" aria-pressed={locale === props.locale} onClick={() => setLocale(props.locale)}>
+            {LANGUAGES[props.locale] ?? props.locale}
+          </button>
+        </div>
+      )}
+      <LiveForm key={locale ?? ''} {...props} locale={locale} />
+    </>
+  );
+}
+
+function LiveForm({ spec, view, locale, type }: LiveProps) {
+  const form = useForm(spec, { locale, ...(locale && { messages: L.german }) }) as Form;
   const [shown, setShown] = useState<string | undefined>(view);
   const [tab, setTab] = useState<'value' | 'type'>('value');
   return (

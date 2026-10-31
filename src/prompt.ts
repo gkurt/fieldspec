@@ -117,6 +117,14 @@ export function prompt(registry: Registry = coreRegistry, options: PromptOptions
   }
   out(
     '',
+    '## Translations (`locales`)',
+    '',
+    'Write every text in one language. Add `locales` only when asked for translations: by locale tag, a table from JSON Pointers into this spec to the text in their place. A pointer leads to a text (`/fields/name/label`, `/fields/plan/options/0/label`, `/groups/net/label`, `/fields/end/checks/0/message`) or a string inside one (`/fields/domain/label/$template`, `…/$then`). A text the spec leaves out may be given too: a label made from the key, the label of a plain option. A translated template reads the same values as the original.',
+    '',
+    '```json',
+    json({ locales: { de: { '/fields/name/label': 'Name', '/fields/plan/options/0/label': 'Kostenlos' } } }),
+    '```',
+    '',
     '## Groups',
     '',
     'A group gathers fields for display; it does not change the shape of the values. A field joins with `"group": "<id>"`. A group may have `label`, `description`, `visible`, `render`, and a parent `group`. It draws where its first field would, as a titled `stack` unless `render` names another container.',
