@@ -200,6 +200,9 @@ A definition is also how a spec names a shape of text of its own:
 A value that does not match says "This isn't a valid slug", named after the definition or
 preset the field uses, else its label or key; `patternMessage` says something else.
 
+`kindOf(decl, spec)` is the kind a field is with `use` followed, so `kindOf({ use: 'email' })`
+is `"string"`; `deref` gives the whole declaration the field stands for.
+
 ## Rendering: `render`
 
 `render` is one grammar everywhere: an element name, or an element object as in json-render.

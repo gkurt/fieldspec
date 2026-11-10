@@ -111,6 +111,7 @@ const result = parse(spec, json); // { ok, value, issues: [{ path, code, message
 - `createForm(spec, { values })` holds values and gives each field's state (`form.field(path)`:
   visible, enabled, required, label, options, issues). `applyPatch` applies JSON Patch.
 - `$computed` names a function passed at runtime: `define(spec, { fns })`.
+- `kindOf(decl, spec)` is a field's kind with `use` followed: `{ use: 'email' }` is `"string"`.
 - To have a model write a spec, give it `prompt(registry)` as the system prompt and check the
   answer with `checkSpec`. The prompt
   teaches only the `topics` it is given beyond fields, kinds and presets (a form: `conditions`,

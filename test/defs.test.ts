@@ -3,7 +3,9 @@ import type * as z from 'zod/v4';
 import {
   checkSpec,
   createForm,
+  createRegistry,
   define,
+  kindOf,
   layout,
   parse,
   prompt,
@@ -128,6 +130,20 @@ describe('definitions', () => {
       }),
     );
     expect(Object.values(out.elements).some((e) => String(e.props.text).includes('deeper levels are not shown'))).toBe(true);
+  });
+
+  test('kindOf follows use to the kind', () => {
+    const spec = define({
+      defs: { Slug: { type: 'string', pattern: '^[a-z-]+$' }, Handle: { use: 'Slug' }, Loop: { use: 'Loop' } },
+      fields: { id: { use: 'Handle' } },
+    });
+    expect(kindOf({ type: 'int' })).toBe('int');
+    expect(kindOf({ use: 'email' })).toBe('string');
+    expect(kindOf({ use: 'port', label: 'Port' })).toBe('int');
+    expect(kindOf(spec.fields.id, spec)).toBe('string');
+    expect(kindOf({ use: 'Handle' })).toBeUndefined();
+    expect(kindOf({ use: 'Loop' }, spec)).toBeUndefined();
+    expect(kindOf({ use: 'Money' }, createRegistry({ presets: { Money: { type: 'bigint' } } }).define({ fields: {} }))).toBe('bigint');
   });
 
   test('the prompt teaches defs and ../', () => {

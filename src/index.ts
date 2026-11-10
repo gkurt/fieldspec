@@ -33,7 +33,7 @@ export {
   type ElementRole,
 } from './elements.ts';
 export { BUILTIN_PRESETS } from './presets.ts';
-export { deref, lookUp, usedName, type Lookup } from './defs.ts';
+export { deref, kindOf, lookUp, usedName, type Lookup } from './defs.ts';
 export { isBuiltinName, isUserName, toUserName } from './names.ts';
 export {
   evaluate,

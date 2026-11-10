@@ -5,7 +5,7 @@ import { isBuiltinName } from './names.ts';
  * of the registry. Lowercase names are built-in presets; capitalized ones are the spec's
  * definitions, then the registry's own presets.
  */
-import type { Presets } from './registry.ts';
+import { coreRegistry, registryOf, type Presets } from './registry.ts';
 import type { Check, FieldDecl, ObjectField, Resolved, Spec, VariantField } from './types.ts';
 
 /** A literal `value` or `default` ends a field's recursion; an expression may give back a value that needs more of it. */
@@ -63,6 +63,24 @@ export function deref(lookup: Lookup, decl: FieldDecl): Resolved {
   if (checks.length > 0) out.checks = checks;
   memo.set(decl, out);
   return out;
+}
+
+/**
+ * The kind a field declaration is, with `use` followed to its preset or definition:
+ * `{ use: "email" }` is `"string"`. Give the spec the declaration is in for its `defs` and its
+ * registry's presets; without one, the built-in presets. Undefined where `use` names nothing or
+ * comes back around.
+ */
+export function kindOf(decl: FieldDecl, spec?: Spec): string | undefined {
+  const lookup: Lookup = { defs: spec?.defs, presets: spec ? registryOf(spec).presets : coreRegistry.presets };
+  const seen = new Set<string>();
+  let at: FieldDecl | undefined = decl;
+  while (at && at.type === undefined && typeof at.use === 'string') {
+    if (seen.has(at.use)) return undefined;
+    seen.add(at.use);
+    at = lookUp(lookup, at.use);
+  }
+  return typeof at?.type === 'string' ? at.type : undefined;
 }
 
 /** Whether following a field's `use` comes back around before it reaches a kind. */
