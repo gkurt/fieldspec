@@ -1,18 +1,30 @@
 core:changelogs:
-  - content: "---\npackages:\n  fieldspec:\n    type: minor\n---\n\n### A spec has `meta` for what the application keeps, and `fingerprint` says whether its description still matches\n\nA spec takes a top-level `meta`, never interpreted, whose `description` is `{ text, of }`: the spec in plain words and the fingerprint of the spec the text last matched. `fingerprint(spec)` is the same whatever the order of keys and leaves out `meta` and `$schema`; `withDescription`, `descriptionOf`, `stampDescription` and `isDescriptionStale` write, read, stamp and compare the description. `toJSONSchema` carries `meta` as `x-meta`.\n"
-    filename: spec-meta-and-fingerprint.md
+  - content: "---\npackages:\n  fieldspec:\n    type: minor\n---\n\n### `prompt(registry, { purpose: 'data' })` teaches a model to write a spec for data, not a form\n\nFor the shape of data a program or a model sends and others read. The prompt says no form is drawn and leaves out labels, groups, layouts, controls and translations; it asks for a `description` on every field at every depth, nesting instead of keys with a shared prefix, `required: true` for what the sender must always give, and `optional: true` for a value that may be unknown, since an absent field that is not optional reads as its kind's zero. The default, `purpose: 'form'`, is unchanged.\n"
+    filename: prompt-for-data.md
     v: 0.0.0
-  - content: "---\npackages:\n  fieldspec:\n    type: minor\n---\n\n### `describePrompt` and `describeMessage` ask a model for a spec's description, the mirror of `prompt`\n\n`describePrompt(registry, { maxLength, customRules })` is a system prompt for saying a spec in plain words such that a writer given `prompt` writes the same fields from it, naming kinds and presets from the registry as `prompt` does. `describeMessage(spec)` is the user message: the spec as JSON without `$schema`, `fieldspec` and `meta`. `prompt` gains one rule, so its text changes: where what the writer is asked for names a key, a kind, options, a limit, a default or whether a field is required, it uses exactly those.\n"
-    filename: describe-prompt.md
+  - content: "---\npackages:\n  fieldspec:\n    type: minor\n---\n\n### `prompt` teaches only the `topics` it is given, so its default is shorter\n\n`prompt(registry, { topics })` names the parts of the format to teach beyond fields, kinds and presets: `conditions`, `checks`, `expressions`, `defs`, `locales`, `migrations`, `groups`, `controls`, `layout`. The default for a form is now `conditions`, `groups` and `controls`, about 11,800 characters where it was 18,650, so `prompt()` no longer teaches `checks`, expressions and code, `defs`, translations, migrations or layout elements. `topics: 'all'` gives the text `prompt()` gave before, and data takes the topics a form does not draw.\n"
+    filename: prompt-topics.md
     v: 0.0.0
-  - content: "---\npackages:\n  fieldspec:\n    type: minor\n---\n\n### `createSpecEditor` holds a spec while its fields, its JSON or its description are edited\n\nThe headless counterpart of `createForm` for the spec itself: `add`, `remove`, `rename`, `move`, `setKind` and `set` work on fields at any depth by JSON Pointer, `json()` and `applyJson(text)` are the JSON way, and `setDescription`, `generate()` and `describe()` keep the description in `meta.description` through callbacks to the application's own model. An edit is taken only when `checkSpec` finds no errors in the spec it makes; otherwise it returns the faults and the last good spec stays. `rename` rewrites the pointers, placements, `namedBy`, translations and default values that name the field. `readSpec(text)` parses and checks JSON without an editor, `fieldspec/react` adds `useSpecEditor` and `useSpecEditorState`, and `examples/editor.tsx` draws the editor with plain elements.\n"
-    filename: spec-editor.md
+  - content: "---\npackages:\n  fieldspec:\n    type: patch\n---\n\n### `prompt` offers only the controls worth choosing, and prints its example compactly\n\nWithout the `layout` topic, the controls list leaves out a control that is a kind's own and takes no props (`select`, `checkbox`, `date`, `file`, `entries`, `fields`, `variant`), since a field has it without `render`, and says which kinds a control edits in brackets. The example has a line per field instead of a line per property. `aliases` and `deprecated` are taught with the `migrations` topic. The default prompt for a form is about 10,400 characters and the one for data about 6,800.\n"
+    filename: prompt-terser-controls.md
+    v: 0.0.0
+  - content: "---\npackages:\n  fieldspec:\n    type: patch\n---\n\n### `prompt` lists kinds more tersely\n\nA kind has an example only where it has properties it needs (`enum`, `array`, `set`, `record`, `object`, `variant`), a kind that takes the same properties as an earlier one says so (`int` after `number`), and the blank lines between a kind's parts are gone. For data, `set`, `record` and `variant` gain an example without labels.\n"
+    filename: prompt-terser-kinds.md
+    v: 0.0.0
+  - content: "---\npackages:\n  fieldspec:\n    type: minor\n---\n\n### `describePrompt` asks for a short description, as a person would ask for the spec\n\n`describePrompt` now asks for one or two sentences (under 300 characters, or `maxLength`) saying what the spec is for and its notable parts, and no longer for every field's key, kind, required, options, limits and default: the description is to read, not to write the same spec from. It takes its options alone, `describePrompt({ maxLength, customRules })`, and no registry. `prompt` loses the rule 0.4.0 added about using the keys and limits it is asked for.\n"
+    filename: short-description.md
+    v: 0.0.0
+  - content: "---\npackages:\n  fieldspec:\n    type: minor\n---\n\n### `kindOf(decl, spec)` gives a field's kind with `use` followed\n\n`kindOf({ use: 'email' })` is `\"string\"`. With the spec, it follows the spec's `defs` and its registry's presets; it is undefined where `use` names nothing.\n"
+    filename: kind-of.md
     v: 0.0.0
 core:packages:
   - changelogIds:
-      - spec-meta-and-fingerprint.md
-      - describe-prompt.md
-      - spec-editor.md
+      - prompt-for-data.md
+      - prompt-topics.md
+      - prompt-terser-controls.md
+      - prompt-terser-kinds.md
+      - short-description.md
+      - kind-of.md
     id: npm:fieldspec
     updated: true
 npm:packages:
