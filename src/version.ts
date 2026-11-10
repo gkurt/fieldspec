@@ -2,7 +2,7 @@
  * The package version, which the spec format's JSON Schema is versioned by. Written out rather
  * than read from package.json, so the built package imports no JSON; a test keeps the two equal.
  */
-export const VERSION: string = '0.3.0';
+export const VERSION: string = '0.4.0';
 
 /**
  * The version of the spec format this library reads, which a spec may state in `fieldspec`.

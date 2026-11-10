@@ -1,3 +1,17 @@
+## fieldspec@0.4.0
+
+### A spec has `meta` for what the application keeps, and `fingerprint` says whether its description still matches
+
+A spec takes a top-level `meta`, never interpreted, whose `description` is `{ text, of }`: the spec in plain words and the fingerprint of the spec the text last matched. `fingerprint(spec)` is the same whatever the order of keys and leaves out `meta` and `$schema`; `withDescription`, `descriptionOf`, `stampDescription` and `isDescriptionStale` write, read, stamp and compare the description. `toJSONSchema` carries `meta` as `x-meta`.
+
+### `describePrompt` and `describeMessage` ask a model for a spec's description, the mirror of `prompt`
+
+`describePrompt(registry, { maxLength, customRules })` is a system prompt for saying a spec in plain words such that a writer given `prompt` writes the same fields from it, naming kinds and presets from the registry as `prompt` does. `describeMessage(spec)` is the user message: the spec as JSON without `$schema`, `fieldspec` and `meta`. `prompt` gains one rule, so its text changes: where what the writer is asked for names a key, a kind, options, a limit, a default or whether a field is required, it uses exactly those.
+
+### `createSpecEditor` holds a spec while its fields, its JSON or its description are edited
+
+The headless counterpart of `createForm` for the spec itself: `add`, `remove`, `rename`, `move`, `setKind` and `set` work on fields at any depth by JSON Pointer, `json()` and `applyJson(text)` are the JSON way, and `setDescription`, `generate()` and `describe()` keep the description in `meta.description` through callbacks to the application's own model. An edit is taken only when `checkSpec` finds no errors in the spec it makes; otherwise it returns the faults and the last good spec stays. `rename` rewrites the pointers, placements, `namedBy`, translations and default values that name the field. `readSpec(text)` parses and checks JSON without an editor, `fieldspec/react` adds `useSpecEditor` and `useSpecEditorState`, and `examples/editor.tsx` draws the editor with plain elements.
+
 ## fieldspec@0.3.0
 
 ### `parse` refuses a required field that the input leaves out
