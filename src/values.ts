@@ -575,6 +575,7 @@ function checkFields(
       path: joinPointer(at, key),
       code: 'unknown',
       message: `is not a field here${near ? `; did you mean "${near}"?` : ''}`,
+      params: near ? { near } : {},
     });
   }
 }

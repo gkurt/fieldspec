@@ -171,6 +171,15 @@ describe('forms and issues', () => {
     expect(form.field('/max')?.issues).toEqual([{ path: '/max', code: 'check', message: 'Fewer than it starts with' }]);
   });
 
+  test('a value for no field is said another way too, with the field it may have meant', () => {
+    const spec = define({ fields: { name: { type: 'string', optional: true } } });
+    const unknown: Messages = (issue) => (issue.code === 'unknown' ? `unbekannt (${String(issue.params.near ?? '')})` : undefined);
+    expect(parse(spec, { nmae: 'a', other: 1 }, { messages: unknown }).issues).toEqual([
+      { path: '/nmae', code: 'unknown', message: 'unbekannt (name)', params: { near: 'name' } },
+      { path: '/other', code: 'unknown', message: 'unbekannt ()', params: {} },
+    ]);
+  });
+
   test('a message the spec writes has no params', () => {
     const spec = define({ fields: { slug: { type: 'string', pattern: '[a-z]+', patternMessage: 'Lowercase only' } } });
     expect(parse(spec, { slug: 'A' }).issues).toEqual([{ path: '/slug', code: 'pattern', message: 'Lowercase only' }]);
