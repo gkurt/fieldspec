@@ -49,7 +49,7 @@ Parent-directory imports go through the `#*` alias (`#src/form.ts`), siblings us
 - `src/meta.ts` — a spec's `meta`: `fingerprint`, and the description kept there with whether it is out of date.
 - `src/patch.ts`, `src/pointer.ts` — JSON Patch over values; JSON Pointers.
 - `src/jsonschema.ts`, `src/zod.ts`, `src/standard.ts`, `src/jsonrender.ts` — interop.
-- `src/prompt.ts`, `src/schema.ts` — a system prompt and the JSON Schema of specs, for agents.
+- `src/prompt.ts`, `src/schema.ts` — the system prompts that write a spec (`prompt`) and describe one (`describePrompt`, `describeMessage`), and the JSON Schema of specs, for agents.
 - `src/version.ts` — `VERSION`, written by the Tegami config on each release, and `FORMAT_VERSION` (see below).
 - `src/react/index.tsx` — `fieldspec/react`: `FormView`, the renderer protocol, text parsing. No look of its own.
 - `src/react/controls.tsx` — what container and choice controls do: `listOf`, `entriesOf`, `variantOf`, `objectOf`, `choicesOf`, `checksOf`.

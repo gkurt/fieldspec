@@ -703,6 +703,19 @@ checks meaning (references, conditions, defaults).
 - `prompt(registry)` and `metaSchema(registry)`: a system prompt and a JSON Schema for structured
   outputs, both generated from the registry's kinds, elements and presets. The prompt tells
   agents to start specs with `$schema`.
+- `describePrompt(registry)` and `describeMessage(spec)`: the mirror of `prompt`, for the way
+  back. The system prompt asks a model for the spec in plain words, such that a writer given
+  `prompt` and only that description writes the same fields: each field by its key, its kind,
+  whether it is required, its options, limits and default, in the spec's order. It names kinds
+  and presets from the same registry in the same words as `prompt`, and takes `maxLength` and
+  `customRules`. The message is the spec as JSON without `$schema`, `fieldspec` and `meta`, so
+  the description a spec carries is never described back. fieldspec calls no model: send both
+  with yours, and keep the answer with `withDescription(spec, text)`.
+
+  ```ts
+  const text = await model({ system: describePrompt(registry, { maxLength: 4000 }), user: describeMessage(spec) });
+  const described = withDescription(spec, text);
+  ```
 
 ## Status
 

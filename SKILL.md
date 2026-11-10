@@ -111,6 +111,10 @@ const result = parse(spec, json); // { ok, value, issues: [{ path, code, message
 - `createForm(spec, { values })` holds values and gives each field's state (`form.field(path)`:
   visible, enabled, required, label, options, issues). `applyPatch` applies JSON Patch.
 - `$computed` names a function passed at runtime: `define(spec, { fns })`.
+- To have a model write a spec, give it `prompt(registry)` as the system prompt and check the
+  answer with `checkSpec`. To have one describe a spec, give it `describePrompt(registry)` and
+  `describeMessage(spec)`; the description is written so that `prompt` writes the same fields
+  from it. Do not write prompts of your own for either.
 - A spec's `meta` is the application's and never interpreted. `meta.description` is `{ text, of }`:
   the spec in plain words and the `fingerprint(spec)` the text last matched. Write it with
   `withDescription(spec, text)`, read it with `descriptionOf(spec)`, and ask

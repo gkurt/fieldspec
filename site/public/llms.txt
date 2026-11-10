@@ -2,7 +2,7 @@
 
 > A typed, serializable, headless format for configs and the forms that edit them. One JSON document, a spec, says what the values are (kinds, constraints, defaults, derived values, conditions, checks) and, optionally, how a form for them is drawn. TypeScript infers the value type from it, agents write it from a generated prompt and meta-schema, and it converts to and from JSON Schema, Zod, Standard Schema and json-render. ESM-only, on npm as `fieldspec`.
 
-Agents writing specs should get their rules from the library rather than from memory: `prompt(registry)` is a system prompt and `metaSchema(registry)` a JSON Schema for structured output, both generated from the registry that will read the spec. `checkSpec(spec, { registry })` then reports every fault at a JSON Pointer, phrased as the fix.
+Agents writing specs should get their rules from the library rather than from memory: `prompt(registry)` is a system prompt and `metaSchema(registry)` a JSON Schema for structured output, both generated from the registry that will read the spec. `checkSpec(spec, { registry })` then reports every fault at a JSON Pointer, phrased as the fix. For the way back, `describePrompt(registry)` and `describeMessage(spec)` ask a model for a spec's description in plain words, from which `prompt` writes the same fields.
 
 `createSpecEditor` is the headless editor of a spec itself (add, remove, rename, reorder and retype fields at any depth, the JSON as text, a plain-words description kept in `meta.description`), taking an edit only when `checkSpec` finds no errors.
 
