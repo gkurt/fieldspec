@@ -508,7 +508,8 @@ function shapeFrom(ctx: FromCtx, s: Schema): Record<string, unknown> {
       return { type: 'boolean' };
     case 'array': {
       const decl: Record<string, unknown> = {
-        type: 'array',
+        // Items each there once are a set's.
+        type: s.uniqueItems === true ? 'set' : 'array',
         items: s.items && typeof s.items === 'object' ? fieldFrom(ctx, s.items) : { type: 'json' },
       };
       copy(s, decl, ['minItems', 'maxItems']);

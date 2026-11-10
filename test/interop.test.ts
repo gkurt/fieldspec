@@ -117,6 +117,11 @@ describe('JSON Schema', () => {
     { name: 'a URI stays text', schema: { type: 'string', format: 'uri' }, decl: { type: 'string', format: 'uri' } },
     { name: 'a format it has no check for', schema: { type: 'string', format: 'phone' }, decl: { type: 'string', format: 'phone' } },
     {
+      name: 'items each there once, a set',
+      schema: { type: 'array', items: { enum: ['a', 'b'] }, uniqueItems: true },
+      decl: { type: 'set', items: { type: 'enum', options: ['a', 'b'] } },
+    },
+    {
       name: 'options labelled by enumNames',
       schema: { type: 'string', enum: ['a', 'b'], enumNames: ['A'] },
       decl: { type: 'enum', options: [{ value: 'a', label: 'A' }, 'b'] },
