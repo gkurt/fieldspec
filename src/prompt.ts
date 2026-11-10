@@ -11,6 +11,14 @@ export { metaSchema } from './schema.ts';
 import type { FunctionDecl, Spec } from './types.ts';
 
 export interface PromptOptions {
+  /**
+   * What the spec is for. `"form"` (the default) is values people edit in a form the spec lays
+   * out. `"data"` is the shape of data a program or a model sends and others read: no form is
+   * drawn, so the prompt teaches no labels, groups, layouts or controls, and asks for a
+   * description on every field, nesting instead of prefixed keys, and `required` and `optional`
+   * that say what the sender must give and what it may not know.
+   */
+  readonly purpose?: 'form' | 'data';
   /** Extra rules, in plain language. */
   readonly customRules?: readonly string[];
   /** Functions the agent may call with `$computed`. */
@@ -21,6 +29,7 @@ const json = (value: unknown) => JSON.stringify(value);
 
 /** A system prompt that teaches an agent to write specs of this registry. */
 export function prompt(registry: Registry = coreRegistry, options: PromptOptions = {}): string {
+  if (options.purpose === 'data') return dataPrompt(registry, options);
   const lines: string[] = [];
   const out = (...l: string[]) => lines.push(...l);
   out(
@@ -237,6 +246,165 @@ const UNDESCRIBED = ['$schema', 'fieldspec', 'meta'];
 export function describeMessage(spec: Spec): string {
   return `The spec:\n${JSON.stringify(Object.fromEntries(Object.entries(spec).filter(([key]) => !UNDESCRIBED.includes(key))))}`;
 }
+
+/** What a field of data says of itself, in the words a sender and a reader need. */
+const DATA_PROPS: { readonly [prop: string]: string } = {
+  type: BASE_PROPS.type!.description,
+  use: BASE_PROPS.use!.description,
+  description: 'What the value holds, in one sentence a model writing or reading the data can act on, with its unit or format.',
+  required: '`true`: the sender must always give it, and not empty.',
+  optional: '`true`: the value may be absent, which says it is unknown or does not apply.',
+  default: 'The value when absent, where one is right without being said.',
+  examples: 'Sample values.',
+};
+
+/** What only a form reads of a kind: left out of a prompt for data. */
+const FORM_ONLY = [
+  'label',
+  'render',
+  'patternMessage',
+  'suggestions',
+  'step',
+  'unit',
+  'accept',
+  'namedBy',
+  'groups',
+  'placeholder',
+  'hint',
+];
+
+/** Core kinds and properties whose own words speak of a form, said for data: by kind, or by kind and property. */
+const DATA_WORDS: { readonly [name: string]: string } = {
+  enum: 'One of a fixed list of options: plain values, or `{ "value": …, "description": "…" }` where an option needs explaining.',
+  'enum.options': 'The choices.',
+  set: 'Distinct items of one declaration. JSON form: an array.',
+  'string.format': 'A known shape: email, uri, uuid, hostname, ipv4, color.',
+  'object.fields': 'The fields.',
+};
+
+function dataPrompt(registry: Registry, options: PromptOptions): string {
+  const lines: string[] = [];
+  const out = (...l: string[]) => lines.push(...l);
+  out(
+    '# Writing a fieldspec spec',
+    '',
+    'A spec is one JSON object that describes the shape of data: values a program or a model sends as JSON, and others read. Nothing draws it as a form. Write JSON only.',
+    '',
+    '```json',
+    '{ "$schema": "…", "fieldspec": 1, "title": "…", "fields": { "<key>": <field> }, "defs": { "<Name>": <field> } }',
+    '```',
+    '',
+    'Only `fields` is required. Keys are lowerCamelCase.',
+    '',
+    `Start the spec with \`"$schema": "${SCHEMA_URL}", "fieldspec": ${FORMAT_VERSION}\`: they name the fieldspec version and the version of the spec format it is written for.`,
+    '',
+    '## Every field may have',
+    '',
+  );
+  for (const [name, about] of Object.entries(DATA_PROPS)) out(`- \`${name}\`: ${about}`);
+  out(
+    '',
+    '## Given, unknown, or left to a default',
+    '',
+    'Decide for every field which of three it is:',
+    '',
+    '- The sender must always give it: `required: true`.',
+    '- The sender may not know it, or it may not apply: `optional: true`, and the sender leaves it out. Never use a made-up value (an empty string, 0, false) to mean unknown.',
+    '- Neither: an absent value takes `default`, else the kind\'s zero ("", 0, false, the first option, an empty list), which a reader cannot tell from one that was sent. So leave a field plain only where that zero or default is the right reading of silence.',
+    '',
+    "A field has `required` or `optional`, never both. The same holds at every depth: the fields of an object and of an array's items say it for themselves.",
+    '',
+    '## Shape',
+    '',
+    '- A thing with parts is an `object` with fields of its own. Never flatten its parts into keys with a shared prefix: not `reporterName` and `reporterEmail`, but `reporter` with `name` and `email`.',
+    '- Several things of one shape are an `array` whose `items` is an `object`.',
+    '- One of several shapes is a `variant`.',
+    '- A shape used in more than one place goes under `defs` with a capitalized name, and a field takes it with `{ "use": "Address" }`, adding properties of its own beside it.',
+    '',
+    '## Kinds (`type`)',
+    '',
+  );
+  for (const kind of registry.kinds.values()) {
+    out(`### ${kind.name}${kind.base ? ` (refines ${kind.base})` : ''}`, '', DATA_WORDS[kind.name] ?? kind.description);
+    const props = Object.entries(kind.props ?? {}).filter(([name]) => !FORM_ONLY.includes(name));
+    if (props.length > 0) {
+      out('');
+      for (const [name, info] of props)
+        out(`- \`${name}\`${info.required ? ' (required)' : ''}: ${DATA_WORDS[`${kind.name}.${name}`] ?? info.description}`);
+    }
+    out('');
+  }
+  const presets = Object.entries(registry.presets).filter(([, preset]) => preset.render === undefined);
+  if (presets.length > 0) {
+    out(
+      '## Presets (`use`)',
+      '',
+      'A field may build on one of these instead of giving a `type`: `{ "use": "email", "description": "…" }`.',
+      '',
+    );
+    for (const [name, preset] of presets) {
+      const about = isBuiltinName(name)
+        ? PRESET_DESCRIPTIONS[name as keyof typeof PRESET_DESCRIPTIONS]
+        : (preset.description as string | undefined);
+      out(
+        `- \`${name}\`: ${about ? `${about} ` : ''}\`${json(Object.fromEntries(Object.entries(preset).filter(([prop]) => !FORM_ONLY.includes(prop))))}\``,
+      );
+    }
+    out('');
+  }
+  out(
+    '## Example',
+    '',
+    '```json',
+    JSON.stringify(DATA_EXAMPLE, null, 2),
+    '```',
+    '',
+    '## Rules',
+    '',
+    '- Use only the kinds and properties above. Unknown properties are errors.',
+    '- Every field, at every depth, has a `description`.',
+    "- An enum's `default` must be one of its options.",
+  );
+  for (const rule of options.customRules ?? []) out(`- ${rule}`);
+  return lines.join('\n');
+}
+
+const DATA_EXAMPLE = {
+  title: 'Order',
+  fields: {
+    id: { type: 'string', description: 'The order number as the shop prints it, like "A-10422".', required: true },
+    status: {
+      type: 'enum',
+      options: ['open', 'paid', 'shipped', 'cancelled'],
+      description: 'Where the order stands now.',
+      required: true,
+    },
+    customer: {
+      type: 'object',
+      description: 'Who placed the order.',
+      required: true,
+      fields: {
+        name: { type: 'string', description: "The customer's full name.", required: true },
+        email: { use: 'email', description: 'Where receipts are sent; absent when the customer gave none.', optional: true },
+      },
+    },
+    lines: {
+      type: 'array',
+      description: 'What was ordered, one entry per product.',
+      required: true,
+      items: {
+        type: 'object',
+        fields: {
+          sku: { type: 'string', description: 'The product code.', required: true },
+          quantity: { type: 'int', min: 1, description: 'How many units.', required: true },
+          unitPrice: { type: 'number', min: 0, description: 'The price of one unit, in euros.', required: true },
+        },
+      },
+    },
+    giftWrap: { type: 'boolean', description: 'Whether the order is gift-wrapped; false when nothing is said.' },
+    shippedAt: { type: 'date', time: true, description: 'When the parcel left the warehouse; absent until it has.', optional: true },
+  },
+};
 
 const EXAMPLE = {
   title: 'Account',

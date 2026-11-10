@@ -1,0 +1,93 @@
+/** The prompt that teaches a model to write specs: what each purpose is told, and how long that is. */
+import { describe, expect, test } from 'bun:test';
+import { design } from '#examples/design.ts';
+import { checkSpec, prompt, type Spec } from '#src/index.ts';
+
+/** The spec a prompt shows under "Example". */
+function exampleOf(text: string): Spec {
+  const from = text.indexOf('```json', text.indexOf('## Example')) + '```json'.length;
+  return JSON.parse(text.slice(from, text.indexOf('```', from)));
+}
+
+/** Every declaration of a spec's fields, at every depth, with its pointer. */
+function declarations(fields: object, at = '/fields'): [string, Record<string, unknown>][] {
+  return Object.entries(fields).flatMap(([key, decl]: [string, Record<string, unknown>]) => [
+    [`${at}/${key}`, decl] as [string, Record<string, unknown>],
+    ...(decl.fields ? declarations(decl.fields, `${at}/${key}/fields`) : []),
+    ...((decl.items as { fields?: object } | undefined)?.fields
+      ? declarations((decl.items as { fields: object }).fields, `${at}/${key}/items/fields`)
+      : []),
+  ]);
+}
+
+describe('prompt for data', () => {
+  const text = prompt(undefined, { purpose: 'data' });
+
+  test('says no form is drawn, and teaches nothing a form alone reads', () => {
+    expect(text).toContain('Nothing draws it as a form');
+    for (const word of [
+      'render',
+      'groups',
+      'layouts',
+      'locales',
+      'placeholder',
+      'hint',
+      'label',
+      'visible',
+      'display',
+      'slider',
+      'patternMessage',
+      '$state',
+    ])
+      expect(text).not.toContain(word);
+  });
+
+  test('asks for a description on every field, nesting over prefixed keys, and required and optional', () => {
+    expect(text).toContain('Every field, at every depth, has a `description`.');
+    expect(text).toContain('Never flatten its parts into keys with a shared prefix');
+    expect(text).toContain('The sender must always give it: `required: true`.');
+    expect(text).toContain('The sender may not know it, or it may not apply: `optional: true`');
+    expect(text).toContain("the kind's zero");
+  });
+
+  test('names every kind with the properties it needs', () => {
+    for (const kind of ['string', 'int', 'enum', 'date', 'array', 'object', 'variant', 'record']) expect(text).toContain(`### ${kind}`);
+    for (const needed of ['`options` (required)', '`items` (required)', '`fields` (required)', '`variants` (required)'])
+      expect(text).toContain(needed);
+    expect(prompt(design, { purpose: 'data' })).toContain('### Gradient');
+  });
+
+  test('offers the presets that say something about the value, not about its control', () => {
+    expect(text).toContain('`email`');
+    expect(text).toContain('`port`');
+    for (const drawn of ['`percent`', '`password`', '`multiline`', '`color`']) expect(text).not.toContain(drawn);
+  });
+
+  test('shows an example that does what it asks: nested, described at every depth, and checked', () => {
+    const example = exampleOf(text);
+    expect(checkSpec(example)).toEqual([]);
+    const all = declarations(example.fields);
+    expect(all.map(([at]) => at)).toContain('/fields/customer/fields/email');
+    expect(all.map(([at]) => at)).toContain('/fields/lines/items/fields/sku');
+    for (const [at, decl] of all) {
+      expect([at, typeof decl.description]).toEqual([at, 'string']);
+      expect([at, decl.required === true && decl.optional === true]).toEqual([at, false]);
+      for (const prop of ['label', 'group', 'render']) expect([at, prop in decl]).toEqual([at, false]);
+    }
+    expect(all.some(([, decl]) => decl.required === true)).toBe(true);
+    expect(all.some(([, decl]) => decl.optional === true)).toBe(true);
+    expect(all.some(([, decl]) => decl.required === undefined && decl.optional === undefined)).toBe(true);
+  });
+
+  test('takes rules of the application', () => {
+    expect(prompt(undefined, { purpose: 'data', customRules: ['Amounts are in cents.'] }).endsWith('- Amounts are in cents.')).toBe(true);
+  });
+});
+
+describe('prompt for a form', () => {
+  test('is what prompt gives when no purpose is named', () => {
+    expect(prompt(undefined, { purpose: 'form' })).toBe(prompt());
+    expect(prompt()).toContain('how a form for them is laid out');
+    expect(checkSpec(exampleOf(prompt()))).toEqual([]);
+  });
+});

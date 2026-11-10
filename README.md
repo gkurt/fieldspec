@@ -703,6 +703,15 @@ checks meaning (references, conditions, defaults).
 - `prompt(registry)` and `metaSchema(registry)`: a system prompt and a JSON Schema for structured
   outputs, both generated from the registry's kinds, elements and presets. The prompt tells
   agents to start specs with `$schema`.
+- `prompt(registry, { purpose: 'data' })` is the prompt for a spec that is no form: the shape of
+  data a program or a model sends as JSON and others read, such as a tool's input or an agent's
+  output. It teaches no labels, groups, layouts, controls or translations, and asks for a
+  `description` on every field at every depth, an object or an array of objects for a thing with
+  parts instead of keys with a shared prefix, and one of three for every field: `required: true`
+  for what the sender must always give, `optional: true` for what it may not know and then leaves
+  out, and neither only where the kind's zero or the `default` is the right reading of an absent
+  value. A value that may be unknown is `optional` because an absent field that is not takes its
+  zero (`""`, `0`, `false`), which a reader cannot tell from a value that was sent.
 - `describePrompt()` and `describeMessage(spec)`: for the way back, a spec's description. The
   system prompt asks a model for what a person would have typed to ask for the spec: what the
   thing is and its notable parts, in one or two sentences (under 300 characters, or
