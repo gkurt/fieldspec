@@ -430,7 +430,8 @@ const german: Messages = ({ code, params }) => (code === 'min' ? `Mindestens ${p
 parse(spec, json, { messages: german });
 ```
 
-It is asked only for issues with `params`. Messages the spec writes, a check's or
+A form keeps its `messages` (`form.messages`), and a text box says what it cannot read ("Enter a
+number") with them too, as a `type` issue with the field's kind as `expected`. It is asked only for issues with `params`. Messages the spec writes, a check's or
 `patternMessage`, have none: they translate with the spec.
 
 ## Versions and migrations

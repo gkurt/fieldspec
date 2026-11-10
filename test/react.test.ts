@@ -81,6 +81,25 @@ describe('React controls', () => {
     await act(() => root.unmount());
   });
 
+  test("text that does not read as the field's kind is said as the form's messages say it", async () => {
+    const count = define({ fields: { count: { type: 'int' } } });
+    const messages = (issue: { code: string; params: Record<string, unknown> }) =>
+      issue.code === 'type' ? `Keine Zahl (${String(issue.params.expected)})` : undefined;
+    const form = createForm(count, { messages });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = client.createRoot(host);
+    const act = (fn: () => void) => React.act(async () => fn());
+    await act(() => root.render(React.createElement(ui.FormView, { form, renderers: html.htmlRenderers })));
+    const input = host.querySelector('input')!;
+    await act(() => {
+      Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')!.set!.call(input, 'x');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(host.textContent).toContain('Keine Zahl (int)');
+    await act(() => root.unmount());
+  });
+
   test('an absent object is offered, not drawn, so one that may contain itself ends', async () => {
     const chain = define({
       fields: { head: { use: 'Node' } },

@@ -72,6 +72,8 @@ export interface Form<V = unknown> {
   /** The spec, translated when the form has a `locale`. */
   readonly spec: Spec;
   readonly locale?: string;
+  /** Says the library's own issue messages another way, as the form was created with; controls use it for theirs. */
+  readonly messages?: Messages;
   readonly registry: Registry;
   readonly values: V;
   readonly issues: readonly Issue[];
@@ -264,6 +266,7 @@ export function createForm<S extends Spec>(given: S, options: FormOptions = {}):
   const form: Form<Infer<S>> = {
     spec,
     ...(options.locale !== undefined && { locale: options.locale }),
+    ...(options.messages !== undefined && { messages: options.messages }),
     registry,
     get values() {
       return values as Infer<S>;

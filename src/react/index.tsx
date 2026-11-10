@@ -473,7 +473,9 @@ export function useParsedText(
         setError(undefined);
         p.set(parsed.value);
       } else {
-        setError(parsed.error);
+        // Said as the form says its issues: text that does not read as the field's kind.
+        const issue = { path: field.path, code: 'type', message: parsed.error, params: { expected: field.decl.type } };
+        setError(p.form.messages?.(issue) ?? parsed.error);
       }
     },
   };
