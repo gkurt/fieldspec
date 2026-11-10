@@ -4,12 +4,14 @@
 
 Agents writing specs should get their rules from the library rather than from memory: `prompt(registry)` is a system prompt and `metaSchema(registry)` a JSON Schema for structured output, both generated from the registry that will read the spec. `checkSpec(spec, { registry })` then reports every fault at a JSON Pointer, phrased as the fix.
 
+`createSpecEditor` is the headless editor of a spec itself (add, remove, rename, reorder and retype fields at any depth, the JSON as text, a plain-words description kept in `meta.description`), taking an edit only when `checkSpec` finds no errors.
+
 ## Docs
 
 - [README](https://github.com/gkurt/fieldspec/blob/main/README.md): the full reference: fields, kinds, conditions, derived values, checks, presets and definitions, rendering, code (`$cel`, `$js`), translations, versions and migrations, extending, interop.
 - [SKILL.md](https://github.com/gkurt/fieldspec/blob/main/SKILL.md): a skill for coding agents working in a project that uses fieldspec. Also shipped in the package.
 - [Tutorial](https://gkurt.com/fieldspec/tutorial.html): one spec grown a feature at a time, with a live form at every step.
-- [Examples](https://gkurt.com/fieldspec/examples.html): forms drawn with the example renderer sets (HTML, React Aria, DialKit, shadcn/ui).
+- [Examples](https://gkurt.com/fieldspec/examples.html): forms drawn with the example renderer sets (HTML, React Aria, DialKit, shadcn/ui), and a spec edited with the example spec editor.
 - [With AI models](https://gkurt.com/fieldspec/models.html): generating specs and filling forms with small models.
 
 ## Reference

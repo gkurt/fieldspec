@@ -4,9 +4,10 @@
  */
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { editorStyles, SpecEditorView } from '#examples/editor.tsx';
 import { htmlRenderers, htmlStyles } from '#examples/renderers/html.tsx';
 import { define } from '#src/index.ts';
-import { FormView, useForm, useFormState } from '#src/react/index.tsx';
+import { FormView, useForm, useFormState, useSpecEditor, useSpecEditorState } from '#src/react/index.tsx';
 import { Footer, Heading, Nav, Page, REPO } from './chrome.tsx';
 import { Code, Json } from './Code.tsx';
 import { cardSource, DialKitDemo } from './DialKit.tsx';
@@ -82,17 +83,62 @@ function HtmlDemo() {
   );
 }
 
+const editorSource = `import { useSpecEditor, useSpecEditorState, FormView, useForm } from "fieldspec/react";
+import { SpecEditorView, editorStyles } from "./editor"; // copied from fieldspec's examples/editor.tsx
+
+const editor = useSpecEditor({
+  spec,
+  generate: (description, spec) => writeSpec(description, spec), // your model, with prompt(registry)
+  describe: (spec) => describeSpec(spec), // your model, with describePrompt(registry)
+});
+const { spec, stale, replaces } = useSpecEditorState(editor);
+
+editor.rename("/fields/members/items/fields/name", "handle"); // namedBy follows
+editor.setKind("/fields/team", "enum"); // starts its options
+editor.applyJson(text); // { ok: false, parse | faults } keeps the last good spec
+
+<style>{editorStyles}</style>
+<SpecEditorView editor={editor} generate describe />`;
+
+/** The form of the spec being edited, made anew when the spec changes. */
+function Preview({ spec }: { spec: Parameters<typeof useForm>[0] }) {
+  return <FormView form={useForm(spec)} renderers={htmlRenderers} />;
+}
+
+function EditorDemo() {
+  const editor = useSpecEditor({ spec: teamSpec });
+  const { spec, version } = useSpecEditorState(editor);
+  return (
+    <div className="aria-demo">
+      <figure>
+        <figcaption>examples/editor</figcaption>
+        <div className="card form-card">
+          <SpecEditorView editor={editor} />
+        </div>
+      </figure>
+      <figure>
+        <figcaption>the form of editor.spec</figcaption>
+        <div className="card form-card">
+          <Preview key={version} spec={spec} />
+        </div>
+      </figure>
+    </div>
+  );
+}
+
 const TOC = [
   ['html', 'Plain HTML'],
   ['dialkit', 'DialKit'],
   ['react-aria', 'React Aria'],
   ['shadcn', 'shadcn/ui'],
+  ['editor', 'Editing a spec'],
 ] as const;
 
 function App() {
   return (
     <>
       <style>{htmlStyles}</style>
+      <style>{editorStyles}</style>
       <Nav current="examples.html" />
       <Page toc={TOC}>
         <header className="hero models-hero" id="top">
@@ -149,6 +195,17 @@ function App() {
           </Heading>
           <ShadcnDemo />
           <Code code={deploySource} label="deploy.tsx" className="dial-code" />
+        </section>
+        <section className="section" id="editor">
+          <Heading kicker="Editing a spec" title="The spec itself, edited like a form">
+            <code>createSpecEditor</code> is the form's counterpart for the spec: it holds the spec while its fields are added, renamed,
+            moved and given other kinds, at any depth, and takes an edit only when the checker finds no errors in what it makes. The fields,
+            the JSON and the description are three ways into one state. This view, in{' '}
+            <a href={`${REPO}/blob/main/examples/editor.tsx`}>examples/editor.tsx</a>, draws it with plain elements; the form beside it is
+            the spec as it stands. Rename a member's <code>name</code> and the list's <code>namedBy</code> follows.
+          </Heading>
+          <EditorDemo />
+          <Code code={editorSource} label="editor.tsx" className="dial-code" />
         </section>
       </Page>
       <Footer>Every form on this page is drawn by FormView with the example renderers.</Footer>

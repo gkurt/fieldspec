@@ -530,6 +530,74 @@ descriptionOf(described)?.text; // "A name, required."
 - `checkSpec` checks that `meta` is an object and `description` is `{ text, of? }`; other keys
   are yours. In JSON Schema, `meta` rides along as `x-meta`.
 
+## Editing a spec: `createSpecEditor`
+
+`createSpecEditor` is the form's counterpart for the spec itself: where `createForm` holds a
+spec's values, the editor holds the spec while a person changes it. It gives three ways into one
+state: the fields as a tree, the JSON as text, and the description in plain words, from which a
+model of yours writes the spec. Like the form it is headless, and it calls no model.
+
+```ts
+import { createSpecEditor } from 'fieldspec';
+
+const editor = createSpecEditor({
+  spec,
+  generate: (description, spec) => writeSpec(description, spec), // your model, with prompt(registry)
+  describe: (spec) => describeSpec(spec), // your model, with describePrompt(registry)
+});
+
+editor.add('/fields', { key: 'age', decl: { type: 'int', min: 0 } }); // { ok: true, path: "/fields/age" }
+editor.rename('/fields/address/fields/street', 'line1'); // what names the field follows
+editor.setKind('/fields/plan', 'enum'); // starts its options
+editor.set('/fields/age/required', true);
+editor.applyJson(text); // { ok: false, parse } or { ok: false, faults }: the spec stays
+```
+
+Every edit is checked. The editor takes the spec an edit makes when `checkSpec` finds no errors
+in it; otherwise the edit returns `{ ok: false, faults }` with the errors at their pointers,
+`editor.refused` holds them until the next edit that is taken, and `editor.spec` stays the last
+good spec. Warnings do not refuse an edit; `editor.faults` lists them, and `faultsAt(path)`
+those at or below a pointer. A spec the editor is created with is kept even with errors, and an
+edit must then leave none.
+
+Everything is addressed by JSON Pointers into the spec, the same ones faults carry, so a nested
+field is edited like a top-level one: `/fields/address/fields/street` (an object's field),
+`/fields/tags/items` (what a list's items follow), `/fields/headers/values`,
+`/fields/auth/variants/token/fields/secret`, `/defs/Address`.
+
+- `fields` and `defs` are the tree to draw: each `SpecNode` has its `path`, `key`, `kind`, `use`,
+  `label`, `required`, `optional`, and what is inside it (`fields`, `items`, `values`, `keys`,
+  `variants`). `node(path)` finds one, `props(path)` lists the properties its kind takes with
+  their JSON Schema and current value, to draw a control for each, and `kinds` and `uses` are
+  what a field can be or build on.
+- `add(map, { key, decl, index })` adds an entry to a map: a field to `/fields` or
+  `/fields/address/fields`, a definition to `/defs`, a variant to `/fields/auth/variants`, a
+  group to `/groups`. `remove(path)` removes one with its translations; what still names it
+  (a placement in a `render`, a pointer) the checker reports, as an error that refuses the
+  removal or a warning.
+- `rename(path, key)` gives an entry another key in place. A field's new key is written wherever
+  the spec names the field: `$state`, `$item` and `$template` pointers, relative and absolute
+  and through every use of a definition, `render` and `layouts` placements, `namedBy`,
+  translations, and the keys of the defaults and examples the spec gives for it. A definition's goes to every `use`, a group's to its members and placements.
+  `{ alias: true }` keeps the old key in the field's `aliases`, so stored values are still read.
+- `move(path, index)` reorders. `setKind(path, kind)` keeps what the new kind also takes, drops
+  what it refuses (a `default` of the old kind) and starts what it needs (`items`, `options`).
+- `set(path, value)` sets anything at a pointer, `undefined` removing it: a label, a default, a
+  kind's constraint, a whole declaration, a group, the title.
+- `json()` is the spec as text; `applyJson(text)` takes edited text when it parses and has no
+  errors, and otherwise reports the parser's message (`parse`) or the faults. `readSpec(text)`
+  does the same without an editor.
+- `description`, `stale` and `replaces` follow the description in `meta.description`:
+  `setDescription(text)` as it is typed, `generate()` to write the spec from it and `describe()`
+  to write it from the spec, both through the callbacks you give, with `pending` saying which is
+  under way. `stale` is `isDescriptionStale(spec)`. `replaces` lists the top-level fields a
+  generate would replace though no description wrote them, so ask before generating while it is
+  not empty. A spec the model writes with errors is refused like any edit.
+
+In React, `useSpecEditor(options)` creates one and `useSpecEditorState(editor)` re-renders on
+every change. fieldspec ships no look for it either:
+[`examples/editor.tsx`](examples/editor.tsx) draws it with plain elements, to copy.
+
 ## Extending
 
 A registry is the vocabulary specs are written in: kinds (what `type` names), elements (what

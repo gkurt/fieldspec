@@ -42,6 +42,7 @@ Parent-directory imports go through the `#*` alias (`#src/form.ts`), siblings us
 - `src/check.ts` — `checkSpec`: every fault at a JSON Pointer, phrased as the fix.
 - `src/layout.ts` — a spec's fields, groups and `render`s resolved into one `LayoutNode` tree.
 - `src/form.ts` — `createForm`, the headless form: values, field state, issues, layout.
+- `src/editor.ts` — `createSpecEditor`, the headless spec editor: the fields as a tree, the JSON, the description; every edit checked.
 - `src/common.ts` — `commonFields`: one spec for the fields several specs share, with mixed values.
 - `src/locales.ts` — translations: `texts`, `localize`, `checkTranslations`, over a spec's `locales`.
 - `src/migrations.ts` — `version` and `migrations`: `migrate` brings stored values forward.
@@ -55,6 +56,7 @@ Parent-directory imports go through the `#*` alias (`#src/form.ts`), siblings us
 - `test/` — `bun test` suites; `test/stress/` generates random specs and checks invariants.
 - `site/` — the website (Vite, React), deployed to GitHub Pages by `pages.yml`.
 - `examples/renderers/` — renderer sets to copy (HTML, DialKit, React Aria, shadcn/ui), not shipped; they import fieldspec by its package name, which the `fieldspec@dev` condition resolves to source.
+- `examples/editor.tsx` — the spec editor drawn with plain elements, to copy; tested and shown on the site's examples page.
 - `examples/design.ts` — a custom registry used by tests and the demo; `demo/` — a design-tool demo app.
 - `experiments/` — studies with small models (spec generation, filling, writing specs from the prompt); their `out/` is data.
 - `schema/spec.json` — the generated JSON Schema of specs, shipped and served by unpkg.

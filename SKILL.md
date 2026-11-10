@@ -128,6 +128,22 @@ fieldspec ships no look. Copy a renderer set from the repository's `examples/ren
 `listOf`, `entriesOf`, `objectOf`, `variantOf`, `choicesOf` and `checksOf`; renderers only draw.
 Read a form in your own components with `useFormState(form)` or `useField(form, path)`.
 
+## Editing a spec
+
+`createSpecEditor({ spec, generate, describe })` holds a spec while a person edits it, headless
+like the form. Operations take JSON Pointers into the spec (`/fields/address/fields/street`,
+`/fields/tags/items`) and return `{ ok: true, path }` or `{ ok: false, faults }`: an edit is
+taken only when `checkSpec` finds no errors, else `editor.spec` stays the last good spec.
+
+- `add`, `remove`, `rename`, `move`, `setKind`, `set(path, value)`; `fields` is the tree to draw
+  and `props(path)` the properties a field's kind takes. Use `rename`, not `set`, to change a
+  key: it rewrites the pointers, placements, `namedBy` and translations that name the field.
+- `json()` and `applyJson(text)` are the JSON way; `readSpec(text)` parses and checks without an editor.
+- `generate` and `describe` are callbacks to your own model (`prompt(registry)`,
+  `describePrompt(registry)` and `describeMessage(spec)`); fieldspec calls none. `stale` says the
+  description is out of date, `replaces` which fields a generate would discard.
+- In React: `useSpecEditor(options)`, `useSpecEditorState(editor)`; copy `examples/editor.tsx` for a view.
+
 ## Extending
 
 `createRegistry({ kinds, elements, presets, rules, languages })` adds to the core vocabulary

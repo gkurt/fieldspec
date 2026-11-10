@@ -12,6 +12,7 @@
  * `input`. What container and choice controls do (lists, entries, variants) comes as helpers.
  */
 import { createContext, createElement, Fragment, use, useId, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { createSpecEditor, type SpecEditor, type SpecEditorOptions, type SpecEditorState } from '#src/editor.ts';
 import type { ElementRole } from '#src/elements.ts';
 import { textOf, type Scope } from '#src/expr.ts';
 import { createForm, type FieldState, type Form, type FormOptions } from '#src/form.ts';
@@ -77,6 +78,25 @@ export function useFormState<V>(form: Form<V>): FormState<V> {
     form.subscribe,
     () => stateOf(form),
     () => stateOf(form),
+  );
+}
+
+/** A spec editor, created once. Read it in components through {@link useSpecEditorState}. */
+export function useSpecEditor(options?: SpecEditorOptions): SpecEditor {
+  const [editor] = useState(() => createSpecEditor(options));
+  return editor;
+}
+
+/**
+ * The spec editor as it is now, re-rendering on every change: its spec, the tree of its fields,
+ * its faults, its description and whether that is out of date. A new object on every change,
+ * unlike the editor itself.
+ */
+export function useSpecEditorState(editor: SpecEditor): SpecEditorState {
+  return useSyncExternalStore(
+    editor.subscribe,
+    () => editor.state,
+    () => editor.state,
   );
 }
 

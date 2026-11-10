@@ -72,6 +72,22 @@ export { checkSpec, assertSpec, formatFaults, type CheckOptions } from './check.
 export { layout, walk, defaultControl, type LayoutNode } from './layout.ts';
 export { commonFields, type Common, type CommonOptions, type Dropped } from './common.ts';
 export { createForm, humanize, type Form, type FormOptions, type FieldState, type FieldOption } from './form.ts';
+export {
+  createSpecEditor,
+  readSpec,
+  type SpecEditor,
+  type SpecEditorOptions,
+  type SpecEditorState,
+  type SpecNode,
+  type SpecFields,
+  type SpecVariant,
+  type SpecProp,
+  type Edit,
+  type Refusal,
+  type ReadSpec,
+  type AddOptions,
+  type RenameOptions,
+} from './editor.ts';
 export { applyPatch, PatchError, type PatchOp } from './patch.ts';
 export { toJSONSchema, fromJSONSchema, type ToJSONSchemaOptions } from './jsonschema.ts';
 export { standardOf, toStandard, type StandardSchemaV1 } from './standard.ts';
