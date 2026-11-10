@@ -463,7 +463,15 @@ function shapeFrom(ctx: FromCtx, s: Schema): Record<string, unknown> {
     return { type: 'json' };
   }
   if (s.const !== undefined) return { type: 'enum', options: [s.const] };
-  if (Array.isArray(s.enum)) return { type: 'enum', options: s.enum.filter((v: unknown) => v !== null) };
+  if (Array.isArray(s.enum)) {
+    // `enumNames`, which older schemas (MCP's elicitation among them) label options with, by position.
+    const names: unknown[] = Array.isArray(s.enumNames) ? s.enumNames : [];
+    const options = s.enum.flatMap((value: unknown, i: number) => {
+      if (value === null) return [];
+      return typeof names[i] === 'string' ? [{ value, label: names[i] }] : [value];
+    });
+    return { type: 'enum', options };
+  }
 
   const type = nonNull(s.type);
   if (xtype && !['object', 'array', 'string', 'number', 'int', 'boolean', 'enum'].includes(xtype)) {
@@ -486,7 +494,7 @@ function shapeFrom(ctx: FromCtx, s: Schema): Record<string, unknown> {
     case 'string': {
       if (s.format === 'date' || s.format === 'date-time') return { type: 'date', ...(s.format === 'date-time' && { time: true }) };
       const decl: Record<string, unknown> = { type: 'string' };
-      copy(s, decl, ['minLength', 'maxLength', 'registry']);
+      copy(s, decl, ['minLength', 'maxLength', 'format', 'registry']);
       if (typeof s.pattern === 'string') decl.pattern = unwrap(s.pattern);
       return decl;
     }

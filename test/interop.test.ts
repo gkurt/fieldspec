@@ -112,6 +112,30 @@ describe('JSON Schema', () => {
     expect(back.defs).toEqual({ C: { type: 'enum', options: ['p', 'q'] } });
   });
 
+  test.each([
+    { name: 'an email', schema: { type: 'string', format: 'email' }, decl: { type: 'string', format: 'email' } },
+    { name: 'a URI stays text', schema: { type: 'string', format: 'uri' }, decl: { type: 'string', format: 'uri' } },
+    { name: 'a format it has no check for', schema: { type: 'string', format: 'phone' }, decl: { type: 'string', format: 'phone' } },
+    {
+      name: 'options labelled by enumNames',
+      schema: { type: 'string', enum: ['a', 'b'], enumNames: ['A'] },
+      decl: { type: 'enum', options: [{ value: 'a', label: 'A' }, 'b'] },
+    },
+  ])('in: $name', ({ schema, decl }) => {
+    expect(fromJSONSchema({ type: 'object', properties: { x: schema }, required: ['x'] }).fields.x).toEqual(decl as never);
+  });
+
+  test('in: a format is checked', () => {
+    const spec = fromJSONSchema({
+      type: 'object',
+      properties: { email: { type: 'string', format: 'email' }, site: { type: 'string', format: 'uri' } },
+    });
+    expect(parse(spec, { email: 'nope', site: 'nowhere' }).issues.map((issue) => [issue.path, issue.code])).toEqual([
+      ['/email', 'format'],
+      ['/site', 'format'],
+    ]);
+  });
+
   test('recursive schemas stay recursive, both ways', () => {
     const tree = define({
       defs: { Node: { type: 'object', fields: { name: { type: 'string' }, children: { type: 'array', items: { use: 'Node' } } } } },

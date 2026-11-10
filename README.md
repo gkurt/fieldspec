@@ -554,6 +554,8 @@ checks meaning (references, conditions, defaults).
 - `toJSONSchema` / `fromJSONSchema`: draft 2020-12. `defs` become `$defs`, a use of one
   becomes `$ref` with the field's added constraints beside it (or is written out when it changes
   one the definition has), a preset is written out; `x-` keywords keep what JSON Schema cannot say.
+  Coming in, a string's `format` is kept (and checked, where fieldspec knows it), and `enumNames`
+  label an enum's options.
 - Defined specs carry `~standard` (Standard Schema, with the JSON Schema extension).
 - `fieldspec/zod`: `toZod(spec)` (refined with the spec's own validation, its messages said by
   `messages`), `fromZod(schema)`.
