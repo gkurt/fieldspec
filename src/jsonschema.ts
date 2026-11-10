@@ -447,8 +447,8 @@ function shapeFrom(ctx: FromCtx, s: Schema): Record<string, unknown> {
   if (xtype === 'variant' || (Array.isArray(branches) && s['x-key'])) return variantFrom(ctx, s, s['x-key']);
   if (Array.isArray(branches)) {
     const real = branches.map((b) => derefSchema(ctx, b)).filter((b) => b.type !== 'null');
-    if (real.length === 1) return shapeFrom(ctx, { ...real[0], ...omit(s, ['oneOf', 'anyOf']) });
-    if (real.every((b) => b.const !== undefined)) {
+    // Options, even only one, keep their titles as labels; another single branch is the field, nullable.
+    if (real.length > 0 && real.every((b) => b.const !== undefined)) {
       return {
         type: 'enum',
         options: real.map((b) =>
@@ -458,6 +458,7 @@ function shapeFrom(ctx: FromCtx, s: Schema): Record<string, unknown> {
         ),
       };
     }
+    if (real.length === 1) return shapeFrom(ctx, { ...real[0], ...omit(s, ['oneOf', 'anyOf']) });
     const key = discriminator(real);
     if (key) return variantFrom(ctx, { ...s, oneOf: real }, key);
     return { type: 'json' };

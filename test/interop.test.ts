@@ -122,6 +122,11 @@ describe('JSON Schema', () => {
       decl: { type: 'set', items: { type: 'enum', options: ['a', 'b'] } },
     },
     {
+      name: 'one titled option',
+      schema: { anyOf: [{ const: 'us', title: 'US' }] },
+      decl: { type: 'enum', options: [{ value: 'us', label: 'US' }] },
+    },
+    {
       name: 'options labelled by enumNames',
       schema: { type: 'string', enum: ['a', 'b'], enumNames: ['A'] },
       decl: { type: 'enum', options: [{ value: 'a', label: 'A' }, 'b'] },
