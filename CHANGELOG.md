@@ -1,3 +1,29 @@
+## fieldspec@0.5.0
+
+### `prompt(registry, { purpose: 'data' })` teaches a model to write a spec for data, not a form
+
+For the shape of data a program or a model sends and others read. The prompt says no form is drawn and leaves out labels, groups, layouts, controls and translations; it asks for a `description` on every field at every depth, nesting instead of keys with a shared prefix, `required: true` for what the sender must always give, and `optional: true` for a value that may be unknown, since an absent field that is not optional reads as its kind's zero. The default, `purpose: 'form'`, is unchanged.
+
+### `prompt` teaches only the `topics` it is given, so its default is shorter
+
+`prompt(registry, { topics })` names the parts of the format to teach beyond fields, kinds and presets: `conditions`, `checks`, `expressions`, `defs`, `locales`, `migrations`, `groups`, `controls`, `layout`. The default for a form is now `conditions`, `groups` and `controls`, about 11,800 characters where it was 18,650, so `prompt()` no longer teaches `checks`, expressions and code, `defs`, translations, migrations or layout elements. `topics: 'all'` gives the text `prompt()` gave before, and data takes the topics a form does not draw.
+
+### `prompt` offers only the controls worth choosing, and prints its example compactly
+
+Without the `layout` topic, the controls list leaves out a control that is a kind's own and takes no props (`select`, `checkbox`, `date`, `file`, `entries`, `fields`, `variant`), since a field has it without `render`, and says which kinds a control edits in brackets. The example has a line per field instead of a line per property. `aliases` and `deprecated` are taught with the `migrations` topic. The default prompt for a form is about 10,400 characters and the one for data about 6,800.
+
+### `prompt` lists kinds more tersely
+
+A kind has an example only where it has properties it needs (`enum`, `array`, `set`, `record`, `object`, `variant`), a kind that takes the same properties as an earlier one says so (`int` after `number`), and the blank lines between a kind's parts are gone. For data, `set`, `record` and `variant` gain an example without labels.
+
+### `describePrompt` asks for a short description, as a person would ask for the spec
+
+`describePrompt` now asks for one or two sentences (under 300 characters, or `maxLength`) saying what the spec is for and its notable parts, and no longer for every field's key, kind, required, options, limits and default: the description is to read, not to write the same spec from. It takes its options alone, `describePrompt({ maxLength, customRules })`, and no registry. `prompt` loses the rule 0.4.0 added about using the keys and limits it is asked for.
+
+### `kindOf(decl, spec)` gives a field's kind with `use` followed
+
+`kindOf({ use: 'email' })` is `"string"`. With the spec, it follows the spec's `defs` and its registry's presets; it is undefined where `use` names nothing.
+
 ## fieldspec@0.4.0
 
 ### A spec has `meta` for what the application keeps, and `fingerprint` says whether its description still matches
