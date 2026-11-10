@@ -1,3 +1,25 @@
+## fieldspec@0.2.1
+
+### A value for no field can be said another way
+
+The `unknown` issue, for a value given for a field the spec does not have, carries `params` now (`near`, the field it may have meant, where there is one), so `messages` says it in another language as it does the others.
+
+### A text box's own errors are said with the form's `messages`
+
+A form keeps the `messages` it was created with, as `form.messages`, and `useParsedText` (so `input` and `textarea`) says text that does not read as the field's kind, such as "Enter a number", through them, as a `type` issue whose `expected` is the field's kind.
+
+### `fromJSONSchema` reads `uniqueItems` as a set
+
+An array schema with `uniqueItems: true` comes in as a `set`, as `toJSONSchema` writes one, so a set of an enum read from a plain JSON Schema draws as `checks`.
+
+### One titled option from JSON Schema keeps its label
+
+A `oneOf` or `anyOf` of a single `const` with a `title` comes in as an enum of that one option, labelled by its title, as one of several does, rather than as a field labelled by it.
+
+### `fromJSONSchema` keeps a string's `format` and reads `enumNames`
+
+A string's `format` comes in as the field's `format`, so `email`, `uri` and the other formats fieldspec checks are checked once read, and other formats are kept as hints. An enum's `enumNames`, which older schemas such as MCP's elicitation forms label options with, become the options' labels.
+
 ## fieldspec@0.2.0
 
 ### JavaScript expressions with `$js`
