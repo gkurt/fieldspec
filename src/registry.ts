@@ -70,7 +70,7 @@ export const BASE_PROPS: { readonly [prop: string]: PropInfo } = {
   readOnly: { schema: { type: 'boolean' }, description: 'Shown but not editable.' },
   visible: { schema: { $ref: '#/$defs/condition' }, description: 'Shown, and validated, only while this holds.' },
   enabled: { schema: { $ref: '#/$defs/condition' }, description: 'Editable only while this holds.' },
-  required: { schema: { $ref: '#/$defs/condition' }, description: 'Must be non-empty while this holds.' },
+  required: { schema: { $ref: '#/$defs/condition' }, description: 'Must be given and non-empty while this holds.' },
   checks: {
     schema: { type: 'array', items: { $ref: '#/$defs/check' } },
     description:

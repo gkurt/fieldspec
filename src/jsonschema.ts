@@ -14,7 +14,8 @@ import type { Resolved, ArrayField, EnumField, FieldDecl, Json, MapField, Object
 export interface ToJSONSchemaOptions {
   readonly registry?: Registry;
   /**
-   * `input`: what `parse` accepts, so fields that take a default or a zero are not required.
+   * `input`: what `parse` accepts, so fields that take a default or a zero are not required,
+   * unless a field's `required` is `true` and the field is always shown: `parse` refuses it absent.
    * `output` (default): what it returns, so every non-optional field is.
    */
   readonly io?: 'input' | 'output';
@@ -71,7 +72,7 @@ export function toJSONSchema(spec: Spec, options: ToJSONSchemaOptions = {}): Jso
   if (typeof spec.title === 'string') out.title = spec.title;
   else if (spec.title !== undefined) out['x-title'] = spec.title;
   if (typeof spec.description === 'string') out.description = spec.description;
-  Object.assign(out, objectSchema(ctx, spec.fields, 'error'));
+  Object.assign(out, objectSchema(ctx, spec.fields, 'error', spec.groups));
   if (spec.defs) out.$defs = Object.fromEntries(Object.entries(spec.defs).map(([name, decl]) => [name, fieldSchema(ctx, decl)]));
   if (spec.groups) out['x-groups'] = spec.groups;
   if (spec.layouts) out['x-layouts'] = spec.layouts;
@@ -99,14 +100,16 @@ interface Out {
   readonly comparing: Set<FieldDecl>;
 }
 
-function objectSchema(ctx: Out, fields: ObjectField['fields'], unknown: ObjectField['unknown']): JsonSchema {
+function objectSchema(ctx: Out, fields: ObjectField['fields'], unknown: ObjectField['unknown'], groups: ObjectField['groups']): JsonSchema {
   const properties: Record<string, JsonSchema> = {};
   const required: string[] = [];
   for (const [key, decl] of Object.entries(fields)) {
     properties[key] = fieldSchema(ctx, decl);
     const real = deref(ctx.lookup, decl);
     if (real.optional) continue;
-    if (ctx.io === 'output' || (real.default === undefined && real.value === undefined && !hasZero(ctx.registry, real))) required.push(key);
+    if (ctx.io === 'output') required.push(key);
+    else if (real.default !== undefined || real.value !== undefined) continue;
+    else if (!hasZero(ctx.registry, real) || (real.required === true && alwaysShown(real, groups))) required.push(key);
   }
   return {
     type: 'object',
@@ -114,6 +117,18 @@ function objectSchema(ctx: Out, fields: ObjectField['fields'], unknown: ObjectFi
     ...(required.length > 0 && { required }),
     additionalProperties: unknown === 'keep',
   };
+}
+
+/** Whether a field is never hidden, by its own `visible` or its groups', so `parse` always validates it. */
+function alwaysShown(decl: Resolved, groups: ObjectField['groups']): boolean {
+  if (decl.visible !== undefined && decl.visible !== true) return false;
+  const seen = new Set<string>();
+  for (let id = decl.group; id !== undefined && !seen.has(id); id = groups?.[id]?.group) {
+    seen.add(id);
+    const visible = groups?.[id]?.visible;
+    if (visible !== undefined && visible !== true) return false;
+  }
+  return true;
 }
 
 function hasZero(registry: Registry, decl: Resolved): boolean {
@@ -221,7 +236,7 @@ function shapeOf(ctx: Out, decl: Resolved): JsonSchema {
     case 'object': {
       const o = decl as ObjectField;
       return {
-        ...objectSchema(ctx, o.fields, o.unknown),
+        ...objectSchema(ctx, o.fields, o.unknown, o.groups),
         ...(o.groups && { 'x-groups': o.groups }),
         ...(o.unknown && { 'x-unknown': o.unknown }),
       };
@@ -230,7 +245,7 @@ function shapeOf(ctx: Out, decl: Resolved): JsonSchema {
       const v = decl as VariantField;
       return {
         oneOf: Object.entries(v.variants).map(([name, variant]) => {
-          const body = objectSchema(ctx, variant.fields, 'error');
+          const body = objectSchema(ctx, variant.fields, 'error', variant.groups);
           return {
             ...(typeof variant.label === 'string' && { title: variant.label }),
             ...(typeof variant.description === 'string' && { description: variant.description }),

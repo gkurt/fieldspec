@@ -76,6 +76,31 @@ describe('JSON Schema', () => {
     expect(toJSONSchema(spec, { io: 'input' }).required ?? []).not.toContain('port');
   });
 
+  test.each([
+    ['text with no rule', { type: 'string' }, false, false],
+    ['text with required: true', { type: 'string', required: true }, true, true],
+    ['a number with required: true', { type: 'number', required: true }, true, true],
+    ['a boolean with required: true', { type: 'boolean', required: true }, true, true],
+    ['a date, which has no zero', { type: 'date' }, true, true],
+    ['a conditional required', { type: 'int', required: { $state: 'other', eq: true } }, false, false],
+    ['required: true with a default', { type: 'int', required: true, default: 3 }, false, false],
+    ['required: true with a value', { type: 'int', required: true, value: 3 }, false, false],
+    // An optional field is left out of `required`, so the way back keeps it optional.
+    ['required: true on an optional field', { type: 'int', required: true, optional: true }, false, true],
+    ['required: true while maybe hidden', { type: 'int', required: true, visible: { $state: 'other', eq: true } }, false, false],
+    ['required: true in a group that may be hidden', { type: 'int', required: true, group: 'more' }, false, false],
+  ] as const)('out: input mode requires what parse refuses absent: %s', (_, field, listed, refused) => {
+    const one = {
+      fields: { field, other: { type: 'boolean' } },
+      groups: { more: { visible: { $state: 'other', eq: true } } },
+    } as const;
+    const required = (toJSONSchema(one, { io: 'input' }).required ?? []) as string[];
+    expect(required.includes('field')).toBe(listed);
+    expect(parse(one as never, {}).issues.map((i) => i.path)).toEqual(refused ? ['/field'] : []);
+    const back = fromJSONSchema(toJSONSchema(one, { io: 'input' })).fields.field!;
+    expect(back.required).toEqual('required' in field ? field.required : undefined);
+  });
+
   test('round trip keeps the spec', () => {
     const back = fromJSONSchema(toJSONSchema(spec));
     expect(back).toEqual(JSON.parse(JSON.stringify(spec)));

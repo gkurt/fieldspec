@@ -104,7 +104,10 @@ const result = parse(spec, json); // { ok, value, issues: [{ path, code, message
   every spec with `checkSpec` (or `assertSpec`, which throws), above all one that arrives as
   data from a file or a model.
 - `parse` decodes JSON (dates, bigints, URLs, Maps, Sets come back as real values), fills
-  defaults, and validates. `encode` goes back to JSON.
+  defaults, and validates. A field with `required` whose key is absent from the input is refused
+  even where its zero would pass (`0` and `false` given are accepted), so mark a number or
+  boolean a caller must send `required: true`. A field with a `default` is never absent.
+  `toJSONSchema(spec, { io: 'input' })` lists such fields under `required`. `encode` goes back to JSON.
 - `createForm(spec, { values })` holds values and gives each field's state (`form.field(path)`:
   visible, enabled, required, label, options, issues). `applyPatch` applies JSON Patch.
 - `$computed` names a function passed at runtime: `define(spec, { fns })`.

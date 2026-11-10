@@ -518,8 +518,22 @@ function computePending(spec: Spec, ctx: Ctx, pending: Pending[], get: () => unk
 
 // ── Validation ───────────────────────────────────────────────────────────────────────────
 
+/**
+ * What the input gave for a value before defaults filled it, where `parse` knows it (`given` is
+ * undefined where the key was absent): a field with `required` that was absent has the `required`
+ * issue even when its zero would pass. `validate`, and so a form, has only resolved values, which
+ * hold every field, and passes no input.
+ */
+type Input = { readonly given: unknown } | undefined;
+
+const inputAt = (input: Input, key: string): Input => input && { given: isPlainObject(input.given) ? input.given[key] : undefined };
+
 /** Check resolved values. Hidden fields are skipped; required-ness and options are evaluated. */
 export function validate(spec: Spec, values: unknown, options?: ValueOptions): Issue[] {
+  return validateInput(spec, values, undefined, options);
+}
+
+function validateInput(spec: Spec, values: unknown, input: Input, options?: ValueOptions): Issue[] {
   const ctx = ctxOf(spec, options);
   const issues: Issue[] = [];
   const env: Env = {
@@ -529,7 +543,7 @@ export function validate(spec: Spec, values: unknown, options?: ValueOptions): I
     declAt: (pointer) => declAt(spec, values, pointer, ctx.registry)?.decl,
   };
   if (!isPlainObject(values)) return [{ path: '', code: 'type', message: 'must be an object' }];
-  checkFields(ctx, env, spec.fields, spec.groups, values, '', 'error', issues);
+  checkFields(ctx, env, spec.fields, spec.groups, values, '', 'error', issues, undefined, undefined, input);
   const messages = options?.messages;
   if (!messages) return issues;
   return issues.map((issue) => {
@@ -558,6 +572,7 @@ function checkFields(
   issues: Issue[],
   extra?: string,
   item?: Pick<Scope, 'item' | 'index'>,
+  input?: Input,
 ) {
   const scope: Scope = { base: at, ...item };
   for (const [key, raw] of Object.entries(fields)) {
@@ -565,7 +580,7 @@ function checkFields(
     const pointer = joinPointer(at, key);
     if (!safeTest(decl.visible, env, scope, issues, pointer)) continue;
     if (!groupsVisible(groups, decl.group, env, scope)) continue;
-    checkField(ctx, env, raw, value[key], pointer, scope, issues);
+    checkField(ctx, env, raw, value[key], pointer, scope, issues, inputAt(input, key));
   }
   if (unknown === 'keep' || unknown === 'strip') return;
   for (const key of Object.keys(value)) {
@@ -580,10 +595,10 @@ function checkFields(
   }
 }
 
-export function checkField(ctx: Ctx, env: Env, given: FieldDecl, value: unknown, at: string, scope: Scope, issues: Issue[]) {
+export function checkField(ctx: Ctx, env: Env, given: FieldDecl, value: unknown, at: string, scope: Scope, issues: Issue[], input?: Input) {
   const decl = deref(lk(ctx), given);
   const before = issues.length;
-  checkValue(ctx, env, given, decl, value, at, scope, issues);
+  checkValue(ctx, env, given, decl, value, at, scope, issues, input);
   if (!decl.checks || ctx.checks === false || value === undefined || value === null) return;
   if (issues.slice(before).some((i) => i.path === at)) return;
   for (const check of decl.checks) {
@@ -606,7 +621,17 @@ function messageOf(check: Check, env: Env, scope: Scope): string {
   }
 }
 
-function checkValue(ctx: Ctx, env: Env, given: FieldDecl, decl: Resolved, value: unknown, at: string, scope: Scope, issues: Issue[]) {
+function checkValue(
+  ctx: Ctx,
+  env: Env,
+  given: FieldDecl,
+  decl: Resolved,
+  value: unknown,
+  at: string,
+  scope: Scope,
+  issues: Issue[],
+  input: Input,
+) {
   const issue = (code: string, message: string, params: Params = {}, path = at) => issues.push({ path, code, message, params });
   if (value === undefined || value === null) {
     const required = decl.required !== undefined && safeTest(decl.required, env, scope, issues, at);
@@ -615,8 +640,12 @@ function checkValue(ctx: Ctx, env: Env, given: FieldDecl, decl: Resolved, value:
       issue('type', 'must not be null', { expected: decl.type, actual: 'null' });
     return;
   }
-  if (decl.required !== undefined && isEmpty(value) && safeTest(decl.required, env, scope, issues, at))
+  // A default or a `value` gives the field, and what is inside it; a zero does not.
+  const filled = decl.value !== undefined || (input?.given === undefined && decl.default !== undefined);
+  const absent = input !== undefined && input.given === undefined && !filled;
+  if (decl.required !== undefined && (absent || isEmpty(value)) && safeTest(decl.required, env, scope, issues, at))
     return issue('required', 'is required');
+  const inside = filled ? undefined : input;
 
   switch (decl.type) {
     case 'object':
@@ -640,7 +669,7 @@ function checkValue(ctx: Ctx, env: Env, given: FieldDecl, decl: Resolved, value:
       const unknown = decl.type === 'object' ? (decl as ObjectField).unknown : 'error';
       const extra = decl.type === 'variant' ? (decl as VariantField).key : undefined;
       const item = scope.item === undefined ? undefined : { item: scope.item, index: scope.index };
-      return checkFields(ctx, env, chosen.fields, chosen.groups, value, at, unknown, issues, extra, item);
+      return checkFields(ctx, env, chosen.fields, chosen.groups, value, at, unknown, issues, extra, item, inside);
     }
     case 'array':
     case 'set': {
@@ -651,6 +680,7 @@ function checkValue(ctx: Ctx, env: Env, given: FieldDecl, decl: Resolved, value:
         issue('minItems', `needs at least ${d.minItems} items`, { minItems: d.minItems });
       if (d.maxItems !== undefined && list.length > d.maxItems)
         issue('maxItems', `takes at most ${d.maxItems} items`, { maxItems: d.maxItems });
+      const given = inside && (Array.isArray(inside.given) ? inside.given : inside.given instanceof Set ? [...inside.given] : []);
       list.forEach((x, i) => {
         const pointer = joinPointer(at, i);
         const itemScope: Scope = {
@@ -658,7 +688,7 @@ function checkValue(ctx: Ctx, env: Env, given: FieldDecl, decl: Resolved, value:
           item: pointer,
           index: i,
         };
-        checkField(ctx, env, d.items, x, pointer, itemScope, issues);
+        checkField(ctx, env, d.items, x, pointer, itemScope, issues, given && { given: given[i] });
       });
       return;
     }
@@ -669,7 +699,7 @@ function checkValue(ctx: Ctx, env: Env, given: FieldDecl, decl: Resolved, value:
       for (const [k, v] of Object.entries(value)) {
         const pointer = joinPointer(at, k);
         if (pattern && !pattern.test(k)) issue('key', `key must match ${r.keyPattern}`, { keyPattern: r.keyPattern! }, pointer);
-        checkField(ctx, env, r.values, v, pointer, { ...scope, item: pointer }, issues);
+        checkField(ctx, env, r.values, v, pointer, { ...scope, item: pointer }, issues, inputAt(inside, k));
       }
       return;
     }
@@ -679,7 +709,8 @@ function checkValue(ctx: Ctx, env: Env, given: FieldDecl, decl: Resolved, value:
       for (const [k, v] of value) {
         const pointer = joinPointer(at, String(k));
         checkField(ctx, env, m.keys, k, pointer, scope, issues);
-        checkField(ctx, env, m.values, v, pointer, { ...scope, item: pointer }, issues);
+        const entry = inside && { given: inside.given instanceof Map ? inside.given.get(k) : undefined };
+        checkField(ctx, env, m.values, v, pointer, { ...scope, item: pointer }, issues, entry);
       }
       return;
     }
@@ -729,8 +760,9 @@ export function parse<S extends Spec>(spec: S, input: unknown, options?: ValueOp
   const failed: Issue[] = [];
   const onError = (path: string, version: number, error: string) =>
     failed.push({ path, code: 'migration', message: `could not be brought to version ${version}: ${error}`, params: { version, error } });
-  const values = resolve(spec, decode(spec, input, { ...options, onError }), options);
-  const issues = [...versionIssues(spec, input), ...failed, ...validate(spec, values, options)];
+  const decoded = decode(spec, input, { ...options, onError });
+  const values = resolve(spec, decoded, options);
+  const issues = [...versionIssues(spec, input), ...failed, ...validateInput(spec, values, { given: decoded }, options)];
   return (issues.length === 0 ? { ok: true, value: values, issues: [] } : { ok: false, value: values, issues }) as unknown as Result<
     Infer<S>
   >;

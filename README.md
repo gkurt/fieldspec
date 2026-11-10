@@ -67,6 +67,14 @@ differ from a built-in only by case.
   a field at the top and `order: 1` at the bottom. It moves the field, not its value, and a group
   draws where its first field does. (JavaScript puts keys like `"2"` before all others, whatever
   order you write them in; `order` puts them back.)
+- **Absent values and `required`**: a field absent from what `parse` is given takes its
+  `default`, else its kind's zero (`""`, `0`, `false`, an empty list), unless it is `optional`.
+  `required` (a condition, often `true`) says the value must be given and not empty while it
+  holds: `parse` refuses an empty value, and a required field whose key is absent from the input
+  even where its zero would pass, so a caller must send a required number or boolean, and `0`
+  or `false` counts as sent. A field with a `default` or a `value` is never absent. A form holds a
+  value for every field, so there a required number at `0` is valid; `validate`, given resolved
+  values, does the same.
 - **Kinds**: `string`, `number`, `int`, `boolean`, `enum`, `date`, `bigint`, `url`, `regexp`,
   `bytes`, `json`, and the containers `array`, `set`, `record`, `map`, `object`, `variant`
   (a discriminated union). Values are real JS values (`Date`, `bigint`, `URL`, `Map`, `Set`,
@@ -555,6 +563,10 @@ checks meaning (references, conditions, defaults).
 - `toJSONSchema` / `fromJSONSchema`: draft 2020-12. `defs` become `$defs`, a use of one
   becomes `$ref` with the field's added constraints beside it (or is written out when it changes
   one the definition has), a preset is written out; `x-` keywords keep what JSON Schema cannot say.
+  `io: 'output'` (the default) describes what `parse` returns, so every field that is not
+  `optional` is required. `io: 'input'` describes what `parse` accepts: a field is required
+  when it has no default, value or zero, or when its `required` is `true` and it is never hidden;
+  a conditional `required` stays in `x-required` only.
   Coming in, a string's `format` is kept (and checked, where fieldspec knows it), and `enumNames`
   label an enum's options.
 - Defined specs carry `~standard` (Standard Schema, with the JSON Schema extension).

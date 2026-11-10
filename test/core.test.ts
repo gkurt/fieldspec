@@ -135,6 +135,58 @@ describe('parse', () => {
     ]);
   });
 
+  const given = define({
+    fields: {
+      verdict: { type: 'string' },
+      count: { type: 'number' },
+      req: { type: 'string', required: true },
+      n: { type: 'number', required: true },
+      flag: { type: 'boolean', required: true },
+      strict: { type: 'boolean' },
+      limit: { type: 'int', required: { $state: 'strict', eq: true } },
+      retries: { type: 'int', default: 3, required: true },
+      total: { type: 'number', value: 1, required: true },
+      owner: { type: 'object', fields: { age: { type: 'int', required: true } } },
+      items: { type: 'array', items: { type: 'object', fields: { qty: { type: 'int', required: true } } } },
+      kind: {
+        type: 'variant',
+        key: 'is',
+        variants: { a: { fields: {} }, b: { fields: { size: { type: 'number', required: true } } } },
+      },
+    },
+  });
+  const present = { req: 'x', n: 1, flag: true, owner: { age: 1 } };
+
+  test.each([
+    ['nothing given', {}, ['/req', '/n', '/flag', '/owner/age']],
+    ['only the text', { req: 'x' }, ['/n', '/flag', '/owner/age']],
+    ['every required field', present, []],
+    ['a zero and false given', { ...present, n: 0, flag: false }, []],
+    ['a required number and boolean given as null', { ...present, n: null, flag: null }, ['/n', '/flag']],
+    ['empty text given', { ...present, req: '' }, ['/req']],
+    ['a conditional required held', { ...present, strict: true }, ['/limit']],
+    ['a conditional required held, the field given 0', { ...present, strict: true, limit: 0 }, []],
+    ['an object with its field absent', { ...present, owner: {} }, ['/owner/age']],
+    ['list items with a field absent', { ...present, items: [{ qty: 0 }, {}] }, ['/items/1/qty']],
+    ['a variant with its field absent', { ...present, kind: { is: 'b' } }, ['/kind/size']],
+  ] as const)('a required field absent from the input is refused: %s', (_, input, paths) => {
+    const result = parse(given, input);
+    expect(result.issues.filter((i) => i.code === 'required').map((i) => i.path)).toEqual([...paths]);
+    expect(result.ok).toBe(paths.length === 0);
+  });
+
+  test('a required field absent from the input still has its zero, its default or its value filled in', () => {
+    const result = parse(given, { req: 'x' });
+    expect(result.value).toMatchObject({ verdict: '', count: 0, n: 0, flag: false, retries: 3, total: 1, owner: { age: 0 } });
+  });
+
+  test('a form holds a required number at 0 and a required boolean at false without an issue', () => {
+    const form = createForm(given, { values: { req: 'x', owner: {} } });
+    expect(form.values).toMatchObject({ n: 0, flag: false, owner: { age: 0 } });
+    expect(form.issues).toEqual([]);
+    expect(form.field('/n')?.required).toBe(true);
+  });
+
   test('conditional visibility unlocks validation', () => {
     const result = parse(account, { email: 'a@b.co', plan: 'pro', seats: 1000 });
     expect(result.issues.map((i) => i.path)).toEqual(['/seats']);

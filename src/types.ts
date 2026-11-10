@@ -158,7 +158,10 @@ export interface FieldBase {
   /** Not shown, and not validated, while false. */
   readonly visible?: Condition;
   readonly enabled?: Condition;
-  /** Must be non-empty (not absent, null, "", or an empty collection) while true and visible. */
+  /**
+   * Must be non-empty (not absent, null, "", or an empty collection) while true and visible.
+   * `parse` also refuses a required field whose key is absent from its input, though a zero fills it.
+   */
   readonly required?: Condition;
   /**
    * Rules the value must keep beyond its kind's own, often over other fields: each `assert`
