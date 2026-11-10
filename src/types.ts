@@ -389,6 +389,30 @@ export interface FunctionDecl {
   readonly returns?: string;
 }
 
+/**
+ * A spec in plain words: the description it was written from, or that was written from it.
+ * `of` is the `fingerprint` of the spec the text last matched, so whether the text still says
+ * what the spec is can be worked out and is never stored; see `isDescriptionStale`.
+ */
+export interface SpecDescription {
+  readonly text: string;
+  /**
+   * The fingerprint of the spec the text last matched. Absent on a description that has not
+   * been compared with a spec yet: `stampDescription` gives it the spec it is kept with. An
+   * empty string matches no spec, for a text typed since that wrote nothing yet.
+   */
+  readonly of?: string;
+}
+
+/**
+ * What the application keeps about a spec. Never interpreted: it changes neither the values nor
+ * the form. One key is fieldspec's own, `description`; the rest are the application's.
+ */
+export interface SpecMeta {
+  readonly description?: SpecDescription;
+  readonly [key: string]: Json | SpecDescription | undefined;
+}
+
 export interface Spec {
   readonly $schema?: string;
   /** The version of the spec format the spec is written for, a whole number from 1; see `FORMAT_VERSION`. */
@@ -411,6 +435,8 @@ export interface Spec {
    * operations reaches: `{ "2": [ … ], "3": [ … ] }`. See {@link MigrationOp}.
    */
   readonly migrations?: { readonly [version: string]: readonly MigrationOp[] };
+  /** What the application keeps about the spec, such as the plain-words description it was written from; see {@link SpecMeta}. */
+  readonly meta?: SpecMeta;
 }
 
 /**

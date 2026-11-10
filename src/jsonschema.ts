@@ -89,6 +89,7 @@ export function toJSONSchema(spec: Spec, options: ToJSONSchemaOptions = {}): Jso
     out['x-version'] = spec.version;
   }
   if (spec.migrations) out['x-migrations'] = spec.migrations;
+  if (spec.meta) out['x-meta'] = spec.meta;
   return out;
 }
 
@@ -338,6 +339,7 @@ export function fromJSONSchema(schema: JsonSchema, options: FromJSONSchemaOption
   if (root['x-locales']) spec.locales = root['x-locales'];
   if (root['x-version'] !== undefined) spec.version = root['x-version'];
   if (root['x-migrations']) spec.migrations = root['x-migrations'];
+  if (root['x-meta']) spec.meta = root['x-meta'];
   if (Object.keys(ctx.defs).length > 0) spec.defs = ctx.defs;
   return spec as unknown as Spec;
 }

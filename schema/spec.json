@@ -84,6 +84,29 @@
         }
       }
     },
+    "meta": {
+      "type": "object",
+      "description": "What the application keeps about the spec. Never interpreted: it changes neither the values nor the form.",
+      "properties": {
+        "description": {
+          "type": "object",
+          "description": "The spec in plain words: the description it was written from, or that was written from it.",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "of": {
+              "type": "string",
+              "description": "The fingerprint of the spec the text last matched."
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
     "functions": {
       "type": "object",
       "description": "Functions `$computed` may call, implemented by the application.",

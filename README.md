@@ -490,6 +490,46 @@ an earlier version forward, keyed by the version each list of operations reaches
 - In JSON Schema, `$version` is a property (`const` on output, an integer up to the version on
   input), and `version` and `migrations` ride along as `x-version` and `x-migrations`.
 
+## What the app keeps: `meta`
+
+A spec's `meta` holds what the application keeps about the spec. It is never interpreted: it
+changes neither the values nor the form, so `parse`, `encode`, `createForm` and `migrate` behave
+the same with and without it. A field has a `meta` of its own, for the same purpose. One key of
+a spec's `meta` is fieldspec's: `description`, the spec in plain words, usually the description
+a model wrote the spec from.
+
+```json
+{
+  "fields": { "name": { "type": "string", "required": true } },
+  "meta": { "description": { "text": "A name, required.", "of": "1k2j3h4g5f" }, "owner": "billing" }
+}
+```
+
+`of` is the fingerprint of the spec the text last matched, so whether the description is out of
+date is worked out and never stored:
+
+```ts
+import { descriptionOf, fingerprint, isDescriptionStale, stampDescription, withDescription } from 'fieldspec';
+
+const described = withDescription(spec, 'A name, required.'); // meta.description = { text, of: fingerprint(spec) }
+isDescriptionStale(described); // false, until a field of the spec changes
+descriptionOf(described)?.text; // "A name, required."
+```
+
+- `fingerprint(spec)` is a short string for what the spec says. It is the same whatever the
+  order of the spec's keys, since stores of JSON do not keep it, and it leaves out `meta` and
+  `$schema`; anything else that changes, changes it.
+- `stampDescription(spec, description)` gives a text, or a description without `of`, the spec's
+  fingerprint: a description that names no spec is taken to describe the one it is kept with. A
+  description that has `of` keeps it, so one sent back with a spec changed since stays out of date.
+- `isDescriptionStale(spec)` is true when the description names a spec and this one's
+  fingerprint differs. A spec without a description is never out of date, nor is a description
+  without `of`. `of: ""` matches no spec, for a text typed since that wrote nothing yet.
+- `withDescription(spec, description)` puts a stamped description in `meta`, keeping the rest of
+  it; `undefined` removes the description.
+- `checkSpec` checks that `meta` is an object and `description` is `{ text, of? }`; other keys
+  are yours. In JSON Schema, `meta` rides along as `x-meta`.
+
 ## Extending
 
 A registry is the vocabulary specs are written in: kinds (what `type` names), elements (what

@@ -70,6 +70,7 @@ const ROOT_PROPS = [
   'locales',
   'version',
   'migrations',
+  'meta',
 ];
 const GROUP_PROPS = ['label', 'description', 'render', 'visible', 'group'];
 const ELEMENT_KEYS = ['type', 'props', 'children', 'visible'];
@@ -136,6 +137,7 @@ export function checkSpec(spec: unknown, options: CheckOptions = {}): Fault[] {
   }
   if (spec.locales !== undefined) checkLocales(c, spec.locales);
   checkVersions(c);
+  checkMeta(c, spec.meta);
   checkFunctions(c, options.fns ?? functionsOf(s));
   const report = (path: string, message: string, severity?: Fault['severity']) => c.fault(path, message, severity);
   for (const rule of [...registry.rules, ...(options.rules ?? [])]) rule(s, report);
@@ -162,6 +164,25 @@ function checkLocales(c: Checker, locales: unknown) {
     const fallbacks = tablesOf(c.spec, tag).filter((t) => t !== table);
     c.faults.push(...checkTranslations(c.spec, table, { registry: c.registry, at, fallbacks }));
   }
+}
+
+const DESCRIPTION_PROPS = ['text', 'of'];
+
+/** `meta` is the application's, except `description`, which `fingerprint`'s helpers read. */
+function checkMeta(c: Checker, meta: unknown) {
+  if (meta === undefined) return;
+  if (!isObject(meta)) return c.fault('/meta', 'must be an object: what the application keeps about the spec');
+  const description = meta.description;
+  if (description === undefined) return;
+  const at = '/meta/description';
+  if (!isObject(description)) return c.fault(at, 'must be the spec in plain words: `{ "text": "…" }`');
+  for (const prop of Object.keys(description)) {
+    if (!DESCRIPTION_PROPS.includes(prop))
+      c.fault(`${at}/${escapeSegment(prop)}`, `is not a property of a description.${mean(prop, DESCRIPTION_PROPS)}`);
+  }
+  if (typeof description.text !== 'string') c.fault(`${at}/text`, 'required: the spec in plain words');
+  if (description.of !== undefined && typeof description.of !== 'string')
+    c.fault(`${at}/of`, 'must be the fingerprint of the spec the text last matched, or left out');
 }
 
 // ── Versions and migrations ──────────────────────────────────────────────────────────────

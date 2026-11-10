@@ -111,6 +111,10 @@ const result = parse(spec, json); // { ok, value, issues: [{ path, code, message
 - `createForm(spec, { values })` holds values and gives each field's state (`form.field(path)`:
   visible, enabled, required, label, options, issues). `applyPatch` applies JSON Patch.
 - `$computed` names a function passed at runtime: `define(spec, { fns })`.
+- A spec's `meta` is the application's and never interpreted. `meta.description` is `{ text, of }`:
+  the spec in plain words and the `fingerprint(spec)` the text last matched. Write it with
+  `withDescription(spec, text)`, read it with `descriptionOf(spec)`, and ask
+  `isDescriptionStale(spec)` whether the spec changed since; do not store "out of date".
 
 ## Drawing a form
 
