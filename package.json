@@ -1,6 +1,6 @@
 {
   "name": "fieldspec",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "A typed, serializable, headless format for configs and the forms that edit them.",
   "keywords": [
     "config",

@@ -1,26 +1,10 @@
 core:changelogs:
-  - content: "---\npackages:\n  fieldspec:\n    type: patch\n---\n\n### A value for no field can be said another way\n\nThe `unknown` issue, for a value given for a field the spec does not have, carries `params` now (`near`, the field it may have meant, where there is one), so `messages` says it in another language as it does the others.\n"
-    filename: unknown-field-messages.md
-    v: 0.0.0
-  - content: "---\npackages:\n  fieldspec:\n    type: patch\n---\n\n### A text box's own errors are said with the form's `messages`\n\nA form keeps the `messages` it was created with, as `form.messages`, and `useParsedText` (so `input` and `textarea`) says text that does not read as the field's kind, such as \"Enter a number\", through them, as a `type` issue whose `expected` is the field's kind.\n"
-    filename: text-box-messages.md
-    v: 0.0.0
-  - content: "---\npackages:\n  fieldspec:\n    type: patch\n---\n\n### `fromJSONSchema` reads `uniqueItems` as a set\n\nAn array schema with `uniqueItems: true` comes in as a `set`, as `toJSONSchema` writes one, so a set of an enum read from a plain JSON Schema draws as `checks`.\n"
-    filename: unique-items-set.md
-    v: 0.0.0
-  - content: "---\npackages:\n  fieldspec:\n    type: patch\n---\n\n### One titled option from JSON Schema keeps its label\n\nA `oneOf` or `anyOf` of a single `const` with a `title` comes in as an enum of that one option, labelled by its title, as one of several does, rather than as a field labelled by it.\n"
-    filename: one-titled-option.md
-    v: 0.0.0
-  - content: "---\npackages:\n  fieldspec:\n    type: patch\n---\n\n### `fromJSONSchema` keeps a string's `format` and reads `enumNames`\n\nA string's `format` comes in as the field's `format`, so `email`, `uri` and the other formats fieldspec checks are checked once read, and other formats are kept as hints. An enum's `enumNames`, which older schemas such as MCP's elicitation forms label options with, become the options' labels.\n"
-    filename: json-schema-formats.md
+  - content: "---\npackages:\n  fieldspec:\n    type: minor\n---\n\n### `parse` refuses a required field that the input leaves out\n\nA field with `required` whose key is absent from what `parse` is given now has the `required` issue even when the field's zero would pass, so a required number or boolean must be sent: `0` and `false` count as sent. A field with a `default` or a `value` is never absent, and a form, which holds a value for every field, is unchanged. `toJSONSchema(spec, { io: \"input\" })` lists a field whose `required` is `true` and that is never hidden under `required`.\n"
+    filename: required-when-absent.md
     v: 0.0.0
 core:packages:
   - changelogIds:
-      - unknown-field-messages.md
-      - text-box-messages.md
-      - unique-items-set.md
-      - one-titled-option.md
-      - json-schema-formats.md
+      - required-when-absent.md
     id: npm:fieldspec
     updated: true
 npm:packages:
