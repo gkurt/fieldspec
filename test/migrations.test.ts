@@ -171,6 +171,6 @@ describe('checking versions and migrations', () => {
     expect(back.fields).not.toHaveProperty('$version');
     expect(new Ajv2020({ strict: false }).compile(output)(encode(settings, now))).toBe(true);
 
-    expect(prompt()).toContain('## Versions and migrations');
+    expect(prompt(undefined, { topics: ['migrations'] })).toContain('## Versions and migrations');
   });
 });

@@ -131,7 +131,7 @@ describe('definitions', () => {
   });
 
   test('the prompt teaches defs and ../', () => {
-    const text = prompt();
+    const text = prompt(undefined, { topics: 'all' });
     expect(text).toContain('## Presets and definitions (`use`)');
     expect(text).toContain('`../`');
   });

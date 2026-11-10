@@ -292,6 +292,7 @@ describe('json-render', () => {
 describe('agents', () => {
   test('the prompt covers kinds, elements and functions', () => {
     const text = prompt(design, {
+      topics: 'all',
       functions: { palette: { description: 'Brand colours', returns: 'string[]' } },
       customRules: ['Prefer sliders.'],
     });

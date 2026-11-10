@@ -106,7 +106,7 @@ export {
   type ToJsonRenderOptions,
   type JsonRenderStateOptions,
 } from './jsonrender.ts';
-export { prompt, describePrompt, describeMessage, type PromptOptions, type DescribePromptOptions } from './prompt.ts';
+export { prompt, describePrompt, describeMessage, type PromptOptions, type PromptTopic, type DescribePromptOptions } from './prompt.ts';
 export { metaSchema, type MetaSchemaOptions } from './schema.ts';
 export { VERSION, FORMAT_VERSION, SCHEMA_URL } from './version.ts';
 export { getAt, setAt, parsePointer, formatPointer, joinPointer, resolvePointer } from './pointer.ts';

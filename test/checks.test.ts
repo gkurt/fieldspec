@@ -230,7 +230,8 @@ describe('checking checks', () => {
     const valid = new Ajv2020({ strict: false }).compile(metaSchema());
     expect(valid(stay)).toBe(true);
     expect(valid({ fields: { a: { type: 'int', checks: [{ assert: true }] } } })).toBe(false);
-    expect(prompt()).toContain('## Checks (`checks`)');
+    expect(prompt(undefined, { topics: ['checks'] })).toContain('## Checks (`checks`)');
+    expect(prompt()).not.toContain('## Checks');
   });
 });
 

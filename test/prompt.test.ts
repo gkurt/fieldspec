@@ -1,7 +1,7 @@
 /** The prompt that teaches a model to write specs: what each purpose is told, and how long that is. */
 import { describe, expect, test } from 'bun:test';
 import { design } from '#examples/design.ts';
-import { checkSpec, prompt, type Spec } from '#src/index.ts';
+import { checkSpec, prompt, type PromptOptions, type Spec } from '#src/index.ts';
 
 /** The spec a prompt shows under "Example". */
 function exampleOf(text: string): Spec {
@@ -89,5 +89,94 @@ describe('prompt for a form', () => {
     expect(prompt(undefined, { purpose: 'form' })).toBe(prompt());
     expect(prompt()).toContain('how a form for them is laid out');
     expect(checkSpec(exampleOf(prompt()))).toEqual([]);
+  });
+});
+
+/** The heading of each section a prompt has. */
+const sections = (text: string) =>
+  text
+    .split('\n')
+    .filter((line) => line.startsWith('## '))
+    .map((line) => line.slice(3).split(' (')[0]);
+
+describe('topics', () => {
+  test('a form is taught conditions, groups and controls unless told otherwise', () => {
+    expect(sections(prompt())).toEqual([
+      'Every field may have',
+      'Kinds',
+      'Conditions',
+      'Presets',
+      'Groups',
+      'Controls',
+      'Example',
+      'Rules',
+    ]);
+    expect(prompt()).toBe(prompt(undefined, { topics: ['conditions', 'groups', 'controls'] }));
+  });
+
+  test('data is taught none, and never what only a form draws', () => {
+    const data = (topics: PromptOptions['topics']) => sections(prompt(undefined, { purpose: 'data', topics }));
+    const plain = ['Every field may have', 'Given, unknown, or left to a default', 'Shape', 'Kinds', 'Presets', 'Example', 'Rules'];
+    expect(data(undefined)).toEqual(plain);
+    expect(data(['groups', 'controls', 'layout', 'locales'])).toEqual(plain);
+    expect(data('all')).toEqual([
+      'Every field may have',
+      'Given, unknown, or left to a default',
+      'Shape',
+      'Kinds',
+      'Conditions',
+      'Checks',
+      'Expressions',
+      'Names',
+      'Presets and definitions',
+      'Versions and migrations',
+      'Functions',
+      'Example',
+      'Rules',
+    ]);
+  });
+
+  test('all teaches a form everything', () => {
+    expect(sections(prompt(undefined, { topics: 'all' }))).toEqual([
+      'Every field may have',
+      'Kinds',
+      'Conditions',
+      'Checks',
+      'Expressions',
+      'Names',
+      'Presets and definitions',
+      'Translations',
+      'Versions and migrations',
+      'Groups',
+      'Rendering',
+      'Functions',
+      'Example',
+      'Rules',
+    ]);
+  });
+
+  test('a topic brings the properties it is about, and the topics it leans on', () => {
+    const none = prompt(undefined, { topics: [] });
+    for (const prop of ['`visible`', '`enabled`', '`checks`', '`value`', '`group`', '`render`']) expect(none).not.toContain(prop);
+    expect(none).toContain('- `required`: `true`: must be given and non-empty.');
+    expect(sections(prompt(undefined, { topics: ['checks'] }))).toContain('Conditions');
+    expect(prompt(undefined, { topics: ['checks'] })).toContain('- `checks`:');
+    expect(sections(prompt(undefined, { topics: ['layout'] }))).toContain('Rendering');
+    expect(prompt(undefined, { topics: ['layout'] })).toContain('- `slider`:');
+    expect(sections(prompt(undefined, { topics: [], functions: { total: { returns: 'number' } } }))).toContain('Expressions');
+  });
+
+  test('the example uses only what was taught, and is a spec the checker takes', () => {
+    for (const topics of [[], ['conditions'], ['groups'], ['controls'], 'all'] as PromptOptions['topics'][]) {
+      const text = prompt(undefined, { topics });
+      const example = exampleOf(text);
+      expect(checkSpec(example).filter((f) => f.severity === 'error')).toEqual([]);
+      const said = JSON.stringify(example);
+      const taught = (topic: string) => topics === 'all' || topics!.includes(topic as never);
+      expect([topics, said.includes('"visible"')]).toEqual([topics, taught('conditions')]);
+      expect([topics, said.includes('"group"')]).toEqual([topics, taught('groups')]);
+      expect([topics, said.includes('"render":"slider"')]).toEqual([topics, taught('controls')]);
+      expect([topics, said.includes('"render":"row"')]).toEqual([topics, topics === 'all']);
+    }
   });
 });

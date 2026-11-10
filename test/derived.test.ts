@@ -88,7 +88,8 @@ describe('value', () => {
   test('the meta-schema and the prompt know it', () => {
     const ajv = new Ajv2020({ strict: false });
     expect(ajv.validate(metaSchema(registry), order)).toBe(true);
-    expect(prompt(registry)).toContain('`value`');
+    expect(prompt(registry, { topics: 'all' })).toContain('`value`');
+    expect(prompt(registry)).not.toContain('`value`');
   });
 });
 

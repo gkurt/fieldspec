@@ -112,7 +112,10 @@ const result = parse(spec, json); // { ok, value, issues: [{ path, code, message
   visible, enabled, required, label, options, issues). `applyPatch` applies JSON Patch.
 - `$computed` names a function passed at runtime: `define(spec, { fns })`.
 - To have a model write a spec, give it `prompt(registry)` as the system prompt and check the
-  answer with `checkSpec`. For a spec that is the shape of data a program or a model sends, and
+  answer with `checkSpec`. The prompt
+  teaches only the `topics` it is given beyond fields, kinds and presets (a form: `conditions`,
+  `groups`, `controls`; data: none): add `checks`, `expressions`, `defs`, `locales`, `migrations`
+  or `layout` when the request calls for one, or `topics: 'all'`. For a spec that is the shape of data a program or a model sends, and
   no form, use `prompt(registry, { purpose: 'data' })`: descriptions on every field, nesting,
   `required` for what must be sent and `optional` for what may be unknown. To have one describe a spec, give it `describePrompt()` and
   `describeMessage(spec)`: the description is a sentence or two saying what the spec is for, as a

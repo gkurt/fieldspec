@@ -703,6 +703,17 @@ checks meaning (references, conditions, defaults).
 - `prompt(registry)` and `metaSchema(registry)`: a system prompt and a JSON Schema for structured
   outputs, both generated from the registry's kinds, elements and presets. The prompt tells
   agents to start specs with `$schema`.
+- `prompt` teaches fields, kinds and presets, and beyond them only the `topics` it is given,
+  since the whole format is several times longer than most requests need:
+  `prompt(registry, { topics: ['conditions', 'checks'] })`. The topics are `conditions`
+  (`visible`, `enabled`, a conditional `required`), `checks`, `expressions` (with code and
+  derived `value`s), `defs`, `locales`, `migrations`, `groups`, `controls` (a field's `render`)
+  and `layout` (layout elements, field parts, `layouts`). A form is taught `conditions`, `groups`
+  and `controls` by default, data none, and `topics: 'all'` teaches everything the purpose can
+  use. `checks` brings `conditions`, `layout` brings `controls`, and giving `functions` brings
+  `expressions`. A model writes only what it was taught: name `checks` for a rule over several
+  fields, `defs` for a shape that repeats or contains itself, `migrations` when changing a spec
+  whose values are stored.
 - `prompt(registry, { purpose: 'data' })` is the prompt for a spec that is no form: the shape of
   data a program or a model sends as JSON and others read, such as a tool's input or an agent's
   output. It teaches no labels, groups, layouts, controls or translations, and asks for a

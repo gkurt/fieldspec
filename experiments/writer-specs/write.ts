@@ -3,7 +3,7 @@
  * several fields, `$cel`, derived values, translations and migrations? Each case is a description
  * that calls for one of them, naming the field keys, and a behaviour test over sample values.
  *
- * The model gets `prompt(registry)` as its system prompt and the description, and replies with
+ * The model gets `prompt(registry, { topics: 'all' })` as its system prompt and the description, and replies with
  * a spec as JSON. A reply the checker rejects is sent back once with the checker's faults, as an
  * application would. Each attempt is scored on three things: it parses as JSON, the checker
  * accepts it, and it behaves (the test passes). Behaviour is never shown to the model.
@@ -148,7 +148,7 @@ export const CASES: readonly Case[] = [
 
 // ── The writer ───────────────────────────────────────────────────────────────────────────
 
-const SYSTEM = `${prompt(registry)}\n\nReply with the spec as JSON only: no prose, no code fences.`;
+const SYSTEM = `${prompt(registry, { topics: 'all' })}\n\nReply with the spec as JSON only: no prose, no code fences.`;
 
 type Message = { role: 'system' | 'user' | 'assistant'; content: string };
 

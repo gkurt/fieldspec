@@ -183,9 +183,9 @@ describe('checking $cel', () => {
   });
 
   test('agents hear of $cel only from a registry that runs it', () => {
-    expect(prompt(registry)).toContain('"$cel"');
-    expect(prompt(registry)).not.toContain('"$js"');
-    expect(prompt()).not.toContain('$cel');
+    expect(prompt(registry, { topics: 'all' })).toContain('"$cel"');
+    expect(prompt(registry, { topics: 'all' })).not.toContain('"$js"');
+    expect(prompt(undefined, { topics: 'all' })).not.toContain('$cel');
     expect(JSON.stringify(metaSchema(registry))).toContain('"$cel"');
     expect(JSON.stringify(metaSchema(registry))).not.toContain('"$js"');
   });

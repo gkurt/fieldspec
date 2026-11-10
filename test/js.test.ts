@@ -111,8 +111,8 @@ describe('checking $js', () => {
   });
 
   test('agents hear of $js only from a registry that runs it', () => {
-    expect(prompt(registry)).toContain('"$js"');
-    expect(prompt()).not.toContain('$js');
+    expect(prompt(registry, { topics: 'all' })).toContain('"$js"');
+    expect(prompt(undefined, { topics: 'all' })).not.toContain('$js');
     expect(JSON.stringify(metaSchema(registry))).toContain('"$js"');
     expect(JSON.stringify(metaSchema(createRegistry()))).not.toContain('$js');
     expect(JSON.stringify(metaSchema())).toContain('"$js"');

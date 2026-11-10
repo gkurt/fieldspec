@@ -232,6 +232,6 @@ describe('checking translations', () => {
     expect(valid(service)).toBe(true);
     expect(valid({ fields: {}, locales: { de: { 'fields/a/label': 'x' } } })).toBe(false);
     expect(fromJSONSchema(toJSONSchema(service)).locales).toEqual(service.locales);
-    expect(prompt()).toContain('## Translations (`locales`)');
+    expect(prompt(undefined, { topics: ['locales'] })).toContain('## Translations (`locales`)');
   });
 });
