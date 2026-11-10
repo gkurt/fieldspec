@@ -75,6 +75,8 @@ const json = (value: unknown) => JSON.stringify(value);
 
 /** The base properties a topic teaches; the rest every prompt lists. */
 const TOPIC_PROPS: { readonly [prop: string]: readonly PromptTopic[] } = {
+  aliases: ['migrations'],
+  deprecated: ['migrations'],
   visible: ['conditions'],
   enabled: ['conditions'],
   checks: ['checks'],
@@ -326,13 +328,26 @@ export function prompt(registry: Registry = coreRegistry, options: PromptOptions
     out(
       '## Controls (`render`)',
       '',
-      'Every field draws with the control of its kind. Give a field `render` only where another control suits it better: a control\'s name (`"render": "slider"`), or the control with its props (`"render": { "type": "textarea", "props": { "rows": 6 } }`).',
+      'Every field draws with the control of its kind, which needs no `render`. Give a field `render` only where one of these suits it better: the control\'s name (`"render": "slider"`), or the control with its props (`"render": { "type": "textarea", "props": { "rows": 6 } }`). Each edits the kinds in brackets.',
       '',
     );
+    // A control that is a kind's own and takes no props is never worth naming: the field has it already.
+    const own = new Set([...registry.kinds.values()].map((kind) => kind.control).filter((control) => typeof control === 'string'));
+    for (const el of registry.elements.values()) {
+      if (el.role !== 'control') continue;
+      const props = Object.entries(el.props ?? {})
+        .filter(([n]) => n !== 'field')
+        .map(([n, i]) => `\`${n}\` (${i.description})`);
+      if (props.length === 0 && own.has(el.name)) continue;
+      out(
+        `- \`${el.name}\`${el.kinds ? ` [${el.kinds.join(', ')}]` : ''}: ${el.description}${props.length > 0 ? ` Props: ${props.join(', ')}.` : ''}`,
+      );
+    }
+    out('');
   }
   for (const role of ['layout', 'part', 'control'] as const) {
-    if (role === 'control' ? !has('controls') : !has('layout')) continue;
-    if (has('layout')) out(`${role === 'layout' ? 'Layout' : role === 'part' ? 'Field parts' : 'Controls'}:`, '');
+    if (!has('layout')) continue;
+    out(`${role === 'layout' ? 'Layout' : role === 'part' ? 'Field parts' : 'Controls'}:`, '');
     for (const el of registry.elements.values()) {
       if (el.role !== role) continue;
       const props = Object.entries(el.props ?? {})
@@ -355,7 +370,7 @@ export function prompt(registry: Registry = coreRegistry, options: PromptOptions
     }
     out('');
   }
-  out('## Example', '', '```json', JSON.stringify(data ? DATA_EXAMPLE : exampleFor(has), null, 2), '```', '', '## Rules', '');
+  out('## Example', '', '```json', pretty(data ? DATA_EXAMPLE : exampleFor(has)), '```', '', '## Rules', '');
   if (data)
     out('- Use only the kinds and properties above. Unknown properties are errors.', '- Every field, at every depth, has a `description`.');
   else out('- Use only the kinds, properties and elements above. Unknown properties are errors.');
@@ -364,6 +379,17 @@ export function prompt(registry: Registry = coreRegistry, options: PromptOptions
   if (!data) out('- Keep labels short; put explanations in `description`.');
   for (const rule of options.customRules ?? []) out(`- ${rule}`);
   return lines.join('\n');
+}
+
+/** JSON for an example: a fields map has a line per field, and a declaration is one line unless it holds fields. */
+function pretty(value: unknown, indent = '', open = true): string {
+  const flat = JSON.stringify(value);
+  if (value === null || typeof value !== 'object' || Array.isArray(value) || !(open || flat.includes('"fields":'))) return flat;
+  const inner = `${indent}  `;
+  const members = Object.entries(value).map(
+    ([key, member]) => `${inner}${JSON.stringify(key)}: ${pretty(member, inner, key === 'fields')}`,
+  );
+  return members.length === 0 ? '{}' : `{\n${members.join(',\n')}\n${indent}}`;
 }
 
 /** The form example with only what the prompt taught. */

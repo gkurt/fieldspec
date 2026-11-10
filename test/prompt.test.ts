@@ -189,3 +189,34 @@ describe('topics', () => {
     }
   });
 });
+
+describe('controls', () => {
+  test('a form is offered the controls worth choosing, not the ones its fields already have', () => {
+    const text = prompt();
+    for (const offered of ['- `slider` [number, int]:', '- `segmented` [enum]:', '- `textarea` [string, json]:', '- `switch` [boolean]:'])
+      expect(text).toContain(offered);
+    for (const own of ['select', 'checkbox', 'date', 'variant', 'fields', 'entries', 'file']) expect(text).not.toContain(`- \`${own}\` [`);
+    expect(prompt(undefined, { topics: ['layout'] })).toContain('- `select`: A drop-down of options. Edits: enum.');
+  });
+});
+
+describe('length', () => {
+  // How long each prompt may be, in characters. A prompt that grows past its budget fails here:
+  // raise the budget only on purpose. The whole prompt was 18,650 before there were topics.
+  const budgets: [name: string, options: PromptOptions, most: number][] = [
+    ['a form', {}, 10_500],
+    ['data', { purpose: 'data' }, 7_000],
+    ['a form, every topic', { topics: 'all' }, 18_000],
+    ['data, every topic', { purpose: 'data', topics: 'all' }, 11_500],
+  ];
+  for (const [name, options, most] of budgets) {
+    test(`the prompt for ${name} is at most ${most} characters`, () => {
+      expect(prompt(undefined, options).length).toBeLessThanOrEqual(most);
+    });
+  }
+
+  test('data is well under half of what the whole prompt was, and a form is much shorter', () => {
+    expect(prompt(undefined, { purpose: 'data' }).length).toBeLessThan(18_650 * 0.4);
+    expect(prompt().length).toBeLessThan(18_650 * 0.6);
+  });
+});

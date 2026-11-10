@@ -713,7 +713,9 @@ checks meaning (references, conditions, defaults).
   use. `checks` brings `conditions`, `layout` brings `controls`, and giving `functions` brings
   `expressions`. A model writes only what it was taught: name `checks` for a rule over several
   fields, `defs` for a shape that repeats or contains itself, `migrations` when changing a spec
-  whose values are stored.
+  whose values are stored. The default prompt for a form is about 10,400 characters and the one
+  for data about 6,800, where teaching everything takes about 17,700; a test holds each to a
+  budget.
 - `prompt(registry, { purpose: 'data' })` is the prompt for a spec that is no form: the shape of
   data a program or a model sends as JSON and others read, such as a tool's input or an agent's
   output. It teaches no labels, groups, layouts, controls or translations, and asks for a
