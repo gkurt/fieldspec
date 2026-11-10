@@ -57,6 +57,15 @@ describe('prompt for data', () => {
     expect(prompt(design, { purpose: 'data' })).toContain('### Gradient');
   });
 
+  test('shows an example for a kind that cannot be written without one, and says a repeated list once', () => {
+    expect(text).toContain('Example: `{"type":"variant","key":"method","variants":{"none":{"fields":{}}');
+    expect(text).toContain('Example: `{"type":"record","values":{"type":"string"}}`');
+    expect(text).toContain('### int\nA whole number.\nTakes what `number` takes.');
+    const form = prompt();
+    expect(form).toContain('Example: `{"type":"enum","label":"Mode"');
+    expect(form).not.toContain('{"type":"boolean"');
+  });
+
   test('offers the presets that say something about the value, not about its control', () => {
     expect(text).toContain('`email`');
     expect(text).toContain('`port`');

@@ -165,15 +165,24 @@ export function prompt(registry: Registry = coreRegistry, options: PromptOptions
     );
   }
   out('## Kinds (`type`)', '');
+  const listed = new Map<string, string>();
   for (const kind of registry.kinds.values()) {
-    out(`### ${kind.name}${kind.base ? ` (refines ${kind.base})` : ''}`, '', (data && DATA_WORDS[kind.name]) || kind.description);
-    const props = Object.entries(kind.props ?? {}).filter(([name]) => !data || !FORM_ONLY.includes(name));
-    if (props.length > 0) {
-      out('');
-      for (const [name, info] of props)
-        out(`- \`${name}\`${info.required ? ' (required)' : ''}: ${(data && DATA_WORDS[`${kind.name}.${name}`]) || info.description}`);
-    }
-    if (kind.example && !data) out('', '```json', json(kind.example), '```');
+    out(`### ${kind.name}${kind.base ? ` (refines ${kind.base})` : ''}`, (data && DATA_WORDS[kind.name]) || kind.description);
+    const props = Object.entries(kind.props ?? {})
+      .filter(([name]) => !data || !FORM_ONLY.includes(name))
+      .map(
+        ([name, info]) =>
+          `- \`${name}\`${info.required ? ' (required)' : ''}: ${(data && DATA_WORDS[`${kind.name}.${name}`]) || info.description}`,
+      );
+    // A kind that takes what an earlier one does says so, rather than the list again.
+    const same = listed.get(props.join('\n'));
+    if (same !== undefined && props.length > 1) out(`Takes what \`${same}\` takes.`);
+    else out(...props);
+    if (props.length > 1 && same === undefined) listed.set(props.join('\n'), kind.name);
+    // An example where a kind cannot be written without one: it has properties it needs.
+    const needs = Object.values(kind.props ?? {}).some((info) => info.required);
+    if (kind.example && needs && !(data && DATA_SHOWN.includes(kind.name)))
+      out(`Example: \`${json(data ? undrawn(kind.example) : kind.example)}\``);
     out('');
   }
   if (has('conditions')) {
@@ -437,6 +446,20 @@ const FORM_ONLY = [
   'placeholder',
   'hint',
 ];
+
+/** The kinds the example for data shows in use, which need no example of their own. */
+const DATA_SHOWN = ['enum', 'array', 'object'];
+
+/** A kind's example without what only a form reads, at every depth. */
+function undrawn(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(undrawn);
+  if (value === null || typeof value !== 'object') return value;
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => !FORM_ONLY.includes(key))
+      .map(([key, inner]) => [key, undrawn(inner)]),
+  );
+}
 
 /** Core kinds and properties whose own words speak of a form, said for data: by kind, or by kind and property. */
 const DATA_WORDS: { readonly [name: string]: string } = {
