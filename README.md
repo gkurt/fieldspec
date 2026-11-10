@@ -543,7 +543,7 @@ import { createSpecEditor } from 'fieldspec';
 const editor = createSpecEditor({
   spec,
   generate: (description, spec) => writeSpec(description, spec), // your model, with prompt(registry)
-  describe: (spec) => describeSpec(spec), // your model, with describePrompt(registry)
+  describe: (spec) => describeSpec(spec), // your model, with describePrompt()
 });
 
 editor.add('/fields', { key: 'age', decl: { type: 'int', min: 0 } }); // { ok: true, path: "/fields/age" }
@@ -703,17 +703,18 @@ checks meaning (references, conditions, defaults).
 - `prompt(registry)` and `metaSchema(registry)`: a system prompt and a JSON Schema for structured
   outputs, both generated from the registry's kinds, elements and presets. The prompt tells
   agents to start specs with `$schema`.
-- `describePrompt(registry)` and `describeMessage(spec)`: the mirror of `prompt`, for the way
-  back. The system prompt asks a model for the spec in plain words, such that a writer given
-  `prompt` and only that description writes the same fields: each field by its key, its kind,
-  whether it is required, its options, limits and default, in the spec's order. It names kinds
-  and presets from the same registry in the same words as `prompt`, and takes `maxLength` and
-  `customRules`. The message is the spec as JSON without `$schema`, `fieldspec` and `meta`, so
-  the description a spec carries is never described back. fieldspec calls no model: send both
-  with yours, and keep the answer with `withDescription(spec, text)`.
+- `describePrompt()` and `describeMessage(spec)`: for the way back, a spec's description. The
+  system prompt asks a model for what a person would have typed to ask for the spec: what the
+  thing is and its notable parts, in one or two sentences (under 300 characters, or
+  `maxLength`), naming a field only where its name carries meaning, and never listing kinds,
+  required fields, options, limits or defaults. The description is for people to read; it is not
+  meant to write the same spec again. `customRules` adds rules. The message is the spec as JSON
+  without `$schema`, `fieldspec` and `meta`, so the description a spec carries is never
+  described back. fieldspec calls no model: send both with yours, and keep the answer with
+  `withDescription(spec, text)`.
 
   ```ts
-  const text = await model({ system: describePrompt(registry, { maxLength: 4000 }), user: describeMessage(spec) });
+  const text = await model({ system: describePrompt(), user: describeMessage(spec) });
   const described = withDescription(spec, text);
   ```
 

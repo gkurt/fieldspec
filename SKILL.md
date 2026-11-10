@@ -112,9 +112,9 @@ const result = parse(spec, json); // { ok, value, issues: [{ path, code, message
   visible, enabled, required, label, options, issues). `applyPatch` applies JSON Patch.
 - `$computed` names a function passed at runtime: `define(spec, { fns })`.
 - To have a model write a spec, give it `prompt(registry)` as the system prompt and check the
-  answer with `checkSpec`. To have one describe a spec, give it `describePrompt(registry)` and
-  `describeMessage(spec)`; the description is written so that `prompt` writes the same fields
-  from it. Do not write prompts of your own for either.
+  answer with `checkSpec`. To have one describe a spec, give it `describePrompt()` and
+  `describeMessage(spec)`: the description is a sentence or two saying what the spec is for, as a
+  person would ask for it, not a list of its fields. Do not write prompts of your own for either.
 - A spec's `meta` is the application's and never interpreted. `meta.description` is `{ text, of }`:
   the spec in plain words and the `fingerprint(spec)` the text last matched. Write it with
   `withDescription(spec, text)`, read it with `descriptionOf(spec)`, and ask
@@ -144,7 +144,7 @@ taken only when `checkSpec` finds no errors, else `editor.spec` stays the last g
   key: it rewrites the pointers, placements, `namedBy` and translations that name the field.
 - `json()` and `applyJson(text)` are the JSON way; `readSpec(text)` parses and checks without an editor.
 - `generate` and `describe` are callbacks to your own model (`prompt(registry)`,
-  `describePrompt(registry)` and `describeMessage(spec)`); fieldspec calls none. `stale` says the
+  `describePrompt()` and `describeMessage(spec)`); fieldspec calls none. `stale` says the
   description is out of date, `replaces` which fields a generate would discard.
 - In React: `useSpecEditor(options)`, `useSpecEditorState(editor)`; copy `examples/editor.tsx` for a view.
 

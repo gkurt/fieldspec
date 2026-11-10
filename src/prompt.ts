@@ -190,70 +190,39 @@ export function prompt(registry: Registry = coreRegistry, options: PromptOptions
     '- Use only the kinds, properties and elements above. Unknown properties are errors.',
     "- An enum's `default` must be one of its options.",
     '- Keep labels short; put explanations in `description`.',
-    '- Where what you are asked for names a key, a kind, options, a limit, a default or whether a field is required, use exactly those.',
   );
   for (const rule of options.customRules ?? []) out(`- ${rule}`);
   return lines.join('\n');
 }
 
 export interface DescribePromptOptions {
-  /** The longest description to ask for, in characters. */
+  /** The longest description to ask for, in characters. Default 300. */
   readonly maxLength?: number;
   /** Extra rules, in plain language. */
   readonly customRules?: readonly string[];
 }
 
 /**
- * The mirror of {@link prompt}: a system prompt that teaches a model to say a spec in plain
- * words, such that a writer given {@link prompt} and only that description writes the same
- * fields. It names kinds and presets as {@link prompt} does, from the same registry, so keys,
- * kinds, required, options, limits and defaults survive the round trip. Send the spec with
- * {@link describeMessage}.
+ * A system prompt that asks a model for a spec's description: what a person would have typed
+ * to ask for it, in a sentence or two. It says what the thing is and its notable parts, and
+ * leaves the fields' kinds, limits and defaults to the spec, so it is something to read, not
+ * something to write the same spec from. Send the spec with {@link describeMessage}.
  */
-export function describePrompt(registry: Registry = coreRegistry, options: DescribePromptOptions = {}): string {
-  const lines: string[] = [];
-  const out = (...l: string[]) => lines.push(...l);
-  out(
+export function describePrompt(options: DescribePromptOptions = {}): string {
+  const lines = [
     '# Describing a fieldspec spec',
     '',
-    'You are given a fieldspec spec: one JSON object that describes a set of values (settings, a form, a config) and how a form for them is laid out. Write its description in plain words, as the person asking for the form would put it.',
-    '',
-    'A writer given only your description, and not the spec, writes the spec again. Say everything that writer needs to write the same fields, in the order the spec has them:',
-    '',
-    '- each field by its key, written exactly as the spec writes it (`firstName`), and what it holds;',
-    '- its kind, by the name or in the words under Kinds;',
-    '- whether it is required (must be given and non-empty), optional (may be absent), or neither, which needs no words;',
-    '- its options, each value exactly as written; its limits, with their numbers; its default;',
-    "- a field inside another (an object's fields, a list's items, a record's values, a variant's variants and their fields) the same way, saying what it is inside;",
-    '- a condition under which a field is shown, enabled or required, a value worked out from other fields, and a check its value must keep, in words that name the fields they read;',
-    '- a title, a label, a group or how a field is drawn (`render`) only where the spec gives one that the key alone would not.',
-    '',
-    '## Kinds',
-    '',
-  );
-  for (const kind of registry.kinds.values()) out(`- \`${kind.name}\`${kind.base ? ` (a ${kind.base})` : ''}: ${kind.description}`);
-  out(
-    '',
-    'A field that builds on a preset or definition (`use`) is said by that name, so the writer uses it again: "an email", "a percent".',
-    '',
-  );
-  for (const [name, preset] of Object.entries(registry.presets)) {
-    const about = isBuiltinName(name)
-      ? PRESET_DESCRIPTIONS[name as keyof typeof PRESET_DESCRIPTIONS]
-      : (preset.description as string | undefined);
-    out(`- \`${name}\`${about ? `: ${about}` : ''}`);
-  }
-  out(
+    'You are given a fieldspec spec: one JSON object that describes a set of values (settings, a form, a config). Write what a person would have typed to ask for it: what the thing is, and its notable parts.',
     '',
     '## Rules',
     '',
-    '- Write sentences. No JSON, no lists, no headings, no code.',
-    '- Say only what the spec says. Do not explain fieldspec, and add no field, option or limit of your own.',
-    '- Leave out what says nothing about the fields: `$schema`, `fieldspec`, `meta`.',
-  );
-  if (options.maxLength !== undefined) out(`- Keep it under ${options.maxLength} characters.`);
-  for (const rule of options.customRules ?? []) out(`- ${rule}`);
-  out('- Reply with the description alone.');
+    `- One or two sentences, under ${options.maxLength ?? 300} characters. Shorter is better.`,
+    '- Name a field only where its name carries meaning the sentence needs. Do not go through the fields one by one.',
+    '- Never list kinds, which fields are required, options, limits or defaults.',
+    '- Plain words: no JSON, no lists, no headings, no code. Do not mention fieldspec or the spec itself.',
+    ...(options.customRules ?? []).map((rule) => `- ${rule}`),
+    '- Reply with the description alone.',
+  ];
   return lines.join('\n');
 }
 
@@ -263,7 +232,7 @@ const UNDESCRIBED = ['$schema', 'fieldspec', 'meta'];
 /**
  * The user message that goes with {@link describePrompt}: the spec as JSON, in its own order,
  * without `$schema`, `fieldspec` and `meta`, so the description a spec carries is never
- * described back and the same fields always make the same message.
+ * described back.
  */
 export function describeMessage(spec: Spec): string {
   return `The spec:\n${JSON.stringify(Object.fromEntries(Object.entries(spec).filter(([key]) => !UNDESCRIBED.includes(key))))}`;

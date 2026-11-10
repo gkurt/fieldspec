@@ -1,6 +1,5 @@
 /** The describe prompt: the mirror of the prompt that writes specs, and the message built from a spec. */
 import { describe, expect, test } from 'bun:test';
-import { design } from '#examples/design.ts';
 import { describeMessage, describePrompt, prompt, withDescription, type Spec } from '#src/index.ts';
 
 const spec: Spec = {
@@ -14,38 +13,29 @@ const spec: Spec = {
 };
 
 describe('describePrompt', () => {
-  test('names every kind and preset the writer prompt teaches, with the same words', () => {
-    for (const registry of [undefined, design]) {
-      const [describer, writer] = [describePrompt(registry), prompt(registry)];
-      const kinds = [...(registry ?? design).kinds.values()].filter((k) => registry !== undefined || k.name.toLowerCase() === k.name);
-      for (const kind of kinds) {
-        expect(describer).toContain(`\`${kind.name}\``);
-        expect(describer).toContain(kind.description);
-        expect(writer).toContain(kind.description);
-      }
-    }
-    expect(describePrompt(design)).toContain('`Gradient`');
-    expect(describePrompt()).not.toContain('`Gradient`');
-    for (const preset of ['email', 'percent', 'port']) expect(describePrompt()).toContain(`\`${preset}\``);
+  test('asks for a sentence or two, as a person would ask for the spec, and not for a list of its fields', () => {
+    const text = describePrompt();
+    expect(text).toContain('what a person would have typed to ask for it');
+    expect(text).toContain('One or two sentences, under 300 characters.');
+    expect(text).toContain('Do not go through the fields one by one.');
+    expect(text).toContain('Never list kinds, which fields are required, options, limits or defaults.');
+    expect(text.endsWith('- Reply with the description alone.')).toBe(true);
+    expect(text.length).toBeLessThan(1000);
   });
 
-  test('asks for what a round trip must keep: keys, kinds, required, options, limits and defaults', () => {
+  test('names no kind or preset, so the description cannot turn into a list of them', () => {
     const text = describePrompt();
-    for (const word of ['key', 'kind', 'required', 'optional', 'options', 'limits', 'default', 'order']) expect(text).toContain(word);
-    expect(text).toContain('Reply with the description alone.');
-    expect(prompt()).toContain('use exactly those');
+    for (const name of ['`string`', '`enum`', '`variant`', '`email`', '`percent`']) expect(text).not.toContain(name);
   });
 
   test('takes a length and rules of the application', () => {
-    expect(describePrompt()).not.toContain('characters');
-    const text = describePrompt(undefined, { maxLength: 4000, customRules: ['Write in German.'] });
-    expect(text).toContain('- Keep it under 4000 characters.');
-    expect(text).toContain('- Write in German.');
-    expect(text.trimEnd().endsWith('Reply with the description alone.')).toBe(true);
+    const text = describePrompt({ maxLength: 500, customRules: ['Write in German.'] });
+    expect(text).toContain('under 500 characters');
+    expect(text).toContain('- Write in German.\n- Reply with the description alone.');
   });
 
-  test('is the same text for the same registry', () => {
-    expect(describePrompt()).toBe(describePrompt());
+  test('leaves the prompt that writes specs as it was before there was a describer', () => {
+    expect(prompt()).not.toContain('use exactly those');
   });
 });
 

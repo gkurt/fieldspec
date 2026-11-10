@@ -89,7 +89,7 @@ import { SpecEditorView, editorStyles } from "./editor"; // copied from fieldspe
 const editor = useSpecEditor({
   spec,
   generate: (description, spec) => writeSpec(description, spec), // your model, with prompt(registry)
-  describe: (spec) => describeSpec(spec), // your model, with describePrompt(registry)
+  describe: (spec) => describeSpec(spec), // your model, with describePrompt()
 });
 const { spec, stale, replaces } = useSpecEditorState(editor);
 
